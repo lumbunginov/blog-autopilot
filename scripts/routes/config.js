@@ -38,7 +38,8 @@ module.exports = function registerConfig(app, deps) {
       if (fs.existsSync(configFile)) {
         const cfg = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
         withSeoDefaults(cfg);
-        return res.json({ ...cfg, _credentials: credMarker });
+        const { clean: cfgClean } = stripCredentials(cfg);
+        return res.json({ ...cfgClean, _credentials: credMarker });
       }
       const templatePath = path.join(paths.skillDir, 'config.template.json');
       if (fs.existsSync(templatePath)) {
@@ -46,7 +47,8 @@ module.exports = function registerConfig(app, deps) {
         delete raw._instructions;
         withSeoDefaults(raw);
         const clean = JSON.parse(JSON.stringify(raw, (k, v) => k.startsWith('_') ? undefined : v));
-        return res.json({ ...clean, _credentials: credMarker });
+        const { clean: templateClean } = stripCredentials(clean);
+        return res.json({ ...templateClean, _credentials: credMarker });
       }
       res.json({ _credentials: credMarker });
     } catch (e) {

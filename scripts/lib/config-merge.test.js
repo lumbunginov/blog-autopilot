@@ -56,3 +56,16 @@ test('stripCredentials tidak memutasi body asli', () => {
   stripCredentials(body);
   assert.strictEqual(body.wordpress.app_password, 'RAHASIA');
 });
+
+test('stripCredentials membersihkan config penuh (skenario GET /api/config) tanpa mengubah field lain', () => {
+  const storedConfig = {
+    wordpress: { url: 'https://x.com', username: 'admin', app_password: 'RAHASIA' },
+    image_api: { type: 'seedream', api_key: 'KUNCI' },
+    workflow: { language: 'id', saved_categories: [1, 2, 3] }
+  };
+  const { clean } = stripCredentials(storedConfig);
+  assert.strictEqual(clean.wordpress.app_password, undefined);
+  assert.strictEqual(clean.image_api.api_key, undefined);
+  assert.strictEqual(clean.wordpress.url, 'https://x.com');
+  assert.deepStrictEqual(clean.workflow.saved_categories, [1, 2, 3]);
+});
