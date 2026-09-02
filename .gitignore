@@ -1,0 +1,10 @@
+node_modules/
+.env
+data/blogs/*/
+blog-autopilot-config.json
+articles-cache.json
+article-plans.json
+agent-queue.json
+*.log
+.playwright-mcp/
+build/

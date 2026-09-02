@@ -1,0 +1,51 @@
+{
+  "_instructions": "Copy this file to your project root as 'blog-autopilot-config.json' and fill in your values. DO NOT commit this file to git.",
+  "wordpress": {
+    "url": "https://yourblog.com",
+    "username": "your-wp-username",
+    "app_password": "xxxx xxxx xxxx xxxx xxxx xxxx"
+  },
+  "image_api": {
+    "type": "gemini",
+    "_type_options": ["seedream", "gemini", "openai", "none"],
+    "api_key": ""
+  },
+  "output": {
+    "articles_dir": "./articles",
+    "images_dir": "./images"
+  },
+  "workflow": {
+    "language": "id",
+    "_language_options": ["id", "en", "ms", "other"],
+    "auto_publish": false,
+    "content_length": 1000,
+    "default_category_id": null,
+    "default_category_name": "",
+    "auto_select_category": false,
+    "saved_categories": []
+  },
+  "knowledge_base": {
+    "business_name": "Your Business Name",
+    "business_description": "Brief description of what your business does and sells",
+    "products": [
+      "Product or service 1",
+      "Product or service 2"
+    ],
+    "target_audience": "Who your customers are (e.g., 'young professionals, 25-35 years old')",
+    "tone": "professional",
+    "_tone_options": ["professional", "casual", "educational", "friendly", "authoritative"],
+    "prohibited_topics": [],
+    "internal_links": [
+      {
+        "url": "https://yourblog.com/example-page/",
+        "anchor": "example anchor text"
+      }
+    ],
+    "custom_entries": [
+      {
+        "title": "Example: Pricing",
+        "content": "Basic package starts at Rp 500,000. Premium package Rp 2,000,000 includes setup and technician."
+      }
+    ]
+  }
+}

@@ -1,0 +1,133 @@
+# SEO Standards — Blog Autopilot
+
+General SEO rules for all blog articles, regardless of business type or language.
+
+---
+
+## Meta Title
+
+**Format**: `[Focus Keyword]: [Benefit/Hook] | [Business Name]`
+
+- Length: **50–60 characters** (hard max: 60)
+- Focus keyword in first 30 characters
+- Brand name at the end (optional but recommended)
+- Use numbers when possible: "7 Tips", "2025 Guide", "Panduan Lengkap"
+- Be specific and clickable — generic titles don't get clicks
+
+**Good examples**:
+- `Harga Sewa Sound System 2025: Panduan Lengkap | Perkap` (54 chars)
+- `Tips Memilih Catering Pernikahan: 5 Hal Wajib Cek` (51 chars)
+- `How to Choose AV Rental: Complete 2025 Guide` (46 chars)
+
+**Bad examples**:
+- `Sound System` (too short, no hook)
+- `Panduan Lengkap Memilih Sound System Terbaik untuk Event di Jakarta 2025` (too long, 72 chars)
+
+---
+
+## Meta Description
+
+**Format**: `[Hook/Problem]. [Solution with keyword]. [CTA]!`
+
+- Length: **150–160 characters** (hard max: 160)
+- Focus keyword in first 100 characters
+- End with a clear call-to-action
+- Address a benefit or solve a problem
+
+**Good examples**:
+- `Hindari 5 kesalahan fatal saat sewa sound system. Panduan pilih vendor terpercaya, cek kualitas alat, tips booking event sukses!` (128 chars ✓)
+- `Looking for reliable AV rental? Compare packages, check what's included, and avoid hidden fees. Get your quote today!` (118 chars ✓)
+
+**CTAs by intent**:
+- Informational: "Baca panduannya!", "Learn more!", "Simak tips lengkapnya!"
+- Transactional: "Dapatkan penawaran!", "Book now!", "Hubungi kami sekarang!"
+
+---
+
+## URL Slug
+
+- Lowercase only, words separated by dashes
+- Include primary keyword
+- 3–7 words ideal, max 75 characters
+- No special characters, no Indonesian accented letters (ä → a, é → e)
+- No stop words if avoidable
+
+**Good**: `/tips-memilih-vendor-catering/`, `/harga-sewa-sound-system-2025/`
+**Bad**: `/Sewa-Sound-System/`, `/artikel-tentang-tips/`, `/p=1234/`
+
+---
+
+## Keyword Placement (Required)
+
+Place focus keyword in:
+1. ✅ H1 title (the article title)
+2. ✅ First paragraph — **bold** the first occurrence
+3. ✅ At least one H2 heading (exact or close variant)
+4. ✅ URL slug
+5. ✅ Meta title (first 30 chars)
+6. ✅ Meta description (first 100 chars)
+7. ✅ Image alt text (natural, not stuffed)
+8. ✅ Conclusion paragraph
+
+---
+
+## Keyword Density
+
+Target: **1–2%** of total word count
+
+For a 1000-word article:
+- Minimum: 10 appearances
+- Ideal: 12–15 appearances
+- Maximum: 20 appearances (above = stuffing)
+
+Distribute naturally across sections. Use keyword variations (plural, synonyms, LSI terms) — don't repeat the exact same phrase every time.
+
+---
+
+## Heading Hierarchy
+
+```
+H1 — Article title (only one, set by WordPress from post title)
+H2 — Main sections (3–6 per article)
+H3 — Subsections under H2 (use sparingly)
+```
+
+Rules:
+- Never skip levels (H2 → H4 is wrong)
+- Never use H4 or deeper
+- At least 1–2 H2s should include keyword or close variant
+- H2 length: 3–8 words
+
+---
+
+## Internal Linking
+
+- Minimum: **2–3 internal links** per article
+- Use descriptive anchor text (never "click here" or "baca ini")
+- Link to related articles and service/product pages
+- Use full absolute URLs
+
+**Good anchor text**: "panduan sewa multimedia", "tips memilih vendor"
+**Bad anchor text**: "klik di sini", "artikel ini", "baca selengkapnya"
+
+---
+
+## Content Length
+
+| Content Type | Minimum | Ideal |
+|-------------|---------|-------|
+| Informational blog | 800 words | 1,000–1,500 words |
+| Comparison/guide | 1,000 words | 1,500–2,000 words |
+| Local SEO page | 500 words | 800–1,000 words |
+
+Quality > quantity. Never add filler to hit a word count.
+
+---
+
+## Readability
+
+- Paragraphs: 2–4 sentences max
+- Sentences: 15–20 words average
+- Use H2/H3 every 200–300 words
+- Use lists for 3+ items
+- Short intro (no more than 2 paragraphs before first H2)
