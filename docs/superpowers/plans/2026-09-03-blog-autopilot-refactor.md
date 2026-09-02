@@ -884,7 +884,7 @@ module.exports = function registerQueue(app, deps) {
 {
   "scripts": {
     "start": "node scripts/server.js",
-    "test": "node --test scripts/lib/"
+    "test": "node --test scripts/lib/*.test.js"
   },
   "dependencies": {
     "express": "^4.21.2"
@@ -2282,7 +2282,7 @@ Expected: `exit=1` (tidak ada yang cocok).
 - [ ] **Step 7: Jalankan seluruh test dan periksa kebersihan repo**
 
 ```bash
-node --test scripts/lib/
+node --test scripts/lib/*.test.js
 grep -oE "=.+$" .env | cut -c2- | grep -v "^$" > .rahasia-cek.txt
 git ls-files | xargs grep -l -F -f .rahasia-cek.txt ; echo "exit=$?"
 rm .rahasia-cek.txt
