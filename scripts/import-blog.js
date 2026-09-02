@@ -35,9 +35,16 @@ if (!fs.existsSync(srcConfig)) {
   process.exit(1);
 }
 
+let cfg;
+try {
+  cfg = JSON.parse(fs.readFileSync(srcConfig, 'utf-8'));
+} catch (e) {
+  console.error(`❌ Gagal membaca/mengurai ${srcConfig}: ${e.message}`);
+  process.exit(1);
+}
+
 fs.mkdirSync(paths.blogDir(id), { recursive: true });
 
-const cfg = JSON.parse(fs.readFileSync(srcConfig, 'utf-8'));
 const prefix = id.toUpperCase().replace(/-/g, '_');
 const secrets = [];
 
