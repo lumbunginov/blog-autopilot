@@ -11,6 +11,10 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const { extractFromHtml } = require('../scripts/lib/html-extract');
+const cacheLib = require('../scripts/lib/articles-cache');
+const { decodeWpEntities, mapPost } = cacheLib;
+const readArticlesCache = () => cacheLib.readArticlesCache(ARTICLES_CACHE_FILE);
+const writeArticlesCache = (data) => cacheLib.writeArticlesCache(ARTICLES_CACHE_FILE, data);
 
 const PORT = 3847;
 const SKILL_DIR = path.join(__dirname, '..');
@@ -52,48 +56,6 @@ function readBody(req) {
     req.on('end', () => resolve(body));
     req.on('error', reject);
   });
-}
-
-// ── Articles Cache Helpers ──────────────────────────────────────────────────
-
-function readArticlesCache() {
-  if (fs.existsSync(ARTICLES_CACHE_FILE)) {
-    try { return JSON.parse(fs.readFileSync(ARTICLES_CACHE_FILE, 'utf-8')); }
-    catch(e) { return null; }
-  }
-  return null;
-}
-
-function writeArticlesCache(data) {
-  try {
-    fs.writeFileSync(ARTICLES_CACHE_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch(e) {
-    console.error('[articles-cache] write failed:', e.message);
-  }
-}
-
-function decodeWpEntities(s) {
-  return s
-    .replace(/&#8217;/g, "'").replace(/&#8216;/g, "'")
-    .replace(/&#8220;/g, '"').replace(/&#8221;/g, '"')
-    .replace(/&#8211;/g, '–').replace(/&#8212;/g, '—')
-    .replace(/&amp;/g, '&').replace(/&#038;/g, '&')
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/<[^>]+>/g, '');
-}
-
-function mapPost(post, categoryMap) {
-  const catId = Array.isArray(post.categories) && post.categories[0];
-  return {
-    id: post.id,
-    title: decodeWpEntities(post.title && post.title.rendered || ''),
-    status: post.status,
-    date: post.date ? post.date.split('T')[0] : '',
-    modified: post.modified ? post.modified.split('T')[0] : '',
-    category: catId && categoryMap[catId] ? categoryMap[catId] : 'Uncategorized',
-    slug: post.slug,
-    url: post.link
-  };
 }
 
 function httpGet(reqUrl, auth) {
