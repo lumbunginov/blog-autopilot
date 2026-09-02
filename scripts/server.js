@@ -39,7 +39,7 @@ require('./routes/config')(app, deps);
 require('./routes/articles')(app, deps);
 require('./routes/scrape')(app, deps);
 
-app.use(express.static(path.join(SKILL_DIR, 'dashboard')));
+app.use(express.static(path.join(SKILL_DIR, 'public')));
 
 const server = app.listen(PORT, () => {
   const dashboardUrl = `http://localhost:${PORT}`;
