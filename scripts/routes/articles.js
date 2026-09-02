@@ -5,43 +5,53 @@ const { basicAuth, httpPost } = require('../lib/wp-client');
 const wpSync = require('../lib/wp-sync');
 
 module.exports = function registerArticles(app, deps) {
-  const { CONFIG_FILE, ARTICLES_CACHE_FILE } = deps.paths;
-  const readArticlesCache = () => cacheLib.readArticlesCache(ARTICLES_CACHE_FILE);
-  const writeArticlesCache = (data) => cacheLib.writeArticlesCache(ARTICLES_CACHE_FILE, data);
+  const { paths } = deps;
 
-  async function doFullSync(cfg) {
+  function resolveBlog(req) {
+    const id = req.query.blog || req.body?.blog || paths.activeBlog();
+    if (!id) throw new Error('Belum ada blog. Buat dulu lewat POST /api/blogs.');
+    return id;
+  }
+
+  async function doFullSync(cfg, cachePath) {
     deps.state.syncState = { done: false, updated: 0, lastSync: null };
     const auth = basicAuth(cfg.wordpress.username, cfg.wordpress.app_password);
-    const cache = await wpSync.fullSync({ wpUrl: cfg.wordpress.url, auth, cachePath: ARTICLES_CACHE_FILE });
+    const cache = await wpSync.fullSync({ wpUrl: cfg.wordpress.url, auth, cachePath });
     deps.state.syncState = { done: true, updated: cache.totalCount, lastSync: cache.lastSync };
   }
 
-  async function doIncrementalSync(cfg, existingCache) {
+  async function doIncrementalSync(cfg, existingCache, cachePath) {
     deps.state.syncState = { done: false, updated: 0, lastSync: existingCache.lastSync };
     const auth = basicAuth(cfg.wordpress.username, cfg.wordpress.app_password);
     const { cache, updated } = await wpSync.incrementalSync({
-      wpUrl: cfg.wordpress.url, auth, cachePath: ARTICLES_CACHE_FILE, existingCache
+      wpUrl: cfg.wordpress.url, auth, cachePath, existingCache
     });
     deps.state.syncState = { done: true, updated, lastSync: cache.lastSync };
   }
 
   app.get('/api/articles', (req, res) => {
+    let blogId;
+    try { blogId = resolveBlog(req); }
+    catch (e) { return res.status(400).json({ error: e.message }); }
+
+    const configFile = paths.configPath(blogId);
+    const cachePath = paths.cachePath(blogId);
     const force = req.query.force === 'true';
     const nosync = req.query.nosync === 'true';
 
-    if (force && fs.existsSync(ARTICLES_CACHE_FILE)) {
+    if (force && fs.existsSync(cachePath)) {
       if (!deps.state.syncState.done) {
         return res.status(409).json({ error: 'Sync already in progress. Try again shortly.' });
       }
-      fs.unlinkSync(ARTICLES_CACHE_FILE);
+      fs.unlinkSync(cachePath);
     }
 
-    const cache = readArticlesCache();
+    const cache = cacheLib.readArticlesCache(cachePath);
 
     let cfg;
     try {
-      if (!fs.existsSync(CONFIG_FILE)) throw new Error('Config not found');
-      cfg = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+      if (!fs.existsSync(configFile)) throw new Error('Config not found');
+      cfg = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
       if (!cfg.wordpress?.url || !cfg.wordpress?.username) throw new Error('WordPress not configured');
     } catch (e) {
       return res.status(400).json({ error: e.message });
@@ -49,7 +59,7 @@ module.exports = function registerArticles(app, deps) {
 
     if (!cache) {
       res.json({ articles: [], totalCount: 0, lastSync: null, syncing: true });
-      doFullSync(cfg).catch(e => {
+      doFullSync(cfg, cachePath).catch(e => {
         deps.state.syncState = { done: true, updated: 0, lastSync: null, error: e.message };
       });
       return;
@@ -61,7 +71,7 @@ module.exports = function registerArticles(app, deps) {
 
     res.json({ ...cache, syncing: true });
     if (deps.state.syncState.done) {
-      doIncrementalSync(cfg, cache).catch(e => {
+      doIncrementalSync(cfg, cache, cachePath).catch(e => {
         deps.state.syncState = { done: true, updated: 0, lastSync: cache.lastSync, error: e.message };
       });
     }
@@ -80,10 +90,14 @@ module.exports = function registerArticles(app, deps) {
         return res.status(400).json({ error: 'Invalid id or status. Status must be "publish" or "draft".' });
       }
 
-      if (!fs.existsSync(CONFIG_FILE)) {
+      const blogId = resolveBlog(req);
+      const configFile = paths.configPath(blogId);
+      const cachePath = paths.cachePath(blogId);
+
+      if (!fs.existsSync(configFile)) {
         return res.status(400).json({ error: 'Config not found' });
       }
-      const cfg = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+      const cfg = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
       const { url: wpUrl, username, app_password } = cfg.wordpress || {};
       if (!wpUrl || !username || !app_password) {
         return res.status(400).json({ error: 'WordPress credentials not configured' });
@@ -104,13 +118,13 @@ module.exports = function registerArticles(app, deps) {
 
       const post = result.body;
       if (post.id) {
-        const cache = readArticlesCache();
+        const cache = cacheLib.readArticlesCache(cachePath);
         if (cache) {
           const idx = cache.articles ? cache.articles.findIndex(a => a.id === id) : -1;
           if (idx !== -1) {
             cache.articles[idx].status = post.status;
             cache.articles[idx].modified = post.modified ? post.modified.split('T')[0] : cache.articles[idx].modified;
-            writeArticlesCache(cache);
+            cacheLib.writeArticlesCache(cachePath, cache);
           }
         }
         return res.json({ success: true, id: post.id, status: post.status });

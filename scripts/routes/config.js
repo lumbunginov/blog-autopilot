@@ -20,16 +20,23 @@ function withSeoDefaults(cfg) {
 }
 
 module.exports = function registerConfig(app, deps) {
-  const { CONFIG_FILE, SKILL_DIR } = deps.paths;
+  const { paths } = deps;
+
+  function resolveBlog(req) {
+    const id = req.query.blog || req.body?.blog || paths.activeBlog();
+    if (!id) throw new Error('Belum ada blog. Buat dulu lewat POST /api/blogs.');
+    return id;
+  }
 
   app.get('/api/config', (req, res) => {
     try {
-      if (fs.existsSync(CONFIG_FILE)) {
-        const cfg = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+      const configFile = paths.configPath(resolveBlog(req));
+      if (fs.existsSync(configFile)) {
+        const cfg = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
         withSeoDefaults(cfg);
         return res.json(cfg);
       }
-      const templatePath = path.join(SKILL_DIR, 'config.template.json');
+      const templatePath = path.join(paths.skillDir, 'config.template.json');
       if (fs.existsSync(templatePath)) {
         const raw = JSON.parse(fs.readFileSync(templatePath, 'utf-8'));
         delete raw._instructions;
@@ -39,15 +46,16 @@ module.exports = function registerConfig(app, deps) {
       }
       res.json({});
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      res.status(400).json({ error: e.message });
     }
   });
 
   app.post('/api/config', (req, res) => {
     try {
-      const body = JSON.stringify(req.body);
-      fs.writeFileSync(CONFIG_FILE, body, 'utf-8');
-      res.json({ success: true, path: CONFIG_FILE });
+      const configFile = paths.configPath(resolveBlog(req));
+      fs.mkdirSync(path.dirname(configFile), { recursive: true });
+      fs.writeFileSync(configFile, JSON.stringify(req.body, null, 2), 'utf-8');
+      res.json({ success: true, path: configFile });
     } catch (e) {
       res.status(400).json({ error: e.message });
     }
@@ -55,10 +63,11 @@ module.exports = function registerConfig(app, deps) {
 
   app.get('/api/categories', async (req, res) => {
     try {
-      if (!fs.existsSync(CONFIG_FILE)) {
+      const configFile = paths.configPath(resolveBlog(req));
+      if (!fs.existsSync(configFile)) {
         return res.status(400).json({ error: 'Config not found. Save your WordPress credentials first.' });
       }
-      const cfg = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+      const cfg = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
       const { url: wpUrl, username, app_password } = cfg.wordpress || {};
       if (!wpUrl || !username || !app_password) {
         return res.status(400).json({ error: 'WordPress credentials not configured.' });

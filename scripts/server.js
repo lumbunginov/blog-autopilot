@@ -3,12 +3,10 @@
 const path = require('path');
 const express = require('express');
 
+const { makePaths } = require('./lib/paths');
+
 const PORT = 3847;
 const SKILL_DIR = path.join(__dirname, '..');
-const CONFIG_FILE = path.join(SKILL_DIR, 'blog-autopilot-config.json');
-const ARTICLES_CACHE_FILE = path.join(SKILL_DIR, 'articles-cache.json');
-const PLANS_FILE = path.join(SKILL_DIR, 'article-plans.json');
-const QUEUE_FILE = path.join(SKILL_DIR, 'agent-queue.json');
 
 const app = express();
 app.use(express.json({ limit: '5mb' }));
@@ -29,7 +27,7 @@ function broadcast(event, data) {
 }
 
 const state = { syncState: { done: true, updated: 0, lastSync: null }, sseClients };
-const paths = { SKILL_DIR, CONFIG_FILE, ARTICLES_CACHE_FILE, PLANS_FILE, QUEUE_FILE };
+const paths = makePaths(SKILL_DIR);
 const deps = { paths, state, broadcast };
 
 require('./routes/events')(app, deps);
@@ -38,6 +36,7 @@ require('./routes/queue')(app, deps);
 require('./routes/config')(app, deps);
 require('./routes/articles')(app, deps);
 require('./routes/scrape')(app, deps);
+require('./routes/blogs')(app, deps);
 
 app.use(express.static(path.join(SKILL_DIR, 'public')));
 
@@ -47,7 +46,7 @@ const server = app.listen(PORT, () => {
   console.log('║        Blog Autopilot Dashboard        ║');
   console.log('╚════════════════════════════════════════╝\n');
   console.log(`🌐 Dashboard: ${dashboardUrl}`);
-  console.log(`📁 Config   : ${CONFIG_FILE}`);
+  console.log(`📁 Data     : ${paths.blogsDir()}`);
   console.log('\nPress Ctrl+C to stop\n');
   const { exec } = require('child_process');
   const openCmd = process.platform === 'win32' ? `start ${dashboardUrl}`

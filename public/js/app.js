@@ -1581,6 +1581,24 @@ function escHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+async function loadBlogs() {
+  const r = await fetch('/api/blogs').then(x => x.json());
+  const sel = document.getElementById('blogSelect');
+  if (!sel) return;
+  sel.innerHTML = (r.blogs || [])
+    .map(b => `<option value="${b.id}"${b.id === r.active ? ' selected' : ''}>${b.name}</option>`)
+    .join('');
+  sel.onchange = async () => {
+    await fetch('/api/blogs/active', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: sel.value })
+    });
+    location.reload();
+  };
+}
+
 // ==================== INIT ====================
 loadConfig();
 initSSE();
+loadBlogs();

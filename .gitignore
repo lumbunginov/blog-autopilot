@@ -1,6 +1,7 @@
 node_modules/
 .env
 data/blogs/*/
+data/blogs/_active
 blog-autopilot-config.json
 articles-cache.json
 article-plans.json
