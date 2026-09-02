@@ -15,6 +15,8 @@ const cacheLib = require('../scripts/lib/articles-cache');
 const { decodeWpEntities, mapPost } = cacheLib;
 const readArticlesCache = () => cacheLib.readArticlesCache(ARTICLES_CACHE_FILE);
 const writeArticlesCache = (data) => cacheLib.writeArticlesCache(ARTICLES_CACHE_FILE, data);
+const { basicAuth, fetchCategories } = require('../scripts/lib/wp-client');
+const wpSync = require('../scripts/lib/wp-sync');
 
 const PORT = 3847;
 const SKILL_DIR = path.join(__dirname, '..');
@@ -58,116 +60,20 @@ function readBody(req) {
   });
 }
 
-function httpGet(reqUrl, auth) {
-  return new Promise((resolve, reject) => {
-    let parsed;
-    try { parsed = new URL(reqUrl); } catch(e) { return reject(e); }
-    const protocol = parsed.protocol === 'https:' ? https : http;
-    const options = {
-      hostname: parsed.hostname,
-      port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
-      path: parsed.pathname + parsed.search,
-      headers: { 'Authorization': 'Basic ' + auth, 'User-Agent': 'BlogAutopilot/1.0' },
-      timeout: 15000
-    };
-    const req = protocol.get(options, (resp) => {
-      const total = parseInt(resp.headers['x-wp-total'] || '0');
-      const totalPages = parseInt(resp.headers['x-wp-totalpages'] || '1');
-      let data = '';
-      resp.on('data', chunk => data += chunk);
-      resp.on('end', () => {
-        try { resolve({ body: JSON.parse(data), total, totalPages }); }
-        catch(e) { reject(new Error('JSON parse error: ' + data.substring(0, 100))); }
-      });
-    });
-    req.on('error', reject);
-    req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });
-  });
-}
-
-async function fetchCategoryMap(wpUrl, auth) {
-  const base = wpUrl.replace(/\/$/, '');
-  try {
-    const { body } = await httpGet(`${base}/wp-json/wp/v2/categories?per_page=100`, auth);
-    const map = {};
-    if (Array.isArray(body)) body.forEach(c => { map[c.id] = c.name; });
-    return map;
-  } catch(e) {
-    console.error('[fetchCategoryMap] failed:', e.message);
-    return {};
-  }
-}
-
 async function doFullSync(cfg) {
   syncState = { done: false, updated: 0, lastSync: null };
-  const base = (cfg.wordpress.url || '').replace(/\/$/, '');
-  const auth = Buffer.from(`${cfg.wordpress.username}:${cfg.wordpress.app_password}`).toString('base64');
-  const fields = '_fields=id,title,status,date,modified,slug,link,categories';
-  const categoryMap = await fetchCategoryMap(base, auth);
-  let allArticles = [];
-  let page = 1;
-  let totalPages = 1;
-  do {
-    const { body, totalPages: tp } = await httpGet(
-      `${base}/wp-json/wp/v2/posts?${fields}&status=publish,draft&per_page=100&page=${page}&orderby=date&order=desc`,
-      auth
-    );
-    totalPages = tp || 1;
-    if (Array.isArray(body)) allArticles = allArticles.concat(body.map(p => mapPost(p, categoryMap)));
-    page++;
-  } while (page <= totalPages);
-
-  const cache = {
-    lastSync: new Date().toISOString(),
-    totalCount: allArticles.length,
-    articles: allArticles
-  };
-  writeArticlesCache(cache);
-  syncState = { done: true, updated: allArticles.length, lastSync: cache.lastSync };
+  const auth = basicAuth(cfg.wordpress.username, cfg.wordpress.app_password);
+  const cache = await wpSync.fullSync({ wpUrl: cfg.wordpress.url, auth, cachePath: ARTICLES_CACHE_FILE });
+  syncState = { done: true, updated: cache.totalCount, lastSync: cache.lastSync };
 }
 
 async function doIncrementalSync(cfg, existingCache) {
   syncState = { done: false, updated: 0, lastSync: existingCache.lastSync };
-  const base = (cfg.wordpress.url || '').replace(/\/$/, '');
-  const auth = Buffer.from(`${cfg.wordpress.username}:${cfg.wordpress.app_password}`).toString('base64');
-  const fields = '_fields=id,title,status,date,modified,slug,link,categories';
-  const after = existingCache.lastSync;
-  const categoryMap = await fetchCategoryMap(base, auth);
-
-  const { body, totalPages } = await httpGet(
-    `${base}/wp-json/wp/v2/posts?${fields}&status=publish,draft&per_page=100&orderby=modified&order=desc&modified_after=${after}`,
-    auth
-  );
-
-  if (!Array.isArray(body) || body.length === 0) {
-    syncState = { done: true, updated: 0, lastSync: existingCache.lastSync };
-    return;
-  }
-
-  // If more than 100 posts changed, fall back to full sync for accuracy
-  if (totalPages > 1) {
-    return doFullSync(cfg);
-  }
-
-  const existingArticles = Array.isArray(existingCache.articles) ? existingCache.articles : [];
-  const idMap = new Map(existingArticles.map(a => [a.id, a]));
-  body.forEach(p => {
-    const mapped = mapPost(p, categoryMap);
-    if (mapped.status === 'publish' || mapped.status === 'draft') {
-      idMap.set(p.id, mapped);
-    } else {
-      idMap.delete(p.id); // remove trashed/deleted posts from cache
-    }
+  const auth = basicAuth(cfg.wordpress.username, cfg.wordpress.app_password);
+  const { cache, updated } = await wpSync.incrementalSync({
+    wpUrl: cfg.wordpress.url, auth, cachePath: ARTICLES_CACHE_FILE, existingCache
   });
-  const updated = Array.from(idMap.values());
-
-  const cache = {
-    lastSync: new Date().toISOString(),
-    totalCount: updated.length,
-    articles: updated
-  };
-  writeArticlesCache(cache);
-  syncState = { done: true, updated: body.length, lastSync: cache.lastSync };
+  syncState = { done: true, updated, lastSync: cache.lastSync };
 }
 
 function withSeoDefaults(cfg) {
@@ -270,62 +176,9 @@ const server = http.createServer(async (req, res) => {
         return res.end(JSON.stringify({ error: 'WordPress credentials not configured.' }));
       }
 
-      const https = require('https');
-      const httpMod = require('http');
-      const baseUrl = wpUrl.replace(/\/$/, '');
-      const apiPath = '/wp-json/wp/v2/categories?per_page=100&orderby=count&order=desc';
-      const auth = Buffer.from(`${username}:${app_password}`).toString('base64');
-
-      let parsedUrl;
-      try { parsedUrl = new URL(baseUrl + apiPath); }
-      catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ error: 'Invalid WordPress URL: ' + wpUrl }));
-      }
-
-      const protocol = parsedUrl.protocol === 'https:' ? https : httpMod;
-      const options = {
-        hostname: parsedUrl.hostname,
-        port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
-        path: parsedUrl.pathname + parsedUrl.search,
-        headers: { 'Authorization': 'Basic ' + auth, 'User-Agent': 'BlogAutopilot/1.0' },
-        timeout: 10000
-      };
-
-      const wpReq = protocol.get(options, (wpRes) => {
-        let data = '';
-        wpRes.on('data', chunk => data += chunk);
-        wpRes.on('end', () => {
-          try {
-            const cats = JSON.parse(data);
-            if (!Array.isArray(cats)) {
-              res.writeHead(500, { 'Content-Type': 'application/json' });
-              return res.end(JSON.stringify({ error: 'Unexpected response from WordPress: ' + data.substring(0, 200) }));
-            }
-            const result = cats
-              .filter(c => c.count >= 0)
-              .map(c => ({ id: c.id, name: c.name, slug: c.slug, count: c.count }));
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(result));
-          } catch (e) {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Failed to parse WordPress response' }));
-          }
-        });
-      });
-
-      wpReq.on('timeout', () => {
-        wpReq.destroy();
-        res.writeHead(504, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Connection timeout — check WordPress URL and make sure the site is reachable' }));
-      });
-
-      wpReq.on('error', (e) => {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Connection failed: ' + e.message }));
-      });
-
-      return;
+      const result = await fetchCategories(wpUrl, basicAuth(username, app_password));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify(result));
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: e.message }));
