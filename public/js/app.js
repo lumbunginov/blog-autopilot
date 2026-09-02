@@ -46,11 +46,18 @@ function updateTitleSuffixPreview() {
   if (preview) preview.textContent = ('e.g. Best Coffee Shops London: Top 7 Picks ' + suffix).trim();
 }
 
+function updateWpPasswordIndicator(isSet) {
+  const el = document.getElementById('wp-password');
+  if (!el) return;
+  el.value = isSet ? '(set in .env)' : '';
+  el.placeholder = isSet ? '' : 'Not set — add PREFIX_WP_APP_PASSWORD to .env';
+}
+
 function populateForm(c) {
   // WordPress
   setVal('wp-url', c.wordpress?.url);
   setVal('wp-username', c.wordpress?.username);
-  setVal('wp-password', c.wordpress?.app_password);
+  updateWpPasswordIndicator(!!c._credentials?.wpPasswordSet);
   // Image
   const imgType = c.image_api?.type || 'gemini';
   selectImageType(imgType);
@@ -119,8 +126,8 @@ function collectForm() {
   return {
     wordpress: {
       url: getVal('wp-url'),
-      username: getVal('wp-username'),
-      app_password: getVal('wp-password')
+      username: getVal('wp-username')
+      // app_password is never sent from the browser — it lives only in .env.
     },
     image_api: {
       type: selectedImgType,
@@ -173,10 +180,10 @@ async function saveConfig() {
     });
     const result = await res.json();
     if (result.success) {
-      config = data;
-      updateStatusDot(data);
+      config = { ...data, _credentials: config._credentials };
+      updateStatusDot(config);
       setChangeStatus(false);
-      toast('✅ Settings saved!', 'success');
+      toast(result.warning || '✅ Settings saved!', result.warning ? 'warning' : 'success');
     } else {
       toast('Save failed: ' + result.error, 'error');
     }
@@ -213,7 +220,7 @@ function setChangeStatus(changed) {
 function updateStatusDot(c) {
   const dot = document.getElementById('config-status-dot');
   const text = document.getElementById('config-status-text');
-  const hasWP = c.wordpress?.url && c.wordpress?.username && c.wordpress?.app_password;
+  const hasWP = c.wordpress?.url && c.wordpress?.username && c._credentials?.wpPasswordSet;
   const hasKB = c.knowledge_base?.business_name;
   if (hasWP && hasKB) {
     dot.className = 'dot ok';
@@ -304,9 +311,12 @@ async function fetchCategories() {
   // Validate WP credentials first
   const wpUrl = getVal('wp-url');
   const wpUser = getVal('wp-username');
-  const wpPass = getVal('wp-password');
-  if (!wpUrl || !wpUser || !wpPass) {
-    toast('Fill in WordPress URL, username, and password first', 'warning');
+  if (!wpUrl || !wpUser) {
+    toast('Fill in WordPress URL and username first', 'warning');
+    return;
+  }
+  if (!config._credentials?.wpPasswordSet) {
+    toast('WordPress password not set — add PREFIX_WP_APP_PASSWORD to .env first', 'warning');
     return;
   }
 
@@ -359,7 +369,11 @@ function openWizard() {
   // Pre-fill from existing config if any
   if (config.wordpress?.url) setVal('wz-wp-url', config.wordpress.url);
   if (config.wordpress?.username) setVal('wz-wp-username', config.wordpress.username);
-  if (config.wordpress?.app_password) setVal('wz-wp-password', config.wordpress.app_password);
+  const wzPwEl = document.getElementById('wz-wp-password');
+  if (wzPwEl) {
+    wzPwEl.value = config._credentials?.wpPasswordSet ? '(set in .env)' : '';
+    wzPwEl.placeholder = config._credentials?.wpPasswordSet ? '' : 'Add PREFIX_WP_APP_PASSWORD to .env';
+  }
   const imgType = config.image_api?.type || '';
   if (imgType) {
     const found = document.querySelector(`#wz-img-type-group .img-option input[value="${imgType}"]`)?.closest('.img-option');
@@ -415,18 +429,20 @@ function updateWizardUI() {
 
 async function wizardNext() {
   if (currentWizardStep === 1) {
-    // Validate WordPress fields
+    // Validate WordPress fields (password lives in .env, not the form)
     const url = getVal('wz-wp-url');
     const user = getVal('wz-wp-username');
-    const pass = document.getElementById('wz-wp-password').value.trim();
-    if (!url || !user || !pass) {
-      toast('Please fill in all WordPress fields', 'warning');
+    if (!url || !user) {
+      toast('Please fill in the WordPress URL and username', 'warning');
+      return;
+    }
+    if (!config._credentials?.wpPasswordSet) {
+      toast('Add PREFIX_WP_APP_PASSWORD to .env before continuing', 'warning');
       return;
     }
     // Copy to main form
     setVal('wp-url', url);
     setVal('wp-username', user);
-    document.getElementById('wp-password').value = pass;
     currentWizardStep = 2;
 
   } else if (currentWizardStep === 2) {
@@ -461,14 +477,13 @@ function wizardBack() {
 async function wizardSave() {
   const url = getVal('wz-wp-url') || getVal('wp-url');
   const user = getVal('wz-wp-username') || getVal('wp-username');
-  const pass = document.getElementById('wz-wp-password').value.trim() || document.getElementById('wp-password').value.trim();
   const imgType = document.querySelector('#wz-img-type-group .img-option.selected input')?.value || 'none';
   const imgKey = document.getElementById('wz-img-key').value.trim();
 
-  // Merge into full config
+  // Merge into full config. app_password is never sent — it lives only in .env.
   const data = {
     ...config,
-    wordpress: { url, username: user, app_password: pass },
+    wordpress: { url, username: user },
     image_api: { type: imgType, api_key: imgKey },
     output: config.output || { articles_dir: './articles', images_dir: './images' },
     workflow: config.workflow || { language: 'id', auto_publish: false, content_length: 1000, auto_select_category: false, saved_categories: [] },
@@ -483,7 +498,7 @@ async function wizardSave() {
     });
     const result = await res.json();
     if (result.success) {
-      config = data;
+      config = { ...data, _credentials: config._credentials };
       populateForm(data);
       updateStatusDot(data);
       setChangeStatus(false);

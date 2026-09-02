@@ -1,6 +1,8 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const { envKeys } = require('../lib/env');
+const { deepMerge, stripCredentials } = require('../lib/config-merge');
 
 module.exports = function registerBlogs(app, deps) {
   const { paths } = deps;
@@ -40,7 +42,10 @@ module.exports = function registerBlogs(app, deps) {
     try {
       const p = paths.configPath(req.params.id);
       if (!fs.existsSync(p)) return res.status(404).json({ error: 'Config tidak ditemukan' });
-      res.json(JSON.parse(fs.readFileSync(p, 'utf-8')));
+      const raw = JSON.parse(fs.readFileSync(p, 'utf-8'));
+      const { clean } = stripCredentials(raw);
+      const credMarker = { wpPasswordSet: !!process.env[envKeys(req.params.id).wpPassword] };
+      res.json({ ...clean, _credentials: credMarker });
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
 
@@ -48,8 +53,15 @@ module.exports = function registerBlogs(app, deps) {
     try {
       const p = paths.configPath(req.params.id);
       if (!fs.existsSync(path.dirname(p))) return res.status(404).json({ error: 'Blog tidak ditemukan' });
-      fs.writeFileSync(p, JSON.stringify(req.body, null, 2), 'utf-8');
-      res.json({ success: true });
+      const stored = fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf-8')) : {};
+      const { clean, ignored } = stripCredentials(req.body);
+      const merged = deepMerge(stored, clean);
+      fs.writeFileSync(p, JSON.stringify(merged, null, 2), 'utf-8');
+      const out = { success: true };
+      if (ignored.length) {
+        out.warning = `Kredensial (${ignored.join(', ')}) diabaikan — set lewat .env, bukan lewat dashboard.`;
+      }
+      res.json(out);
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
 

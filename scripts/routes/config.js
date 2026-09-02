@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { basicAuth, fetchCategories } = require('../lib/wp-client');
 const { resolveCredentials, envKeys } = require('../lib/env');
+const { deepMerge, stripCredentials } = require('../lib/config-merge');
 
 function withSeoDefaults(cfg) {
   if (!cfg.seo_plugin) {
@@ -57,8 +58,15 @@ module.exports = function registerConfig(app, deps) {
     try {
       const configFile = paths.configPath(resolveBlog(req));
       fs.mkdirSync(path.dirname(configFile), { recursive: true });
-      fs.writeFileSync(configFile, JSON.stringify(req.body, null, 2), 'utf-8');
-      res.json({ success: true, path: configFile });
+      const stored = fs.existsSync(configFile) ? JSON.parse(fs.readFileSync(configFile, 'utf-8')) : {};
+      const { clean, ignored } = stripCredentials(req.body);
+      const merged = deepMerge(stored, clean);
+      fs.writeFileSync(configFile, JSON.stringify(merged, null, 2), 'utf-8');
+      const out = { success: true, path: configFile };
+      if (ignored.length) {
+        out.warning = `Kredensial (${ignored.join(', ')}) diabaikan — set lewat .env, bukan lewat dashboard.`;
+      }
+      res.json(out);
     } catch (e) {
       res.status(400).json({ error: e.message });
     }

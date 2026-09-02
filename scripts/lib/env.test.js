@@ -75,3 +75,30 @@ test('loadDotEnv diam saja kalau berkas tidak ada', () => {
   loadDotEnv(path.join(os.tmpdir(), 'tidak-ada-98765.env'), env);
   assert.deepStrictEqual(env, {});
 });
+
+test('loadDotEnv melepas tanda kutip ganda pembungkus', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ab-env-'));
+  const f = path.join(dir, '.env');
+  fs.writeFileSync(f, 'FOO="bar"\n');
+  const env = {};
+  loadDotEnv(f, env);
+  assert.strictEqual(env.FOO, 'bar');
+});
+
+test('loadDotEnv melepas tanda kutip tunggal pembungkus', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ab-env-'));
+  const f = path.join(dir, '.env');
+  fs.writeFileSync(f, "FOO='bar'\n");
+  const env = {};
+  loadDotEnv(f, env);
+  assert.strictEqual(env.FOO, 'bar');
+});
+
+test('loadDotEnv tidak mengubah kutip yang ada di tengah nilai', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ab-env-'));
+  const f = path.join(dir, '.env');
+  fs.writeFileSync(f, 'FOO=pass"word123\n');
+  const env = {};
+  loadDotEnv(f, env);
+  assert.strictEqual(env.FOO, 'pass"word123');
+});

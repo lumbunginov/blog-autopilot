@@ -4,6 +4,20 @@ const fs = require('fs');
 // Tipe image_api yang tidak memerlukan API key.
 const NO_KEY_TYPES = new Set(['none', '']);
 
+// Lepas satu pasang tanda kutip pembungkus ("..." atau '...') kalau ada di
+// kedua ujung nilai. Kutip di tengah nilai (bukan membungkus keseluruhan)
+// tidak disentuh.
+function stripSurroundingQuotes(value) {
+  if (value.length >= 2) {
+    const first = value[0];
+    const last = value[value.length - 1];
+    if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+      return value.slice(1, -1);
+    }
+  }
+  return value;
+}
+
 function loadDotEnv(filePath, env = process.env) {
   if (!fs.existsSync(filePath)) return;
   const text = fs.readFileSync(filePath, 'utf-8');
@@ -13,7 +27,7 @@ function loadDotEnv(filePath, env = process.env) {
     const eq = trimmed.indexOf('=');
     if (eq === -1) continue;
     const key = trimmed.slice(0, eq).trim();
-    const value = trimmed.slice(eq + 1).trim();
+    const value = stripSurroundingQuotes(trimmed.slice(eq + 1).trim());
     if (!key) continue;
     if (env[key] === undefined) env[key] = value; // shell menang atas berkas
   }
