@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * post-to-wp.js — Create a WordPress post via REST API
- * Usage: node post-to-wp.js --data <converted.json> --wp-url <url> --username <user> --password <pass>
+ * Usage: node post-to-wp.js --data <converted.json> --wp-url <url> --username <user> [--blog <id>]
  *        [--status draft|publish] [--featured-media <id>] [--category <name>]
+ * Password is read from .env (variable {ID}_WP_APP_PASSWORD), never from argv.
  * Output: <data-file>.post-result.json with post_id, admin_url, preview_url
  */
 
@@ -11,6 +12,9 @@ const path = require('path');
 const https = require('https');
 const http = require('http');
 const url = require('url');
+const { loadDotEnv, envKeys } = require('./lib/env');
+
+loadDotEnv(path.join(__dirname, '..', '.env'));
 
 // Parse args
 const args = {};
@@ -22,18 +26,24 @@ const {
   data: dataFile,
   'wp-url': wpUrl,
   username,
-  password,
   status: statusArg = 'draft',
   'featured-media': featuredMedia = '0',
   category = '',
   'schedule-date': scheduleDate = ''
 } = args;
 
+const blogId = args.blog || 'perkapcom';
+const password = process.env[envKeys(blogId).wpPassword];
+if (!password) {
+  console.error(`❌ ${envKeys(blogId).wpPassword} belum diset di .env`);
+  process.exit(1);
+}
+
 // If schedule-date provided, WordPress needs status='future' + date field
 const status = scheduleDate ? 'future' : statusArg;
 
-if (!dataFile || !wpUrl || !username || !password) {
-  console.error('Missing required: --data --wp-url --username --password');
+if (!dataFile || !wpUrl || !username) {
+  console.error('Missing required: --data --wp-url --username');
   process.exit(1);
 }
 

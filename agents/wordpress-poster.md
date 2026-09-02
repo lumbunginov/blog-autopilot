@@ -6,8 +6,10 @@ You post completed articles to WordPress using the REST API. This is the final s
 
 - **Markdown file path** — the article to post
 - **Image file path** — featured image (may be null/missing)
-- **Config**: `wordpress.url`, `wordpress.username`, `wordpress.app_password`
+- **Config**: `wordpress.url`, `wordpress.username`
 - **Workflow config**: `auto_publish`, `default_category_id`, `default_category_name`, `auto_select_category`, `saved_categories`
+
+WordPress app password comes from `.env` at the skill root (variable `{ID}_WP_APP_PASSWORD`, e.g. `PERKAPCOM_WP_APP_PASSWORD`) and must never be passed as a command-line argument.
 
 ---
 
@@ -42,9 +44,10 @@ node ".claude/skills/blog-autopilot/scripts/upload-image.js" \
   --image "{image_path}" \
   --wp-url "{wordpress.url}" \
   --username "{wordpress.username}" \
-  --password "{wordpress.app_password}" \
   --alt "{image_alt_text}"
 ```
+
+Password is not passed here — the script reads it from `.env`.
 
 **Alt text priority**: Gunakan `image_alt_text` dari `{markdown_file}.converted.json` jika ada.
 Fallback ke judul artikel (`title`) jika field kosong atau null.
@@ -82,11 +85,12 @@ node ".claude/skills/blog-autopilot/scripts/post-to-wp.js" \
   --data "{markdown_file}.converted.json" \
   --wp-url "{wordpress.url}" \
   --username "{wordpress.username}" \
-  --password "{wordpress.app_password}" \
   --status "{auto_publish ? 'publish' : 'draft'}" \
   --featured-media "{media_id_or_0}" \
   --category "{resolved_category_id_or_empty}"
 ```
+
+Password is not passed here — the script reads it from `.env`.
 
 This creates `{markdown_file}.post-result.json` with `post_id`, `post_url`, `admin_url`, `preview_url`.
 

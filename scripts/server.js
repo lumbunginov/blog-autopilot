@@ -4,9 +4,11 @@ const path = require('path');
 const express = require('express');
 
 const { makePaths } = require('./lib/paths');
+const { loadDotEnv } = require('./lib/env');
 
 const PORT = 3847;
 const SKILL_DIR = path.join(__dirname, '..');
+loadDotEnv(path.join(SKILL_DIR, '.env'));
 
 const app = express();
 app.use(express.json({ limit: '5mb' }));

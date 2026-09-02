@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * upload-image.js — Upload an image to WordPress media library
- * Usage: node upload-image.js --image <path> --wp-url <url> --username <user> --password <pass> --alt <text>
+ * Usage: node upload-image.js --image <path> --wp-url <url> --username <user> [--blog <id>] --alt <text>
+ * Password is read from .env (variable {ID}_WP_APP_PASSWORD), never from argv.
  * Output: <image-path>.upload.json with media_id and source_url
  */
 
@@ -10,6 +11,9 @@ const path = require('path');
 const https = require('https');
 const http = require('http');
 const url = require('url');
+const { loadDotEnv, envKeys } = require('./lib/env');
+
+loadDotEnv(path.join(__dirname, '..', '.env'));
 
 // Parse args
 const args = {};
@@ -17,10 +21,17 @@ process.argv.slice(2).forEach((arg, i, arr) => {
   if (arg.startsWith('--')) args[arg.slice(2)] = arr[i + 1];
 });
 
-const { image, 'wp-url': wpUrl, username, password, alt = '' } = args;
+const { image, 'wp-url': wpUrl, username, alt = '' } = args;
 
-if (!image || !wpUrl || !username || !password) {
-  console.error('Missing required arguments: --image --wp-url --username --password');
+const blogId = args.blog || 'perkapcom';
+const password = process.env[envKeys(blogId).wpPassword];
+if (!password) {
+  console.error(`❌ ${envKeys(blogId).wpPassword} belum diset di .env`);
+  process.exit(1);
+}
+
+if (!image || !wpUrl || !username) {
+  console.error('Missing required arguments: --image --wp-url --username');
   process.exit(1);
 }
 

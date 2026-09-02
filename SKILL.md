@@ -460,9 +460,10 @@ node ".claude/skills/blog-autopilot/scripts/upload-image.js" \
   --image "{images_dir}/{POST_SLUG}.png" \
   --wp-url "{config.wordpress.url}" \
   --username "{config.wordpress.username}" \
-  --password "{config.wordpress.app_password}" \
   --alt "{descriptive alt text with POST_TITLE and location}"
 ```
+
+Password is not passed here — the script reads it from `.env` (variable `{ID}_WP_APP_PASSWORD`) and must never be passed as a command-line argument.
 
 Read `{image_path}.upload.json` → extract `media_id` and `image_url`.
 

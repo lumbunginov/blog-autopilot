@@ -3,6 +3,7 @@ const fs = require('fs');
 const cacheLib = require('../lib/articles-cache');
 const { basicAuth, httpPost } = require('../lib/wp-client');
 const wpSync = require('../lib/wp-sync');
+const { resolveCredentials } = require('../lib/env');
 
 module.exports = function registerArticles(app, deps) {
   const { paths } = deps;
@@ -51,8 +52,9 @@ module.exports = function registerArticles(app, deps) {
     let cfg;
     try {
       if (!fs.existsSync(configFile)) throw new Error('Config not found');
-      cfg = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
-      if (!cfg.wordpress?.url || !cfg.wordpress?.username) throw new Error('WordPress not configured');
+      const raw = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
+      if (!raw.wordpress?.url || !raw.wordpress?.username) throw new Error('WordPress not configured');
+      cfg = resolveCredentials(blogId, raw);
     } catch (e) {
       return res.status(400).json({ error: e.message });
     }
@@ -97,9 +99,14 @@ module.exports = function registerArticles(app, deps) {
       if (!fs.existsSync(configFile)) {
         return res.status(400).json({ error: 'Config not found' });
       }
-      const cfg = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
+      let cfg;
+      try {
+        cfg = resolveCredentials(blogId, JSON.parse(fs.readFileSync(configFile, 'utf-8')));
+      } catch (e) {
+        return res.status(400).json({ error: e.message });
+      }
       const { url: wpUrl, username, app_password } = cfg.wordpress || {};
-      if (!wpUrl || !username || !app_password) {
+      if (!wpUrl || !username) {
         return res.status(400).json({ error: 'WordPress credentials not configured' });
       }
 
