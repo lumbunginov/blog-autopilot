@@ -40,6 +40,7 @@ require('./routes/articles')(app, deps);
 require('./routes/scrape')(app, deps);
 require('./routes/blogs')(app, deps);
 require('./routes/knowledge-source')(app, deps);
+require('./routes/templates')(app, deps);
 
 app.use(express.static(path.join(SKILL_DIR, 'public')));
 
