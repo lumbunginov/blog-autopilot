@@ -26,13 +26,13 @@ Gambar dihasilkan dari foto produk asli, bukan hanya dari prompt teks.
   `knowledge_base.internal_links`, tinggal diperluas)
 - Sekalian: `audit-featured-media.js` (artikel tanpa featured image)
 
-## 8. Product knowledge
+## 8. Product knowledge — SELESAI (2026-09-03)
 
-- Sumber: `Perkap_com/project/article/Product knowledge/` + skill `product-knowledge`
-- Butuh format penyimpanan dan UI baru di dashboard (tab tersendiri)
-- Dipakai penulis artikel sebagai konteks: spesifikasi, harga, kegunaan
-- Perhatikan: `knowledge_base.custom_entries` di config sekarang sudah menyerupai ini —
-  putuskan digabung atau dipisah saat brainstorm
+Dikerjakan lewat sumber knowledge base Business Asset:
+`docs/superpowers/specs/2026-09-03-knowledge-source-business-asset-design.md`.
+
+Produk lengkap (spesifikasi, harga, FAQ) diambil per produk lewat
+`node scripts/blog-config.js product "<nama>"`, bukan disimpan ulang di autoblog.
 
 ## 9. SERP tracker
 

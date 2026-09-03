@@ -11,7 +11,9 @@ Given a keyword and business context, generate **5 distinct article ideas**. Eac
 - **Keyword**: provided by user
 - **Knowledge Base** (dari `node scripts/blog-config.js knowledge_base`):
   - `business_name` / `business_description` — what this business actually does
-  - `products` — their offerings (mention these naturally in ideas)
+  - `products` — their offerings (mention these naturally in ideas). Daftarnya bisa
+    panjang (puluhan produk kalau bersumber dari Business Asset) — pilih yang relevan
+    dengan keyword, jangan menyebut semuanya.
   - `target_audience` — who they serve
   - `tone` — how they communicate
 

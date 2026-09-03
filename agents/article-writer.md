@@ -140,6 +140,35 @@ Jika file ada:
 
 Jika file tidak ada: lanjutkan menulis tanpa internal links (jangan error).
 
+### Detail Produk (kalau artikel membahas satu produk)
+
+`knowledge_base.products` sengaja ringkas: nama, URL, harga, target market. Spesifikasi
+lengkap, cara pakai, dan FAQ TIDAK ikut di sana karena ukurannya ratusan kilobita untuk
+seluruh katalog.
+
+Kalau artikel yang ditulis membahas satu produk tertentu, ambil detailnya:
+
+```bash
+node .claude/skills/blog-autopilot/scripts/blog-config.js product "Sewa HT"
+```
+
+Hasilnya: `{ id, name, price, url, target_market, context, faq }`.
+
+- `context` — spesifikasi, varian, cara kerja. Pakai untuk bagian teknis artikel.
+- `faq` — pertanyaan yang benar-benar sering ditanya pembeli. Boleh diangkat jadi bagian
+  FAQ di artikel, tapi tulis ulang dengan gaya artikel, jangan disalin mentah.
+- `price` — harga asli. Sebutkan kalau relevan; jangan mengarang harga sendiri.
+
+Perintah ini hanya bekerja kalau knowledge base bersumber dari Business Asset. Kalau ia
+menjawab bahwa sumbernya bukan Business Asset, lanjutkan menulis dengan `knowledge_base`
+yang ada — itu bukan kegagalan.
+
+### Kata yang Dihindari
+
+Jangan pakai kata mana pun yang ada di `knowledge_base.avoid_words`, termasuk bentuk
+berimbuhannya. Ini soal pilihan kata, bukan soal topik — topik yang mengandungnya tetap
+boleh ditulis, hanya katanya yang diganti dengan padanan lain.
+
 ### Prohibited Content
 
 Never write about topics in `knowledge_base.prohibited_topics`. If the article idea touches one of these, adjust the angle to avoid it.

@@ -39,6 +39,18 @@
     "_site_gmt_offset_note": "Ukur di <url-situs>/wp-json/ pada field gmt_offset.",
     "schedule_hour": 6
   },
+  "knowledge_source": {
+    "type": "manual",
+    "_type_options": [
+      "manual",
+      "business_asset"
+    ],
+    "_note": "manual = isi knowledge_base di bawah lewat dashboard. business_asset = dibaca langsung dari data skill business-asset; knowledge_base di bawah diabaikan dan disimpan sebagai cadangan.",
+    "business_asset": {
+      "root": "",
+      "business_id": ""
+    }
+  },
   "knowledge_base": {
     "business_name": "Your Business Name",
     "business_description": "Brief description of what your business does and sells",
