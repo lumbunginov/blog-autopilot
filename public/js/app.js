@@ -1659,7 +1659,7 @@ function planSeoCheck() {
 
 async function planSave() {
   const kw = document.getElementById('pm-keyword').value.trim();
-  if (!kw) { showToast('Focus keyword wajib diisi!', 'error'); return; }
+  if (!kw) { toast('Focus keyword wajib diisi!', 'error'); return; }
 
   const catSel = document.getElementById('pm-category-id');
   const catOption = catSel.options[catSel.selectedIndex];
@@ -1690,11 +1690,11 @@ async function planSave() {
   try {
     const res = await fetch('/api/plans', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(plan) });
     const data = await res.json();
-    if (data.error) { showToast('Error: ' + data.error, 'error'); return; }
-    showToast(data.created ? 'Rencana berhasil ditambahkan!' : 'Rencana berhasil diupdate!', 'success');
+    if (data.error) { toast('Error: ' + data.error, 'error'); return; }
+    toast(data.created ? 'Rencana berhasil ditambahkan!' : 'Rencana berhasil diupdate!', 'success');
     planModalClose();
     plansLoad();
-  } catch(e) { showToast('Gagal menyimpan: ' + e.message, 'error'); }
+  } catch(e) { toast('Gagal menyimpan: ' + e.message, 'error'); }
 }
 
 function planActionComingSoon(action) {
@@ -1712,10 +1712,10 @@ async function planDelete(id) {
   try {
     const res = await fetch('/api/plans', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id}) });
     const data = await res.json();
-    if (data.error) { showToast('Error: ' + data.error, 'error'); return; }
-    showToast('Rencana dihapus.', 'success');
+    if (data.error) { toast('Error: ' + data.error, 'error'); return; }
+    toast('Rencana dihapus.', 'success');
     plansLoad();
-  } catch(e) { showToast('Gagal menghapus: ' + e.message, 'error'); }
+  } catch(e) { toast('Gagal menghapus: ' + e.message, 'error'); }
 }
 
 function escHtml(s) {
