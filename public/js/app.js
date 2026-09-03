@@ -1667,7 +1667,10 @@ async function ksLoadBusinesses(selectId) {
   const root = getVal('ks-root');
   const sel = document.getElementById('ks-business');
   const status = document.getElementById('ks-status');
-  if (!root) { status.innerHTML = '<span style="color:var(--danger)">Isi folder root dulu.</span>'; return; }
+  if (!root) {
+    status.innerHTML = '<span style="color:var(--danger)">Isi folder root dulu.</span>';
+    return { gagal: true };
+  }
   try {
     const r = await (await fetch('/api/business-assets?root=' + encodeURIComponent(root))).json();
     sel.innerHTML = (r.businesses || []).map(b =>
@@ -1676,8 +1679,10 @@ async function ksLoadBusinesses(selectId) {
     status.innerHTML = r.error
       ? `<span style="color:var(--danger)">${escHtml(r.error)}</span>`
       : `<span style="color:var(--text-secondary)">${r.businesses.length} bisnis ditemukan.</span>`;
+    return { gagal: !!r.error };
   } catch (e) {
     status.innerHTML = `<span style="color:var(--danger)">${escHtml(e.message)}</span>`;
+    return { gagal: true };
   }
 }
 
@@ -1696,7 +1701,11 @@ function populateKnowledgeSource(c) {
     // ksLoadBusinesses async dan ikut menulis ks-status. Tunggu ia selesai dulu,
     // kalau tidak pesan "2 bisnis ditemukan" mendarat belakangan dan menimpa
     // ringkasan "Terbaca: N produk" yang justru dicari user.
-    ksLoadBusinesses(c.knowledge_source?.business_asset?.business_id).then(() => {
+    ksLoadBusinesses(c.knowledge_source?.business_asset?.business_id).then((hasil) => {
+      // Kalau pemuatan daftar bisnis sendiri yang gagal, biarkan pesannya berdiri.
+      // Menimpanya dengan ringkasan dari config berarti menyembunyikan kegagalan
+      // yang baru saja terjadi di balik data yang belum tentu masih berlaku.
+      if (hasil && hasil.gagal) return;
       tulisStatusKnowledge(c, status);
     });
   }
@@ -1705,16 +1714,14 @@ function populateKnowledgeSource(c) {
 // Ringkasan hasil resolusi knowledge base — sumber kebenarannya _knowledge dari server.
 function tulisStatusKnowledge(c, status) {
   if (!status) return;
-  {
-    if (c._knowledge?.error) {
-      status.innerHTML = `<span style="color:var(--danger)">⚠️ ${escHtml(c._knowledge.error)}</span>`;
-    } else {
-      const kb = c.knowledge_base || {};
-      status.innerHTML = `<span style="color:var(--success, green)">✅ Terbaca: ` +
-        `${(kb.products || []).length} produk · ${(kb.internal_links || []).length} internal link · ` +
-        `tone ${escHtml(kb.tone || '')}</span>`;
-    }
+  if (c._knowledge?.error) {
+    status.innerHTML = `<span style="color:var(--danger)">⚠️ ${escHtml(c._knowledge.error)}</span>`;
+    return;
   }
+  const kb = c.knowledge_base || {};
+  status.innerHTML = `<span style="color:var(--success, green)">✅ Terbaca: ` +
+    `${(kb.products || []).length} produk · ${(kb.internal_links || []).length} internal link · ` +
+    `tone ${escHtml(kb.tone || '')}</span>`;
 }
 
 // Bagian knowledge_source yang ikut dikirim saat Save.
