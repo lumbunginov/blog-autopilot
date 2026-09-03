@@ -16,6 +16,10 @@
 //   node scripts/blog-config.js product-image --produk "Nama Produk Persis"
 //                                                    → sama, tapi nama produk
 //                                                      eksplisit (tidak menebak)
+//   node scripts/blog-config.js template "plan_123"  → prompt template rencana
+//                                                      sudah terisi variabel &
+//                                                      riset (kode 1 = riset
+//                                                      gagal, artikel batal)
 //
 // Kredensial TIDAK pernah ikut tercetak.
 
@@ -226,10 +230,26 @@ if (arg === 'template') {
   const kunciTeks = process.env[envKeys(id).textKey];
   const ask = (prompt) => askOpenAI(kunciTeks, prompt);
 
+  // SATU panggilan untuk SATU template, bukan satu per field. Field digabung
+  // dengan pemisah acak, diselesaikan sekali, lalu dipecah lagi — dengan begitu
+  // resolveRiset melihat semua blok {riset} sekaligus dan membundelnya jadi satu
+  // permintaan. Pemisah dibangkitkan acak tiap proses supaya mustahil muncul di
+  // teks template ATAU di balasan riset.
+  const kunciBidang = Object.keys(bidang);
+  const PISAH = `
+[[RISET-PISAH-${require('crypto').randomBytes(12).toString('hex')}]]
+`;
+
   (async () => {
-    for (const k of Object.keys(bidang)) {
-      bidang[k] = await resolveRiset(bidang[k], { ask, konteks: konteksRiset });
+    const gabung = kunciBidang.map(k => bidang[k]).join(PISAH);
+    const jadi = await resolveRiset(gabung, { ask, konteks: konteksRiset });
+    const bagian = jadi.split(PISAH);
+    // Pecahan yang jumlahnya meleset berarti field saling tertukar isinya —
+    // kegagalan yang wajib berisik, bukan prompt yang salah diam-diam.
+    if (bagian.length !== kunciBidang.length) {
+      throw new Error(`Pemisah riset tidak utuh: dapat ${bagian.length} bagian, seharusnya ${kunciBidang.length}.`);
     }
+    kunciBidang.forEach((k, i) => { bidang[k] = bagian[i]; });
     cetak();
   })().catch(e => {
     console.error(`❌ Riset gagal: ${e.message}`);

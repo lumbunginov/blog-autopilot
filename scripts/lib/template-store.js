@@ -70,4 +70,4 @@ function findTemplate(file, id) {
   return readTemplates(file).templates.find(t => t.id === id) || null;
 }
 
-module.exports = { readTemplates, writeTemplates, saveTemplate, deleteTemplate, findTemplate, FIELD_TEMPLATE };
+module.exports = { readTemplates, writeTemplates, saveTemplate, deleteTemplate, findTemplate };

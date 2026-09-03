@@ -59,4 +59,4 @@ function askOpenAI(apiKey, prompt, opts = {}) {
   });
 }
 
-module.exports = { askOpenAI, MODEL_BAWAAN, TIMEOUT_BAWAAN };
+module.exports = { askOpenAI };
