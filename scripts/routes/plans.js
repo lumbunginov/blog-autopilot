@@ -47,6 +47,13 @@ module.exports = function registerPlans(app, deps) {
     }
     plan.slug = slug;
 
+    // template_id hanya boleh string. Nilai bertipe lain dari klien akan lolos
+    // lewat deepMerge dan membuat findTemplate menerima objek — dinormalkan di
+    // pintu masuk, bukan di setiap pembacanya.
+    if (plan.template_id !== undefined) {
+      plan.template_id = typeof plan.template_id === 'string' ? plan.template_id.trim() : '';
+    }
+
     const now = new Date().toISOString();
     let created = false;
     let saved;
