@@ -80,7 +80,8 @@ function populateForm(c) {
   setVal('kb-audience', c.knowledge_base?.target_audience);
   selectTone(c.knowledge_base?.tone || 'professional');
   renderProhibited(c.knowledge_base?.prohibited_topics || []);
-  renderProducts(c.knowledge_base?.products || []);
+  renderProducts(c.knowledge_base?.products || [],
+    c.knowledge_source?.type === 'business_asset' ? 'business_asset' : 'manual');
   renderLinks(c.knowledge_base?.internal_links || []);
   renderCustomEntries(c.knowledge_base?.custom_entries || []);
   isiProfilLengkap(c.knowledge_base || {});
@@ -535,11 +536,102 @@ function buildWizardSummary() {
 }
 
 // ==================== PRODUCTS ====================
-function renderProducts(arr) {
+// `source` dioper eksplisit: saat populateForm berjalan, radio sumber belum
+// dipasang (populateKnowledgeSource dipanggil setelah ini), jadi membaca
+// ksCurrentType() di sini akan memberi jawaban tenant sebelumnya.
+function renderProducts(arr, source) {
   const container = document.getElementById('products-list');
   container.innerHTML = '';
+  // Mode business_asset: kartu read-only dengan foto dan detail.
+  // Mode manual TIDAK berubah — autoblog tidak punya penyimpanan gambar,
+  // jadi tidak ada foto yang bisa ditampilkan untuk tenant manual.
+  if (source === 'business_asset') {
+    renderProductCards(arr, container);
+    return;
+  }
   const items = arr.length ? arr : [{ name: '', url: '' }];
   items.forEach(p => addProductItem(typeof p === 'string' ? { name: p, url: '' } : p));
+}
+
+function renderProductCards(arr, container) {
+  if (!arr.length) {
+    container.innerHTML = '<div class="kb-kosong">Belum ada produk di business asset ini.</div>';
+    return;
+  }
+  container.innerHTML = arr.map(p => `
+    <div class="produk-kartu" data-produk="${escHtml(p.id)}">
+      <div class="produk-kartu-baris" onclick="toggleProdukKartu('${escHtml(p.id)}')">
+        <div class="produk-kartu-foto">${
+          p.image
+            ? `<img src="/api/business-asset-photo?file=${encodeURIComponent(p.image)}" alt="${escHtml(p.name)}" loading="lazy">`
+            : `<span class="produk-kartu-inisial">${escHtml((p.name || '?').slice(0, 2).toUpperCase())}</span>`
+        }</div>
+        <div class="produk-kartu-isi">
+          <div class="produk-kartu-nama"><span class="produk-kartu-panah">▶</span> ${escHtml(p.name)}</div>
+          <div class="produk-kartu-meta">
+            ${p.price ? `<span>${escHtml(p.price.slice(0, 60))}${p.price.length > 60 ? '…' : ''}</span>` : ''}
+            ${p.url
+              ? `<span class="produk-kartu-url">🔗 ${escHtml(p.url.replace(/^https?:\/\//, '').slice(0, 40))}</span>`
+              : '<span class="produk-kartu-nourl">⚠ belum ada URL</span>'}
+          </div>
+        </div>
+        <div class="produk-kartu-lencana">
+          ${p.has_context ? '<span title="Punya konteks produk">📝</span>' : ''}
+          ${p.faq_count ? `<span title="${p.faq_count} pertanyaan FAQ">❓${p.faq_count}</span>` : ''}
+          ${p.gallery_count ? `<span title="${p.gallery_count} foto galeri">📷${p.gallery_count}</span>` : ''}
+        </div>
+      </div>
+      <div class="produk-kartu-detail" id="produk-detail-${escHtml(p.id)}" hidden></div>
+    </div>
+  `).join('');
+}
+
+const cacheDetailProduk = new Map();
+
+async function toggleProdukKartu(id) {
+  const panel = document.getElementById('produk-detail-' + id);
+  if (!panel) return;
+  const kartu = panel.closest('.produk-kartu');
+  const panah = kartu?.querySelector('.produk-kartu-panah');
+  if (!panel.hidden) {
+    panel.hidden = true;
+    if (panah) panah.textContent = '▶';
+    return;
+  }
+  panel.hidden = false;
+  if (panah) panah.textContent = '▼';
+  if (cacheDetailProduk.has(id)) { panel.innerHTML = cacheDetailProduk.get(id); return; }
+
+  panel.innerHTML = '<div class="produk-kartu-memuat">Memuat detail…</div>';
+  try {
+    // Diambil saat dibuka, bukan saat halaman dimuat: 45 produk x konteks penuh
+    // itu 143 KB yang hampir seluruhnya tidak akan dibaca.
+    const r = await fetch('/api/business-asset-product?id=' + encodeURIComponent(id));
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Gagal memuat detail produk');
+    const html = renderDetailProduk(d);
+    cacheDetailProduk.set(id, html);
+    panel.innerHTML = html;
+  } catch (e) {
+    panel.innerHTML = `<div class="produk-kartu-galat">${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderDetailProduk(d) {
+  const bagian = (label, isi) => isi && isi.trim()
+    ? `<details class="produk-detail-bagian"><summary>${escHtml(label)}</summary><pre>${escHtml(isi)}</pre></details>`
+    : '';
+  const galeri = (d.gallery || []).length
+    ? `<div class="produk-detail-galeri">${d.gallery.map(g =>
+        `<img src="/api/business-asset-photo?file=${encodeURIComponent(g.filename)}" alt="${escHtml(g.caption || '')}" title="${escHtml(g.caption || '')}" loading="lazy">`
+      ).join('')}</div>`
+    : '';
+  return bagian('Konteks Produk', d.context)
+    + bagian('FAQ', d.faq)
+    + bagian('Troubleshooting', d.troubleshooting)
+    + bagian('Perawatan', d.care)
+    + bagian('Target Market', d.target_market)
+    + galeri;
 }
 
 function addProduct() { addProductItem({ name: '', url: '' }); }
@@ -1685,6 +1777,9 @@ function onKsTypeChange(type) {
   });
   document.getElementById('ks-ba-fields').style.display = type === 'business_asset' ? '' : 'none';
   applyKnowledgeReadonly(type === 'business_asset');
+  // Radio diganti tanpa reload halaman: daftar produk harus ikut berganti
+  // bentuk (kartu ↔ baris input), pakai produk dari config terakhir yang dimuat.
+  renderProducts(config.knowledge_base?.products || [], type);
   if (type === 'business_asset') ksMuatOtomatisKalauPerlu();
   markChanged();
 }

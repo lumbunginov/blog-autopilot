@@ -97,6 +97,25 @@ test('POST /api/config mode business_asset TIDAK menulis knowledge_base ke disk'
   });
 });
 
+test('POST /api/config mode business_asset: knowledge_base kosong dari browser TIDAK menimpa cadangan manual', async () => {
+  // Tampilan kartu tidak punya .product-row, jadi collectForm mengirim
+  // products: []. Server wajib membuangnya, bukan menuliskannya.
+  // Tanpa ini, satu Save di mode business_asset menghapus cadangan manual.
+  await withServer(baConfig(baRoot()), async (base, configFile) => {
+    const sebelum = JSON.parse(fs.readFileSync(configFile, 'utf-8')).knowledge_base;
+    const res = await fetch(`${base}/api/config`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        knowledge_source: { type: 'business_asset', business_asset: { root: baRoot(), business_id: 'perkapcom' } },
+        knowledge_base: { business_name: '', products: [], prohibited_topics: [], custom_entries: [] }
+      })
+    });
+    assert.strictEqual(res.status, 200);
+    const saved = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
+    assert.deepStrictEqual(saved.knowledge_base, sebelum, 'cadangan manual harus utuh');
+  });
+});
+
 test('POST /api/config mode manual tetap menyimpan knowledge_base', async () => {
   await withServer(MANUAL, async (base, configFile) => {
     await fetch(`${base}/api/config`, {

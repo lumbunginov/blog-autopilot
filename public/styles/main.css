@@ -1229,6 +1229,30 @@
   .product-row input { padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; width: 100%; }
   .product-row input:focus { outline: none; border-color: var(--accent); }
 
+  /* Kartu produk read-only (mode business_asset) */
+  .kb-kosong { color: var(--text-secondary); font-size: 13px; padding: 10px 0; }
+  .produk-kartu { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 6px; overflow: hidden; }
+  .produk-kartu-baris { display: flex; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer; }
+  .produk-kartu-baris:hover { background: var(--bg, #f8fafc); }
+  .produk-kartu-foto { width: 56px; height: 56px; flex-shrink: 0; border-radius: var(--radius); overflow: hidden; background: #f1f5f9; display: flex; align-items: center; justify-content: center; }
+  .produk-kartu-foto img { width: 100%; height: 100%; object-fit: cover; }
+  .produk-kartu-inisial { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+  .produk-kartu-isi { flex: 1; min-width: 0; }
+  .produk-kartu-nama { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .produk-kartu-panah { display: inline-block; width: 10px; color: var(--text-secondary); }
+  .produk-kartu-meta { display: flex; gap: 10px; font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .produk-kartu-url { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .produk-kartu-nourl { color: var(--warning); }
+  .produk-kartu-lencana { display: flex; gap: 6px; font-size: 12px; flex-shrink: 0; }
+  .produk-kartu-detail { padding: 10px 10px 10px 76px; border-top: 1px solid var(--border); background: var(--bg, #f8fafc); }
+  .produk-kartu-memuat, .produk-kartu-galat { font-size: 12px; color: var(--text-secondary); }
+  .produk-kartu-galat { color: var(--danger); }
+  .produk-detail-bagian { margin-bottom: 8px; font-size: 12px; }
+  .produk-detail-bagian summary { cursor: pointer; font-weight: 600; color: var(--text-secondary); }
+  .produk-detail-bagian pre { white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow-y: auto; margin: 6px 0 0; padding: 8px; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); font-family: inherit; font-size: 12px; }
+  .produk-detail-galeri { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .produk-detail-galeri img { width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--border); }
+
   /* Plan product combo */
   .pm-product-wrap { display: flex; flex-direction: column; gap: 6px; }
   .pm-product-source { display: flex; gap: 8px; }
