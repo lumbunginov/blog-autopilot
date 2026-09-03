@@ -1,8 +1,9 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { resolveKnowledgeBase } = require('../lib/knowledge');
+const { resolveKnowledgeBase, sourceType } = require('../lib/knowledge');
 const { resolveBlog } = require('../lib/tenant');
+const { assertBusinessId, readBusinessAsset, findProduct, hitungFaq } = require('../lib/business-asset');
 
 module.exports = function registerKnowledgeSource(app, deps) {
   const { paths } = deps;
@@ -61,5 +62,88 @@ module.exports = function registerKnowledgeSource(app, deps) {
     } catch (e) {
       res.status(e.status || 400).json({ error: e.message });
     }
+  });
+
+  // Hanya nama berkas polos. Tanpa pemisah path, tanpa titik ganda, tanpa NUL.
+  const NAMA_BERKAS_RE = /^[A-Za-z0-9._-]+$/;
+  const EKSTENSI_GAMBAR = new Set(['.png', '.jpg', '.jpeg', '.webp']);
+  const MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' };
+
+  // Config tenant aktif, atau null kalau tenant bukan mode business_asset.
+  function baTenantAktif(req) {
+    const blogId = resolveBlog(req, paths);
+    const file = paths.configPath(blogId);
+    const cfg = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf-8')) : {};
+    if (sourceType(cfg) !== 'business_asset') return null;
+    return { cfg, ba: cfg.knowledge_source.business_asset || {} };
+  }
+
+  app.get('/api/business-asset-photo', (req, res) => {
+    let ctx;
+    try { ctx = baTenantAktif(req); } catch (e) { return res.status(400).json({ error: e.message }); }
+    if (!ctx) return res.status(400).json({ error: 'Tenant aktif tidak memakai Business Asset.' });
+
+    const nama = String(req.query.file || '');
+    // Lapis 1: bentuk nama berkas. Menolak "/", "\", "..", NUL, dan spasi.
+    if (!NAMA_BERKAS_RE.test(nama)) return res.status(400).json({ error: 'Nama berkas tidak valid.' });
+    // Lapis 2: hanya ekstensi gambar. Config, .env, dan skrip tidak pernah tersaji.
+    const ext = path.extname(nama).toLowerCase();
+    if (!EKSTENSI_GAMBAR.has(ext)) return res.status(400).json({ error: 'Hanya berkas gambar.' });
+
+    let dirFoto;
+    try {
+      // Lapis 3: root dari CONFIG, bukan dari query. Browser tidak pernah
+      // menentukan direktori mana yang dibaca.
+      dirFoto = path.resolve(String(ctx.ba.root || ''), assertBusinessId(ctx.ba.business_id), 'photos');
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+
+    const berkas = path.resolve(dirFoto, nama);
+    // Lapis 4: jaring terakhir. Apa pun yang lolos tiga lapis di atas tetap
+    // wajib berada di dalam folder photos.
+    if (berkas !== dirFoto && !berkas.startsWith(dirFoto + path.sep)) {
+      return res.status(404).json({ error: 'Berkas tidak ditemukan.' });
+    }
+    if (!fs.existsSync(berkas) || !fs.statSync(berkas).isFile()) {
+      // Pesan sengaja tidak menyebut path absolut: jangan bocorkan tata letak disk.
+      return res.status(404).json({ error: 'Berkas tidak ditemukan.' });
+    }
+    res.setHeader('Content-Type', MIME[ext]);
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    fs.createReadStream(berkas).pipe(res);
+  });
+
+  app.get('/api/business-asset-product', (req, res) => {
+    let ctx;
+    try { ctx = baTenantAktif(req); } catch (e) { return res.status(400).json({ error: e.message }); }
+    if (!ctx) return res.status(400).json({ error: 'Tenant aktif tidak memakai Business Asset.' });
+
+    const q = String(req.query.id || '').trim();
+    if (!q) return res.status(400).json({ error: 'Parameter "id" wajib diisi.' });
+    let found;
+    try {
+      const { products } = readBusinessAsset(ctx.ba.root, ctx.ba.business_id);
+      found = findProduct(products, q);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    if (!found) return res.status(404).json({ error: `Produk "${q}" tidak ditemukan.` });
+
+    // Satu produk, bukan katalog: membuka 45 kartu tidak pernah menarik 143 KB sekaligus.
+    res.json({
+      id: found.id || '',
+      name: found.nama || '',
+      url: found.url || '',
+      price: found.harga || '',
+      target_market: found.targetMarket || '',
+      context: found.konteks || '',
+      faq: found.faq || '',
+      faq_count: hitungFaq(found.faq),
+      troubleshooting: found.troubleshooting || '',
+      care: found.care || '',
+      image: found.foto || '',
+      gallery: Array.isArray(found.gallery) ? found.gallery : []
+    });
   });
 };
