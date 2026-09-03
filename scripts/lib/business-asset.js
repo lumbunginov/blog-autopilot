@@ -19,6 +19,16 @@ function assertBusinessId(raw) {
   return s;
 }
 
+// Lapis terakhir rute berkas (mis. /api/business-asset-photo): setelah nama
+// berkas digabung ke folder yang diizinkan lewat path.resolve, hasilnya WAJIB
+// tetap di dalam folder itu. Jaring penangkap apa pun yang lolos lapis
+// sebelumnya (regex nama, allowlist ekstensi) — bukan pengganti keduanya.
+function diDalamFolder(dirIzin, namaBerkas) {
+  const dir = path.resolve(String(dirIzin || ''));
+  const target = path.resolve(dir, String(namaBerkas || ''));
+  return target === dir || target.startsWith(dir + path.sep);
+}
+
 const TONE_MAP = {
   santai: 'casual',
   casual: 'casual',
@@ -199,5 +209,6 @@ function readBusinessAsset(root, businessId) {
 }
 
 module.exports = {
-  assertBusinessId, toneFrom, extractProductUrl, mapProfile, mapProducts, findProduct, readBusinessAsset, hitungFaq
+  assertBusinessId, toneFrom, extractProductUrl, mapProfile, mapProducts, findProduct, readBusinessAsset, hitungFaq,
+  diDalamFolder
 };

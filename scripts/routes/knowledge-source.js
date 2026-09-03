@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { resolveKnowledgeBase, sourceType } = require('../lib/knowledge');
 const { resolveBlog } = require('../lib/tenant');
-const { assertBusinessId, readBusinessAsset, findProduct, hitungFaq } = require('../lib/business-asset');
+const { assertBusinessId, readBusinessAsset, findProduct, hitungFaq, diDalamFolder } = require('../lib/business-asset');
 
 module.exports = function registerKnowledgeSource(app, deps) {
   const { paths } = deps;
@@ -99,12 +99,12 @@ module.exports = function registerKnowledgeSource(app, deps) {
       return res.status(400).json({ error: e.message });
     }
 
-    const berkas = path.resolve(dirFoto, nama);
     // Lapis 4: jaring terakhir. Apa pun yang lolos tiga lapis di atas tetap
     // wajib berada di dalam folder photos.
-    if (berkas !== dirFoto && !berkas.startsWith(dirFoto + path.sep)) {
+    if (!diDalamFolder(dirFoto, nama)) {
       return res.status(404).json({ error: 'Berkas tidak ditemukan.' });
     }
+    const berkas = path.resolve(dirFoto, nama);
     if (!fs.existsSync(berkas) || !fs.statSync(berkas).isFile()) {
       // Pesan sengaja tidak menyebut path absolut: jangan bocorkan tata letak disk.
       return res.status(404).json({ error: 'Berkas tidak ditemukan.' });

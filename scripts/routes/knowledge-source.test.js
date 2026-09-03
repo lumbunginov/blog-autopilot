@@ -23,6 +23,10 @@ function baRoot() {
   // Foto sah untuk tes rute /api/business-asset-photo.
   fs.mkdirSync(path.join(root, 'perkapcom', 'photos'), { recursive: true });
   fs.writeFileSync(path.join(root, 'perkapcom', 'photos', 'sah.png'), 'PNG-PALSU-UNTUK-TES');
+  // Berkas non-gambar yang BENAR-BENAR ADA di photos/ — supaya tes ekstensi
+  // menggigit allowlist (lapis 2), bukan cuma 404-karena-tidak-ada.
+  fs.writeFileSync(path.join(root, 'perkapcom', 'photos', 'config.json'), 'PENANDA-CONFIG-RAHASIA');
+  fs.writeFileSync(path.join(root, 'perkapcom', 'photos', 'catatan.txt'), 'PENANDA-CATATAN-RAHASIA');
   return root;
 }
 
@@ -176,7 +180,23 @@ test('foto: ekstensi selain gambar ditolak', async () => {
       const res = await fetch(`${base}/api/business-asset-photo?file=` + f);
       assert.ok(res.status === 400 || res.status === 404, `harus ditolak: ${f}`);
     }
+    // config.json dan catatan.txt BENAR-BENAR ADA di photos/ (lihat baRoot()) —
+    // jadi penolakannya wajib datang dari allowlist ekstensi (lapis 2), bukan
+    // dari "berkas tidak ada". Kalau lapis 2 bocor, isi berkas akan tersaji.
+    const resConfig = await fetch(`${base}/api/business-asset-photo?file=config.json`);
+    assert.ok(!/PENANDA-CONFIG-RAHASIA/.test(await resConfig.text()), 'lapis 2 harus menahan isi config.json');
+    const resCatatan = await fetch(`${base}/api/business-asset-photo?file=catatan.txt`);
+    assert.ok(!/PENANDA-CATATAN-RAHASIA/.test(await resCatatan.text()), 'lapis 2 harus menahan isi catatan.txt');
   });
+});
+
+test('lapis 4 (diDalamFolder): menolak nama yang resolve keluar folder, menerima yang di dalam', () => {
+  const { diDalamFolder } = require('../lib/business-asset');
+  const dirIzin = path.join(os.tmpdir(), 'ks-dirizin-uji');
+  assert.strictEqual(diDalamFolder(dirIzin, 'sah.png'), true, 'berkas sah di dalam folder harus diterima');
+  assert.strictEqual(diDalamFolder(dirIzin, '../../rahasia.png'), false, 'harus tertolak: naik dua folder');
+  assert.strictEqual(diDalamFolder(dirIzin, '../x.png'), false, 'harus tertolak: naik satu folder');
+  assert.strictEqual(diDalamFolder(dirIzin, 'sub/dir/x.png'), true, 'subfolder di DALAM dirIzin tetap sah untuk fungsi ini (lapis 1 di rute yang menolak "/", bukan lapis 4)');
 });
 
 test('foto: mode manual menolak, karena tidak punya sumber gambar', async () => {
