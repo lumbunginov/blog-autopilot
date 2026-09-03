@@ -1,7 +1,8 @@
 'use strict';
 const fs = require('fs');
-const { slugify, checkSlug } = require('../lib/slug-guard');
+const { slugify, checkSlug, normalizeSlug } = require('../lib/slug-guard');
 const { readArticlesCache } = require('../lib/articles-cache');
+const { deepMerge } = require('../lib/config-merge');
 
 module.exports = function registerPlans(app, deps) {
   const { paths, broadcast } = deps;
@@ -31,31 +32,41 @@ module.exports = function registerPlans(app, deps) {
     const plan = req.body || {};
     if (!plan.keyword) return res.status(400).json({ error: 'keyword is required' });
 
+    const data = readPlans(plansFile);
+    const idx = data.plans.findIndex(p => p.id === plan.id);
     const slug = plan.slug || slugify(plan.title || plan.keyword);
-    const check = checkSlug(slug, readArticlesCache(paths.cachePath(blogId)));
-    if (check.duplicate && !plan.allow_duplicate) {
-      return res.status(409).json({
-        error: `Slug "${slug}" sudah dipakai artikel lain.`,
-        existing: check.existing
-      });
+
+    // Duplicate check is only meaningful for a slug this plan does not
+    // already own: a brand-new plan, or an existing plan whose slug is
+    // being changed. Re-saving a plan with the slug it already has (the
+    // normal state of a plan whose article was published) must not 409.
+    const ownsSlug = idx !== -1 && normalizeSlug(data.plans[idx].slug) === normalizeSlug(slug);
+    if (!ownsSlug) {
+      const check = checkSlug(slug, readArticlesCache(paths.cachePath(blogId)));
+      if (check.duplicate && plan.allow_duplicate !== true) {
+        return res.status(409).json({
+          error: `Slug "${slug}" sudah dipakai artikel lain.`,
+          existing: check.existing
+        });
+      }
     }
     plan.slug = slug;
 
-    const data = readPlans(plansFile);
     const now = new Date().toISOString();
-    const idx = data.plans.findIndex(p => p.id === plan.id);
     let created = false;
+    let saved;
     if (idx === -1) {
-      plan.created_at = now; plan.updated_at = now;
-      data.plans.unshift(plan); created = true;
+      saved = { ...plan, created_at: now, updated_at: now };
+      data.plans.unshift(saved); created = true;
     } else {
-      plan.created_at = data.plans[idx].created_at;
-      plan.updated_at = now;
-      data.plans[idx] = plan;
+      saved = deepMerge(data.plans[idx], plan);
+      saved.created_at = data.plans[idx].created_at;
+      saved.updated_at = now;
+      data.plans[idx] = saved;
     }
     fs.writeFileSync(plansFile, JSON.stringify(data, null, 2));
-    broadcast('plan_saved', { plan_id: plan.id, keyword: plan.keyword, title: plan.title || plan.keyword });
-    res.json({ success: true, created, id: plan.id });
+    broadcast('plan_saved', { plan_id: saved.id, keyword: saved.keyword, title: saved.title || saved.keyword });
+    res.json({ success: true, created, id: saved.id });
   });
 
   app.delete('/api/plans', (req, res) => {

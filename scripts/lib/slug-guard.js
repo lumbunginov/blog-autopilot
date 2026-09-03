@@ -22,4 +22,4 @@ function checkSlug(slug, cache) {
     : { duplicate: false, existing: null };
 }
 
-module.exports = { slugify, checkSlug };
+module.exports = { slugify, checkSlug, normalizeSlug: normalize };
