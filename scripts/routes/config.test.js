@@ -154,3 +154,35 @@ test('PUT /api/blogs/:id/config juga menolak knowledge_base di mode business_ass
     assert.strictEqual(saved.knowledge_base.business_name, 'Manual Inc');
   });
 });
+
+test('PUT /api/blogs/:id/config tetap menolak kredensial, dan dua peringatan bisa muncul bersamaan', async () => {
+  await withServer(baConfig(baRoot()), async (base, configFile) => {
+    const out = await (await fetch(`${base}/api/blogs/testblog/config`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        wordpress: { app_password: 'rahasia-jangan-tersimpan' },
+        knowledge_base: { business_name: 'DISUSUPI' }
+      })
+    })).json();
+    assert.ok(out.warning.includes('app_password'), 'peringatan kredensial harus tetap ada');
+    assert.ok(out.warning.includes('knowledge_base'), 'peringatan knowledge_base harus ikut');
+    const disk = fs.readFileSync(configFile, 'utf-8');
+    assert.ok(!disk.includes('rahasia-jangan-tersimpan'), 'kredensial tidak boleh mendarat di disk');
+    assert.ok(!disk.includes('DISUSUPI'));
+  });
+});
+
+test('POST /api/config juga menolak kredensial berbarengan dengan knowledge_base', async () => {
+  await withServer(baConfig(baRoot()), async (base, configFile) => {
+    const out = await (await fetch(`${base}/api/config`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image_api: { api_key: 'kunci-rahasia-xyz' },
+        knowledge_base: { business_name: 'DISUSUPI' }
+      })
+    })).json();
+    assert.ok(out.warning.includes('api_key'));
+    assert.ok(out.warning.includes('knowledge_base'));
+    assert.ok(!fs.readFileSync(configFile, 'utf-8').includes('kunci-rahasia-xyz'));
+  });
+});
