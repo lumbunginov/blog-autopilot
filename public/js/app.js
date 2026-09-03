@@ -15,6 +15,7 @@ function showPage(pageId, navEl) {
   }
   if (pageId === 'articles' && articlesAll.length === 0) articlesLoad();
   if (pageId === 'planning') { planFillCategorySelect(null); plansLoad(); agentStatusBarRefresh(); }
+  if (pageId === 'templates') templatesLoad();
 }
 
 // ==================== CONFIG LOAD/SAVE ====================
@@ -1942,4 +1943,123 @@ function collectKnowledgeSource() {
       business_id: document.getElementById('ks-business')?.value || ''
     }
   };
+}
+
+// ==================== TEMPLATE ====================
+let templatesData = [];
+
+async function templatesLoad() {
+  try {
+    const r = await fetch('/api/templates').then(x => x.json());
+    templatesData = r.templates || [];
+    templatesRender();
+  } catch (e) { toast('Gagal memuat template: ' + e.message, 'error'); }
+}
+
+function templatesRender() {
+  const box = document.getElementById('template-list');
+  if (!box) return;
+  if (templatesData.length === 0) {
+    box.innerHTML = '<p style="color:var(--text-secondary); font-size:14px;">Belum ada template. Klik "+ Template Baru".</p>';
+    return;
+  }
+  // Kartu dibangun tanpa onclick inline: id template masuk data-attribute dan
+  // dibaca lewat listener terdelegasi, supaya nilai apa pun di dalamnya tidak
+  // pernah diperlakukan sebagai kode.
+  box.innerHTML = templatesData.map(t => `
+    <div class="produk-kartu" data-tpl="${escHtml(t.id)}" style="border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div>
+          <strong>${escHtml(t.name)}</strong>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
+            ${t.article_prompt ? '📝 artikel' : ''}
+            ${t.image_prompt ? ' · 🖼 gambar' : ''}
+            ${t.meta_title_pattern || t.meta_desc_pattern ? ' · 🔖 meta' : ''}
+          </div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="plan-act" data-aksi="edit">✏️ Edit</button>
+          <button class="plan-act" data-aksi="hapus">🗑 Hapus</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  pasangKlikTemplate(box);
+}
+
+let templateKlikTerpasang = false;
+function pasangKlikTemplate(container) {
+  if (templateKlikTerpasang) return;
+  templateKlikTerpasang = true;
+  container.addEventListener('click', (e) => {
+    const tombol = e.target.closest('[data-aksi]');
+    if (!tombol) return;
+    const id = tombol.closest('[data-tpl]')?.dataset.tpl;
+    if (!id) return;
+    if (tombol.dataset.aksi === 'edit') templateEdit(id);
+    else templateDelete(id);
+  });
+}
+
+function templateNew() {
+  document.getElementById('template-editor-title').textContent = 'Template Baru';
+  document.getElementById('tpl-id').value = '';
+  document.getElementById('tpl-name').value = '';
+  document.getElementById('tpl-article').value = '';
+  document.getElementById('tpl-image').value = '';
+  document.getElementById('tpl-meta-title').value = '';
+  document.getElementById('tpl-meta-desc').value = '';
+  document.getElementById('template-editor').style.display = '';
+}
+
+function templateEdit(id) {
+  const t = templatesData.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('template-editor-title').textContent = 'Edit Template';
+  document.getElementById('tpl-id').value = t.id;
+  document.getElementById('tpl-name').value = t.name || '';
+  document.getElementById('tpl-article').value = t.article_prompt || '';
+  document.getElementById('tpl-image').value = t.image_prompt || '';
+  document.getElementById('tpl-meta-title').value = t.meta_title_pattern || '';
+  document.getElementById('tpl-meta-desc').value = t.meta_desc_pattern || '';
+  document.getElementById('template-editor').style.display = '';
+}
+
+function templateEditorClose() {
+  document.getElementById('template-editor').style.display = 'none';
+}
+
+async function templateSave() {
+  const body = {
+    id: document.getElementById('tpl-id').value,
+    name: document.getElementById('tpl-name').value.trim(),
+    article_prompt: document.getElementById('tpl-article').value,
+    image_prompt: document.getElementById('tpl-image').value,
+    meta_title_pattern: document.getElementById('tpl-meta-title').value,
+    meta_desc_pattern: document.getElementById('tpl-meta-desc').value
+  };
+  if (!body.name) { toast('Nama template wajib diisi.', 'error'); return; }
+  try {
+    const data = await fetch('/api/templates', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    }).then(x => x.json());
+    if (data.error) { toast('Error: ' + data.error, 'error'); return; }
+    toast(data.created ? 'Template dibuat.' : 'Template diperbarui.', 'success');
+    templateEditorClose();
+    templatesLoad();
+  } catch (e) { toast('Gagal menyimpan: ' + e.message, 'error'); }
+}
+
+async function templateDelete(id) {
+  const t = templatesData.find(x => x.id === id);
+  if (!t) return;
+  if (!confirm(`Hapus template "${t.name}"?\n\nRencana yang memakainya akan ditulis dengan aturan bawaan.`)) return;
+  try {
+    const data = await fetch('/api/templates', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id })
+    }).then(x => x.json());
+    if (data.error) { toast('Error: ' + data.error, 'error'); return; }
+    toast('Template dihapus.', 'success');
+    templatesLoad();
+  } catch (e) { toast('Gagal menghapus: ' + e.message, 'error'); }
 }

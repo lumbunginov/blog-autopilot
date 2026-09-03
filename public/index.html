@@ -32,6 +32,10 @@
       <span class="icon">📋</span> Perencanaan
       <span class="nav-badge" id="plan-count-badge" style="display:none;"></span>
     </div>
+    <div class="nav-item" data-page="templates" onclick="showPage('templates', this)">
+      <span class="nav-icon">🧩</span>
+      <span>Template</span>
+    </div>
     <div class="nav-item" data-page="about" onclick="showPage('about', this)">
       <span class="icon">💡</span> How to Use
     </div>
@@ -796,6 +800,92 @@
           <li>Copy the generated password (format: <code>xxxx xxxx xxxx xxxx</code>)</li>
           <li>Paste it in the WordPress settings above</li>
         </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEMPLATES PAGE -->
+  <div id="page-templates" class="page">
+    <div class="page-header">
+      <h2>🧩 Template Artikel</h2>
+      <p>Prompt artikel, prompt gambar, dan pola meta — dipilih per rencana</p>
+    </div>
+
+    <div class="plan-toolbar">
+      <button class="btn btn-primary" onclick="templateNew()">+ Template Baru</button>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Daftar Template</h3></div>
+      <div class="card-body">
+        <div id="template-list"></div>
+      </div>
+    </div>
+
+    <div class="card" id="template-editor" style="display:none;">
+      <div class="card-header"><h3 id="template-editor-title">Template Baru</h3></div>
+      <div class="card-body">
+        <input type="hidden" id="tpl-id">
+        <div class="form-group">
+          <label>Nama Template</label>
+          <input type="text" id="tpl-name" placeholder="mis. Transaksional Lokal">
+        </div>
+        <div class="form-group">
+          <label>Prompt Artikel</label>
+          <textarea id="tpl-article" rows="10" placeholder="Instruksi tambahan untuk penulis. Boleh memuat {keyword}, {kotaTarget}, dan blok {riset}...{/riset}"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Prompt Gambar</label>
+          <textarea id="tpl-image" rows="5" placeholder="Gaya visual featured image. Boleh memuat {produkNama}, {namaBisnis}"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Pola Meta Title</label>
+          <input type="text" id="tpl-meta-title" placeholder="{keyword} {kotaTarget} 2026 | {namaBisnis}">
+        </div>
+        <div class="form-group">
+          <label>Pola Meta Description</label>
+          <textarea id="tpl-meta-desc" rows="2" placeholder="Sewa {produkNama} di {kotaTarget}. {cta}"></textarea>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-primary" onclick="templateSave()">Simpan</button>
+          <button class="btn btn-secondary" onclick="templateEditorClose()">Batal</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Variabel yang Tersedia</h3></div>
+      <div class="card-body">
+        <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.7; margin-bottom:12px;">
+          Variabel yang tidak dikenal <strong>dibiarkan apa adanya</strong> di prompt akhir —
+          jadi salah ketik terlihat, bukan hilang diam-diam.
+        </p>
+        <p style="font-size:13px; line-height:2;">
+          <strong>Bisnis:</strong>
+          <code>{namaBisnis}</code> <code>{deskripsiBisnis}</code> <code>{tagline}</code>
+          <code>{jenisUsaha}</code> <code>{targetAudiens}</code> <code>{nada}</code>
+          <code>{usp}</code> <code>{kota}</code> <code>{alamat}</code> <code>{whatsapp}</code>
+          <code>{email}</code> <code>{website}</code> <code>{jamOperasional}</code>
+          <code>{cta}</code> <code>{kataKhas}</code> <code>{kataHindari}</code>
+          <code>{dos}</code> <code>{donts}</code> <code>{topikTerlarang}</code>
+        </p>
+        <p style="font-size:13px; line-height:2;">
+          <strong>Rencana:</strong>
+          <code>{keyword}</code> <code>{judul}</code> <code>{lsi}</code> <code>{kotaTarget}</code>
+          <code>{kategori}</code> <code>{tipeKonten}</code> <code>{jumlahKata}</code>
+          <code>{slug}</code> <code>{catatan}</code> <code>{anchorUrl}</code> <code>{anchorText}</code>
+        </p>
+        <p style="font-size:13px; line-height:2;">
+          <strong>Produk:</strong>
+          <code>{produkNama}</code> <code>{produkHarga}</code> <code>{produkUrl}</code>
+          <code>{produkKonteks}</code> <code>{produkFaq}</code> <code>{produkTargetMarket}</code>
+        </p>
+        <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.7; margin-top:12px;">
+          <strong>Blok riset:</strong> <code>{riset}tugas riset di sini{/riset}</code> dikerjakan AI
+          sebelum artikel ditulis, dan hasilnya menggantikan blok itu. Butuh
+          <code>{ID}_TEXT_API_KEY</code> di <code>.env</code>. Tanpa kunci itu, artikel
+          <strong>tidak ditulis</strong> — bukan ditulis tanpa risetnya.
+        </p>
       </div>
     </div>
   </div>
