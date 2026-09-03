@@ -139,7 +139,9 @@ if (arg === 'template') {
   // Produk diambil dari field `product` rencana, TIDAK ditambang dari notes:
   // notes berisi teks bebas dan menguraikannya berarti menebak.
   let produk = null;
-  if (rencana.product && sourceType(cfg) === 'business_asset') {
+  let sebabProduk = null;
+  const punyaBusinessAsset = sourceType(cfg) === 'business_asset';
+  if (rencana.product && punyaBusinessAsset) {
     const ba = cfg.knowledge_source.business_asset || {};
     try {
       const { products } = readBusinessAsset(ba.root, ba.business_id);
@@ -156,11 +158,16 @@ if (arg === 'template') {
       // Produk tidak terbaca tidak menggagalkan render: template masih berguna
       // tanpa variabel produk, dan sebabnya dilaporkan lewat warning.
       produk = null;
+      sebabProduk = e.message;
     }
   }
 
-  const { knowledge_base } = resolveKnowledgeBase(cfg);
-  const vars = buildVars(knowledge_base, rencana, produk);
+  // resolveKnowledgeBase TIDAK melempar: saat business asset gagal dibaca ia
+  // mengembalikan KB kosong + error. Dibiarkan diam berarti seluruh variabel
+  // bisnis ({namaBisnis}, {nada}, {usp}...) kosong tanpa ada yang tahu sebabnya.
+  // Tidak keluar 1: template masih berguna, pemiliknya cuma perlu MELIHAT ini.
+  const kb = resolveKnowledgeBase(cfg);
+  const vars = buildVars(kb.knowledge_base, rencana, produk);
 
   const bidang = {
     article_prompt: template.article_prompt || '',
@@ -175,13 +182,30 @@ if (arg === 'template') {
 
   const perluRiset = Object.values(bidang).some(punyaRiset);
 
+  // warning satu field: semua sebab digabung supaya tidak ada yang tertimpa.
+  // Titik di ujung pesan sebab dibuang supaya tidak jadi ".." saat disambung.
+  const sebab = (m) => String(m).replace(new RegExp("[.]+$"), "");
+  const peringatan = [];
+  if (kb.error) {
+    peringatan.push(`Knowledge base tidak terbaca: ${sebab(kb.error)}. Variabel bisnis kosong.`);
+  }
+  if (rencana.product && !produk) {
+    if (!punyaBusinessAsset) {
+      // Tenant manual tidak punya business asset sama sekali — bilang "tidak
+      // ditemukan di business asset" di sini menyesatkan.
+      peringatan.push(`Rencana menyebut produk "${rencana.product}", tapi knowledge base tenant ini bukan business asset; variabel produk kosong.`);
+    } else if (sebabProduk) {
+      peringatan.push(`Business asset tidak terbaca: ${sebab(sebabProduk)}. Variabel produk kosong.`);
+    } else {
+      peringatan.push(`Produk "${rencana.product}" tidak ditemukan di business asset; variabel produk kosong.`);
+    }
+  }
+
   const cetak = () => keluar({
     template_id: template.id,
     template_name: template.name,
     ...bidang,
-    warning: (rencana.product && !produk)
-      ? `Produk "${rencana.product}" tidak ditemukan di business asset; variabel produk kosong.`
-      : null
+    warning: peringatan.length ? peringatan.join(' ') : null
   });
 
   if (!perluRiset) cetak();
