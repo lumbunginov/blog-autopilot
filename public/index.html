@@ -371,6 +371,41 @@
       <p>Tell the AI about your business — this shapes every article it writes</p>
     </div>
 
+    <!-- Sumber Knowledge Base -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📚 Sumber Knowledge Base</h3>
+      </div>
+      <div class="card-body">
+        <div class="radio-group" id="ks-type-group" style="display:flex; gap:10px; margin-bottom:14px;">
+          <label class="radio-btn selected">
+            <input type="radio" name="ks-type" value="manual" checked onchange="onKsTypeChange('manual')">
+            <span>✍️ Input manual</span>
+          </label>
+          <label class="radio-btn">
+            <input type="radio" name="ks-type" value="business_asset" onchange="onKsTypeChange('business_asset')">
+            <span>📦 Business Asset</span>
+          </label>
+        </div>
+
+        <div id="ks-ba-fields" style="display:none;">
+          <div class="form-group">
+            <label>Folder root data bisnis</label>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="ks-root" style="flex:1;"
+                     placeholder="G:\Project\...\sosmed_content\data\businesses">
+              <button class="btn btn-secondary" onclick="ksLoadBusinesses()" style="white-space:nowrap;">Muat</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Bisnis</label>
+            <select id="ks-business" onchange="ksOnBusinessChange()"></select>
+          </div>
+          <div id="ks-status" style="font-size:13px; margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Scrape from Website -->
     <div class="card">
       <div class="card-header">

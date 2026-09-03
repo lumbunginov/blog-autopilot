@@ -83,6 +83,7 @@ function populateForm(c) {
   renderProducts(c.knowledge_base?.products || []);
   renderLinks(c.knowledge_base?.internal_links || []);
   renderCustomEntries(c.knowledge_base?.custom_entries || []);
+  populateKnowledgeSource(c);
   // SEO Plugin
   const sp = c.seo_plugin || {};
   const seoType = sp.type || 'rankmath';
@@ -156,6 +157,7 @@ function collectForm() {
       internal_links: links,
       custom_entries: collectCustomEntries()
     },
+    knowledge_source: collectKnowledgeSource(),
     seo_plugin: {
       type: getVal('seo-plugin-type') || 'rankmath',
       rankmath: {
@@ -180,7 +182,10 @@ async function saveConfig() {
     });
     const result = await res.json();
     if (result.success) {
-      config = { ...data, _credentials: config._credentials };
+      // Muat ulang dari server, bukan memakai `data` mentah: di mode
+      // business_asset knowledge_base yang dikirim memang dibuang server,
+      // jadi kalau dipakai apa adanya layar menampilkan data yang tidak tersimpan.
+      await loadConfig();
       updateStatusDot(config);
       setChangeStatus(false);
       toast(result.warning || '✅ Settings saved!', result.warning ? 'warning' : 'success');
@@ -221,7 +226,7 @@ function updateStatusDot(c) {
   const dot = document.getElementById('config-status-dot');
   const text = document.getElementById('config-status-text');
   const hasWP = c.wordpress?.url && c.wordpress?.username && c._credentials?.wpPasswordSet;
-  const hasKB = c.knowledge_base?.business_name;
+  const hasKB = c.knowledge_base?.business_name && !c._knowledge?.error;
   if (hasWP && hasKB) {
     dot.className = 'dot ok';
     text.textContent = 'Config OK';
@@ -1617,3 +1622,98 @@ async function loadBlogs() {
 loadConfig();
 initSSE();
 loadBlogs();
+
+// ==================== SUMBER KNOWLEDGE BASE ====================
+function ksCurrentType() {
+  return document.querySelector('#ks-type-group input:checked')?.value || 'manual';
+}
+
+function onKsTypeChange(type) {
+  document.querySelectorAll('#ks-type-group .radio-btn').forEach(el => {
+    el.classList.toggle('selected', el.querySelector('input')?.value === type);
+  });
+  document.getElementById('ks-ba-fields').style.display = type === 'business_asset' ? '' : 'none';
+  applyKnowledgeReadonly(type === 'business_asset');
+  markChanged();
+}
+
+// Di mode business_asset seluruh field knowledge base dikunci: isinya hasil
+// baca live, dan menyimpan hasil bacaan itu balik ke config akan membekukannya.
+function applyKnowledgeReadonly(readonly) {
+  const page = document.getElementById('page-knowledge');
+  if (!page) return;
+  page.querySelectorAll('input, textarea, select, button').forEach(el => {
+    if (el.closest('#ks-type-group') || el.closest('#ks-ba-fields')) return;
+    // Tombol di save-bar diurus terpisah di bawah — jangan ikut dimatikan di sini.
+    if (el.closest('.save-bar')) return;
+    if (el.tagName === 'BUTTON') el.disabled = readonly;
+    else if (el.type === 'radio' || el.type === 'checkbox') el.disabled = readonly;
+    else { el.readOnly = readonly; el.disabled = readonly; }
+  });
+  const scrapeCard = document.getElementById('scrape-url')?.closest('.card');
+  if (scrapeCard) scrapeCard.style.display = readonly ? 'none' : '';
+  // Tombol Save TETAP hidup: ia satu-satunya jalan menyimpan knowledge_source
+  // (pilihan mode dan bisnis). Yang dikunci cuma field knowledge base-nya.
+  // Server sudah membuang knowledge_base kiriman browser di mode ini, jadi
+  // menekan Save aman — labelnya diganti supaya jelas apa yang tersimpan.
+  const saveBtn = document.querySelector('#page-knowledge .save-bar .btn-primary');
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    saveBtn.textContent = readonly ? '💾 Simpan Sumber' : '💾 Save Knowledge Base';
+  }
+}
+
+async function ksLoadBusinesses(selectId) {
+  const root = getVal('ks-root');
+  const sel = document.getElementById('ks-business');
+  const status = document.getElementById('ks-status');
+  if (!root) { status.innerHTML = '<span style="color:var(--danger)">Isi folder root dulu.</span>'; return; }
+  try {
+    const r = await (await fetch('/api/business-assets?root=' + encodeURIComponent(root))).json();
+    sel.innerHTML = (r.businesses || []).map(b =>
+      `<option value="${escHtml(b.id)}">${escHtml(b.name)} (${b.productCount} produk)</option>`).join('');
+    if (selectId) sel.value = selectId;
+    status.innerHTML = r.error
+      ? `<span style="color:var(--danger)">${escHtml(r.error)}</span>`
+      : `<span style="color:var(--text-secondary)">${r.businesses.length} bisnis ditemukan.</span>`;
+  } catch (e) {
+    status.innerHTML = `<span style="color:var(--danger)">${escHtml(e.message)}</span>`;
+  }
+}
+
+function ksOnBusinessChange() { markChanged(); }
+
+// Dipanggil dari populateForm(): pasang keadaan UI dari config yang dimuat.
+function populateKnowledgeSource(c) {
+  const type = c.knowledge_source?.type === 'business_asset' ? 'business_asset' : 'manual';
+  const radio = document.querySelector(`#ks-type-group input[value="${type}"]`);
+  if (radio) radio.checked = true;
+  setVal('ks-root', c.knowledge_source?.business_asset?.root || '');
+  onKsTypeChange(type);
+
+  const status = document.getElementById('ks-status');
+  if (type === 'business_asset') {
+    ksLoadBusinesses(c.knowledge_source?.business_asset?.business_id);
+    if (c._knowledge?.error) {
+      status.innerHTML = `<span style="color:var(--danger)">⚠️ ${escHtml(c._knowledge.error)}</span>`;
+    } else {
+      const kb = c.knowledge_base || {};
+      status.innerHTML = `<span style="color:var(--success, green)">✅ Terbaca: ` +
+        `${(kb.products || []).length} produk · ${(kb.internal_links || []).length} internal link · ` +
+        `tone ${escHtml(kb.tone || '')}</span>`;
+    }
+  }
+}
+
+// Bagian knowledge_source yang ikut dikirim saat Save.
+function collectKnowledgeSource() {
+  const type = ksCurrentType();
+  if (type !== 'business_asset') return { type: 'manual' };
+  return {
+    type: 'business_asset',
+    business_asset: {
+      root: getVal('ks-root'),
+      business_id: document.getElementById('ks-business')?.value || ''
+    }
+  };
+}
