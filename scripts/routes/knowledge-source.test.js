@@ -107,3 +107,27 @@ test('preview mode manual tetap menjawab tanpa error', async () => {
       assert.strictEqual(r.summary.products, 1);
     });
 });
+
+test('respons hanya memuat id, name, productCount — bukan field lain dari profile.json', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ks-bocor-'));
+  const dir = path.join(root, 'bisnisku');
+  fs.mkdirSync(dir, { recursive: true });
+  // Profil bisnis yang SAH tapi memuat data yang tidak boleh ikut tersiar.
+  fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify({
+    nama: 'Bisnis Sah',
+    whatsapp: '0812RAHASIA',
+    fbBusinessId: 'TOKEN-RAHASIA-JANGAN-BOCOR',
+    paletWarna: 'panjang sekali dan tidak relevan'
+  }));
+  fs.writeFileSync(path.join(dir, 'products.json'), JSON.stringify([{ id: 'a', nama: 'Produk' }]));
+
+  await withServer({}, async (base) => {
+    const res = await fetch(`${base}/api/business-assets?root=${encodeURIComponent(root)}`);
+    const body = await res.text();
+    assert.ok(!body.includes('RAHASIA'), 'field profil di luar nama tidak boleh ikut tersiar');
+    assert.ok(!body.includes('paletWarna'));
+    const j = JSON.parse(body);
+    assert.deepStrictEqual(Object.keys(j.businesses[0]).sort(), ['id', 'name', 'productCount'],
+      'bentuk baris harus persis 3 field — kalau bertambah, ini harus merah');
+  });
+});
