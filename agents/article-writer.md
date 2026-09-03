@@ -149,6 +149,7 @@ seluruh katalog.
 Kalau artikel yang ditulis membahas satu produk tertentu, ambil detailnya:
 
 ```bash
+# dijalankan dari root project (folder yang memuat .claude/)
 node .claude/skills/blog-autopilot/scripts/blog-config.js product "Sewa HT"
 ```
 

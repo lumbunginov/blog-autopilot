@@ -34,6 +34,15 @@ Dikerjakan lewat sumber knowledge base Business Asset:
 Produk lengkap (spesifikasi, harga, FAQ) diambil per produk lewat
 `node scripts/blog-config.js product "<nama>"`, bukan disimpan ulang di autoblog.
 
+Yang SENGAJA tidak dikerjakan dari rencana awal: "UI baru di dashboard (tab tersendiri)"
+untuk mengelola product knowledge. Datanya dikelola di dashboard skill `business-asset`
+(agent sosmed content) dan autoblog hanya membacanya — menambah tab kedua untuk mengedit
+data yang sama berarti dua tempat mengedit satu sumber, dan itu justru yang dihindari.
+Dashboard autoblog menampilkannya sebagai daftar read-only di tab Knowledge Base.
+
+Pertanyaan `custom_entries` digabung atau dipisah: DIPISAH. `custom_entries` tetap milik
+mode manual; mode business_asset tidak memakainya.
+
 ## 9. SERP tracker
 
 Paling mahal, manfaat jangka panjang.
