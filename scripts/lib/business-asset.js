@@ -124,9 +124,19 @@ function readBusinessAsset(root, businessId) {
     throw new Error(`Business asset "${id}" tidak ada di ${base} (mencari ${profileFile}).`);
   }
   const profile = readJson(profileFile, 'profile.json');
+  // JSON yang sah belum tentu bentuk yang benar. Tanpa cek ini, profile.json
+  // berisi array atau teks lolos senyap jadi knowledge base kosong, dan
+  // dashboard menampilkan status hijau untuk data yang sebenarnya rusak.
+  if (!profile || typeof profile !== 'object' || Array.isArray(profile)) {
+    throw new Error(`Isi profile.json bukan objek (${profileFile}).`);
+  }
   const productsFile = path.join(dir, 'products.json');
-  const products = fs.existsSync(productsFile) ? readJson(productsFile, 'products.json') : [];
-  return { profile, products: Array.isArray(products) ? products : [] };
+  if (!fs.existsSync(productsFile)) return { profile, products: [] };
+  const products = readJson(productsFile, 'products.json');
+  if (!Array.isArray(products)) {
+    throw new Error(`Isi products.json bukan daftar produk (${productsFile}).`);
+  }
+  return { profile, products };
 }
 
 module.exports = {

@@ -212,3 +212,18 @@ test('business_id dengan ../ ditolak sebelum menyentuh disk', () => {
 test('root kosong ditolak dengan pesan jelas', () => {
   assert.throws(() => readBusinessAsset('', 'perkapcom'), /root/i);
 });
+
+test('profile.json sah sebagai JSON tapi bukan objek ditolak, bukan lolos senyap', () => {
+  const root = fixture();
+  for (const isi of ['"cuma teks"', '[]', 'null', '42']) {
+    fs.writeFileSync(path.join(root, 'perkapcom', 'profile.json'), isi);
+    assert.throws(() => readBusinessAsset(root, 'perkapcom'), /profile\.json bukan objek/,
+      `isi ${isi} seharusnya ditolak`);
+  }
+});
+
+test('products.json berupa objek ditolak, bukan diam-diam jadi daftar kosong', () => {
+  const root = fixture();
+  fs.writeFileSync(path.join(root, 'perkapcom', 'products.json'), '{"nama":"x"}');
+  assert.throws(() => readBusinessAsset(root, 'perkapcom'), /products\.json bukan daftar/);
+});
