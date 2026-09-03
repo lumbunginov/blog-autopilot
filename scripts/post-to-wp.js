@@ -34,9 +34,18 @@ const {
 } = args;
 
 const blogId = args.blog || 'perkapcom';
-const password = process.env[envKeys(blogId).wpPassword];
+let envNames;
+try {
+  // envKeys menyanitasi id di dalam; id cacat (kosong, '..', '/') melempar.
+  // Ditangkap di sini supaya CLI gagal dengan pesan, bukan stack trace.
+  envNames = envKeys(blogId);
+} catch (e) {
+  console.error(`❌ ${e.message}`);
+  process.exit(1);
+}
+const password = process.env[envNames.wpPassword];
 if (!password) {
-  console.error(`❌ ${envKeys(blogId).wpPassword} belum diset di .env`);
+  console.error(`❌ ${envNames.wpPassword} belum diset di .env`);
   process.exit(1);
 }
 
