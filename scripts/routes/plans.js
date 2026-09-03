@@ -1,5 +1,7 @@
 'use strict';
 const fs = require('fs');
+const { slugify, checkSlug } = require('../lib/slug-guard');
+const { readArticlesCache } = require('../lib/articles-cache');
 
 module.exports = function registerPlans(app, deps) {
   const { paths, broadcast } = deps;
@@ -22,12 +24,23 @@ module.exports = function registerPlans(app, deps) {
   });
 
   app.post('/api/plans', (req, res) => {
-    let plansFile;
-    try { plansFile = paths.plansPath(resolveBlog(req)); }
+    let blogId, plansFile;
+    try { blogId = resolveBlog(req); plansFile = paths.plansPath(blogId); }
     catch (e) { return res.status(400).json({ error: e.message }); }
 
     const plan = req.body || {};
     if (!plan.keyword) return res.status(400).json({ error: 'keyword is required' });
+
+    const slug = plan.slug || slugify(plan.title || plan.keyword);
+    const check = checkSlug(slug, readArticlesCache(paths.cachePath(blogId)));
+    if (check.duplicate && !plan.allow_duplicate) {
+      return res.status(409).json({
+        error: `Slug "${slug}" sudah dipakai artikel lain.`,
+        existing: check.existing
+      });
+    }
+    plan.slug = slug;
+
     const data = readPlans(plansFile);
     const now = new Date().toISOString();
     const idx = data.plans.findIndex(p => p.id === plan.id);
