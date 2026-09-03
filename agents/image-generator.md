@@ -28,6 +28,13 @@ Sebelum menyusun prompt, cek apakah artikel ini tentang produk yang fotonya suda
 node .claude/skills/blog-autopilot/scripts/blog-config.js product-image "{ARTICLE_TITLE}"
 ```
 
+**Penting**: lewatkan JUDUL ARTIKEL apa adanya, TANPA flag `--produk`. Tanpa flag itu,
+skrip mencocokkan lewat isi judul (boleh tidak persis — "berisi nama produk" atau
+"kata-kata yang tumpang tindil dengan nama produk" cukup). Flag `--produk "Nama Persis"`
+ada untuk pemanggil lain yang sudah tahu ID/nama produk PERSIS (mis. dari halaman produk)
+— kalau dipakai di sini dengan judul artikel, pencocokan akan SELALU gagal, karena nama
+persis yang tidak dikenal ditolak, bukan dijatuhkan ke pencocokan judul.
+
 Keluarannya satu baris JSON:
 
 - `{"path": "...", "product": "...", "caption": "..."}` — ada foto asli

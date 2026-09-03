@@ -9,8 +9,13 @@
 //   node scripts/blog-config.js --id               → id tenant aktif
 //   node scripts/blog-config.js product "Sewa HT"  → satu produk LENGKAP
 //                                                    (harga, konteks, faq)
-//   node scripts/blog-config.js product-image "judul" → foto referensi produk
-//                                                    (selalu keluar kode 0)
+//   node scripts/blog-config.js product-image "judul artikel"
+//                                                    → foto referensi produk,
+//                                                      dicocokkan dari JUDUL
+//                                                      (selalu keluar kode 0)
+//   node scripts/blog-config.js product-image --produk "Nama Produk Persis"
+//                                                    → sama, tapi nama produk
+//                                                      eksplisit (tidak menebak)
 //
 // Kredensial TIDAK pernah ikut tercetak.
 
@@ -88,8 +93,20 @@ if (arg === 'product') {
 // Cari foto referensi untuk artikel. SELALU keluar dengan kode 0 dan JSON
 // yang bisa dibaca: gambar hilang tidak boleh menggagalkan penulisan artikel.
 if (arg === 'product-image') {
-  const q = process.argv[3] || '';
   const keluar = (obj) => { console.log(JSON.stringify(obj)); process.exit(0); };
+
+  // `--produk "Nama Persis"` = nama produk eksplisit (jalur eksak, tidak
+  // menebak). Tanpa flag itu, argumennya JUDUL ARTIKEL (jalur pencocokan
+  // judul/kata). Dua field ini beda arti bagi matchProduct — mengisi
+  // productName dengan judul artikel membuat aturan "tak dikenal → null"
+  // menggigit duluan dan jalur judul tidak pernah tercapai (lihat commit
+  // fix berikutnya: itu yang terjadi sebelum pemisahan ini).
+  let opsiCocok;
+  if (process.argv[3] === '--produk') {
+    opsiCocok = { productName: process.argv[4] || '' };
+  } else {
+    opsiCocok = { title: process.argv[3] || '' };
+  }
 
   if (sourceType(cfg) !== 'business_asset') {
     keluar({ path: null, reason: 'Knowledge base tidak bersumber dari Business Asset.' });
@@ -103,7 +120,8 @@ if (arg === 'product-image') {
   }
 
   const ringkas = mapProducts(products, cfg.wordpress?.url || '').products;
-  const cocok = matchProduct(ringkas, { productName: q, title: q });
+  const cocok = matchProduct(ringkas, opsiCocok);
+  const q = opsiCocok.productName ?? opsiCocok.title;
   if (!cocok) keluar({ path: null, reason: `Tidak ada produk yang cocok dengan "${q}".` });
 
   const penuh = findProduct(products, cocok.product.id);
