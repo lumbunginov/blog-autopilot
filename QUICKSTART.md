@@ -19,7 +19,7 @@ Skill ini mengotomasi penulisan artikel WordPress: dari keyword → riset → tu
 2. `cd .claude/skills/blog-autopilot && npm install`
 3. Salin `.env.example` jadi `.env`, isi kredensial tiap blog
 4. Jalankan: `npm start` (atau `node scripts/server.js`)
-5. Dashboard terbuka di http://localhost:3847
+5. Dashboard terbuka di http://localhost:3847 — tapi belum ada blog. Lanjut ke "Buat Tenant Pertama" di bawah sebelum Setup.
 
 **Verifikasi** skill terinstall — di Claude Code, ketik:
 ```
@@ -28,6 +28,29 @@ Skill ini mengotomasi penulisan artikel WordPress: dari keyword → riset → tu
 → Harus muncul pesan welcome
 
 ---
+
+## Buat Tenant Pertama (wajib — clone baru tidak punya blog)
+
+Skill ini multi-tenant: tiap blog hidup di `data/blogs/{id}/`. Instalasi baru (clone fresh) tidak punya satupun sampai kamu buat/impor. Server harus sudah jalan (`npm start`). Pilih salah satu:
+
+**A. Blog baru dari nol** — kirim ke API sambil server jalan:
+```bash
+curl -X POST http://localhost:3847/api/blogs -H "Content-Type: application/json" -d "{\"id\":\"namablog\"}"
+```
+Ganti `namablog` dengan id pendek (huruf/angka/strip). Ini jadi tenant aktif otomatis kalau belum ada tenant lain.
+
+**B. Impor instalasi single-tenant lama** — kalau kamu punya instalasi blog-autopilot versi lama (sebelum multi-tenant, dengan `blog-autopilot-config.json` di root):
+```bash
+node scripts/import-blog.js "<folder-instalasi-lama>" namablog
+```
+Script ini mengkopi config + cache + plans, lalu **mencetak dua baris ke layar** — tempelkan ke `.env` (kredensial TIDAK ditulis otomatis ke file manapun):
+```
+NAMABLOG_WP_APP_PASSWORD=...
+NAMABLOG_IMAGE_API_KEY=...
+```
+Tenant yang diimpor jadi aktif otomatis kalau belum ada tenant lain sebelumnya.
+
+Setelah tenant ada, cek: `curl http://localhost:3847/api/blogs`
 
 ## Setup Pertama Kali (wajib)
 
@@ -53,8 +76,8 @@ Di tab **Settings**, isi:
 |-------|-----------------|
 | WordPress URL | URL blog kamu, contoh: `https://namablog.com` |
 | WordPress Username | Username login WordPress kamu |
-| Application Password | WP Admin → Users → Profile → Application Passwords → Add New |
-| Image API Key | Google AI Studio (gratis) atau OpenAI (berbayar) — opsional |
+| Application Password | **Bukan di dashboard** — masukkan langsung ke `.env` (lihat di bawah). Field ini di dashboard read-only, cuma indikator sudah/belum diset |
+| Image API Key | **Bukan di dashboard** — masukkan langsung ke `.env` (lihat di bawah) |
 
 > **Cara buat WordPress Application Password:**
 > 1. Login ke WordPress Admin
@@ -62,6 +85,7 @@ Di tab **Settings**, isi:
 > 3. Scroll bawah → **Application Passwords**
 > 4. Ketik nama (contoh: "Blog Autopilot") → **Add New Application Password**
 > 5. Copy password yang muncul (format: `xxxx xxxx xxxx xxxx`)
+> 6. Tempelkan ke `.env` di root skill sebagai `{ID}_WP_APP_PASSWORD=xxxx xxxx xxxx xxxx` (ganti `{ID}` dengan id tenant huruf besar, contoh `NAMABLOG_WP_APP_PASSWORD`). Untuk gambar: `{ID}_IMAGE_API_KEY=...`. Lihat `.env.example`.
 
 ### Langkah 3 — Isi Knowledge Base
 

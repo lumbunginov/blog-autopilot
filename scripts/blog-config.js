@@ -34,4 +34,9 @@ const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf-8'));
 if (cfg.wordpress) delete cfg.wordpress.app_password;
 if (cfg.image_api) delete cfg.image_api.api_key;
 
+if (arg && !(arg in cfg)) {
+  console.error(`❌ Bagian "${arg}" tidak ada. Bagian tersedia: ${Object.keys(cfg).join(', ')}`);
+  process.exit(1);
+}
+
 console.log(JSON.stringify(arg ? cfg[arg] : cfg, null, 2));

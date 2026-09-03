@@ -13,7 +13,8 @@ Create one featured image that:
 ## Inputs
 
 - **Article title** — tells you the topic
-- **Config**: `image_api.type`, `image_api.api_key`
+- **Blog ID** — which tenant this is for (from `node scripts/blog-config.js --id`); used to look up the `.env` key
+- **Config**: `image_api.type` — the API key is NOT in config; it comes from `.env` (variable `{ID}_IMAGE_API_KEY`, e.g. `PERKAPCOM_IMAGE_API_KEY`) and must never be pasted into a script literal
 - **Knowledge Base**: `business_name`, `business_description`
 
 ---
@@ -60,7 +61,14 @@ const fs = require('fs');
 const path = require('path');
 
 const prompt = '{IMAGE_PROMPT}';
-const apiKey = '{API_KEY}';
+const { loadDotEnv, envKeys } = require('./.claude/skills/blog-autopilot/scripts/lib/env');
+loadDotEnv('./.claude/skills/blog-autopilot/.env');
+const blogId = '{BLOG_ID}';
+const apiKey = process.env[envKeys(blogId).imageKey];
+if (!apiKey) {
+  console.error('ERROR:' + envKeys(blogId).imageKey + ' belum diset di .env');
+  process.exit(1);
+}
 const outputPath = '{OUTPUT_PATH}';
 
 const payload = JSON.stringify({
@@ -112,7 +120,14 @@ const fs = require('fs');
 const path = require('path');
 
 const prompt = '{IMAGE_PROMPT}';
-const apiKey = '{API_KEY}';
+const { loadDotEnv, envKeys } = require('./.claude/skills/blog-autopilot/scripts/lib/env');
+loadDotEnv('./.claude/skills/blog-autopilot/.env');
+const blogId = '{BLOG_ID}';
+const apiKey = process.env[envKeys(blogId).imageKey];
+if (!apiKey) {
+  console.error('ERROR:' + envKeys(blogId).imageKey + ' belum diset di .env');
+  process.exit(1);
+}
 const outputPath = '{OUTPUT_PATH}';
 
 const payload = JSON.stringify({
@@ -156,7 +171,14 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-const apiKey = '{API_KEY}';
+const { loadDotEnv, envKeys } = require('./.claude/skills/blog-autopilot/scripts/lib/env');
+loadDotEnv('./.claude/skills/blog-autopilot/.env');
+const blogId = '{BLOG_ID}';
+const apiKey = process.env[envKeys(blogId).imageKey];
+if (!apiKey) {
+  console.error('ERROR:' + envKeys(blogId).imageKey + ' belum diset di .env');
+  process.exit(1);
+}
 const outputPath = '{OUTPUT_PATH}';
 
 const payload = JSON.stringify({

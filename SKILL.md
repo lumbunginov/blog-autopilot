@@ -398,7 +398,7 @@ Input: `post_id` (WordPress post ID, e.g. `11282`) or `slug` (e.g. `sewa-stand-p
 node .claude/skills/blog-autopilot/scripts/blog-config.js
 ```
 
-Ambil `wordpress`, `image_api`, `knowledge_base`, `output` dari hasil JSON-nya. WordPress app password tidak ada di output ini — script yang memanggil WordPress membacanya sendiri dari `.env`.
+Ambil `wordpress`, `image_api`, `knowledge_base`, `output` dari hasil JSON-nya. WordPress app password dan image API key tidak ada di output ini — script yang memanggilnya membaca kredensial itu sendiri dari `.env` (`{ID}_WP_APP_PASSWORD`, `{ID}_IMAGE_API_KEY`).
 
 ### Step 2: Fetch Post from WordPress
 
@@ -444,7 +444,8 @@ Read and follow the image-generator.md approach:
 
 ```
 Article title: [POST_TITLE from Step 2]
-Config: config.image_api
+Blog ID: [active blog id]
+Config: config.image_api  (type only — the API key comes from .env, never from this config)
 Knowledge Base: config.knowledge_base
 ```
 
@@ -564,7 +565,7 @@ Output: markdown file saved to `config.output.articles_dir` (default: `./article
 
 Read `agents/image-generator.md` and follow its instructions.
 
-Input: article title + business context
+Input: article title + business context (the API key comes from `.env`, not from config — see image-generator.md)
 Output: image file saved to `config.output.images_dir` (default: `./images/`)
 
 Skip if `config.image_api.type` is `"none"`.
