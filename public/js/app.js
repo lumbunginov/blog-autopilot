@@ -1523,6 +1523,7 @@ function planModalOpen(id) {
     document.getElementById('pm-priority').value = 'medium';
     document.getElementById('pm-date').value = '';
     document.getElementById('pm-notes').value = '';
+    planFillTemplateSelect('');
     document.getElementById('pm-meta-title-count').textContent = '0 karakter';
     document.getElementById('pm-meta-desc-count').textContent = '0 karakter';
     planFillCategorySelect(null);
@@ -1548,6 +1549,7 @@ function planModalOpen(id) {
     document.getElementById('pm-priority').value = p.priority || 'medium';
     document.getElementById('pm-date').value = p.scheduled_date || '';
     document.getElementById('pm-notes').value = p.notes || '';
+    planFillTemplateSelect(p.template_id || '');
     planFillCategorySelect(p.category_id);
     planCharCount('pm-meta-title','pm-meta-title-count',50,60);
     planCharCount('pm-meta-desc','pm-meta-desc-count',150,160);
@@ -1572,6 +1574,27 @@ function planFillProductSelect(selectedName) {
   } else {
     manualInput.style.display = '';
   }
+}
+
+// Dropdown template selalu memuat ulang dari server: template bisa berubah di
+// tab sebelah tanpa menutup dashboard, dan daftar basi akan menawarkan template
+// yang sudah dihapus.
+async function planFillTemplateSelect(nilai) {
+  const sel = document.getElementById('pm-template');
+  if (!sel) return;
+  try {
+    const r = await fetch('/api/templates').then(x => x.json());
+    templatesData = r.templates || [];
+  } catch { /* daftar gagal dimuat: biarkan hanya opsi "tanpa template" */ }
+  sel.innerHTML = '<option value="">— Tanpa template (aturan bawaan) —</option>' +
+    templatesData.map(t => `<option value="${escHtml(t.id)}">${escHtml(t.name)}</option>`).join('');
+  // Template yang sudah dihapus tapi masih tertulis di rencana: tambahkan opsi
+  // penanda supaya pemilik melihat bahwa rencananya menunjuk sesuatu yang hilang,
+  // bukan diam-diam berpindah ke "tanpa template".
+  if (nilai && !templatesData.some(t => t.id === nilai)) {
+    sel.innerHTML += `<option value="${escHtml(nilai)}">⚠ Template sudah dihapus (${escHtml(nilai)})</option>`;
+  }
+  sel.value = nilai || '';
 }
 
 function planProductSelectChange() {
@@ -1679,6 +1702,7 @@ async function planSave() {
     category_id: document.getElementById('pm-category-id').value ? Number(document.getElementById('pm-category-id').value) : null,
     category_name: catName.replace(/^-- .* --$/, ''),
     content_type: document.getElementById('pm-content-type').value,
+    template_id: document.getElementById('pm-template').value,
     target_words: Number(document.getElementById('pm-word-count').value) || 1000,
     lsi_keywords: document.getElementById('pm-lsi').value.split(',').map(s=>s.trim()).filter(Boolean),
     status: document.getElementById('pm-status').value,
