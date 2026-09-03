@@ -554,13 +554,14 @@ function renderProducts(arr, source) {
 }
 
 function renderProductCards(arr, container) {
+  pasangKlikKartuProduk(container);
   if (!arr.length) {
     container.innerHTML = '<div class="kb-kosong">Belum ada produk di business asset ini.</div>';
     return;
   }
   container.innerHTML = arr.map(p => `
     <div class="produk-kartu" data-produk="${escHtml(p.id)}">
-      <div class="produk-kartu-baris" onclick="toggleProdukKartu('${escHtml(p.id)}')">
+      <div class="produk-kartu-baris">
         <div class="produk-kartu-foto">${
           p.image
             ? `<img src="/api/business-asset-photo?file=${encodeURIComponent(p.image)}" alt="${escHtml(p.name)}" loading="lazy">`
@@ -581,17 +582,34 @@ function renderProductCards(arr, container) {
           ${p.gallery_count ? `<span title="${p.gallery_count} foto galeri">📷${p.gallery_count}</span>` : ''}
         </div>
       </div>
-      <div class="produk-kartu-detail" id="produk-detail-${escHtml(p.id)}" hidden></div>
+      <div class="produk-kartu-detail" hidden></div>
     </div>
   `).join('');
 }
 
+// Listener terdelegasi dipasang SEKALI di container (bukan onclick inline per-kartu):
+// id produk cuma pernah dibaca lewat dataset, tidak pernah disisipkan sebagai kode JS
+// dalam atribut HTML — menutup XSS lewat id berkarakter aneh (mis. berisi kutip tunggal)
+// yang mungkin datang dari products.json sistem lain (termasuk berkas .bak-* hasil impor).
+let produkKlikTerpasang = false;
+function pasangKlikKartuProduk(container) {
+  if (produkKlikTerpasang) return;
+  produkKlikTerpasang = true;
+  container.addEventListener('click', (e) => {
+    const baris = e.target.closest('.produk-kartu-baris');
+    if (!baris) return;
+    const kartu = baris.closest('.produk-kartu');
+    const id = kartu?.dataset.produk;
+    if (id) toggleProdukKartu(id, kartu);
+  });
+}
+
 const cacheDetailProduk = new Map();
 
-async function toggleProdukKartu(id) {
-  const panel = document.getElementById('produk-detail-' + id);
+async function toggleProdukKartu(id, kartu) {
+  kartu = kartu || document.querySelector(`.produk-kartu[data-produk="${CSS.escape(id)}"]`);
+  const panel = kartu?.querySelector('.produk-kartu-detail');
   if (!panel) return;
-  const kartu = panel.closest('.produk-kartu');
   const panah = kartu?.querySelector('.produk-kartu-panah');
   if (!panel.hidden) {
     panel.hidden = true;
@@ -1771,15 +1789,17 @@ function ksCurrentType() {
   return document.querySelector('#ks-type-group input:checked')?.value || 'manual';
 }
 
-function onKsTypeChange(type) {
+// renderProdukJuga=false dipakai populateKnowledgeSource saat load awal: populateForm
+// sudah merender produk sekali (baris ~83), jadi merender lagi di sini cuma dobel kerja
+// untuk kasus yang sama. Saat user ganti radio dengan tangan (onchange di index.html),
+// tetap true — itu satu-satunya jalan daftar produk ikut berganti bentuk tanpa reload.
+function onKsTypeChange(type, renderProdukJuga = true) {
   document.querySelectorAll('#ks-type-group .radio-btn').forEach(el => {
     el.classList.toggle('selected', el.querySelector('input')?.value === type);
   });
   document.getElementById('ks-ba-fields').style.display = type === 'business_asset' ? '' : 'none';
   applyKnowledgeReadonly(type === 'business_asset');
-  // Radio diganti tanpa reload halaman: daftar produk harus ikut berganti
-  // bentuk (kartu ↔ baris input), pakai produk dari config terakhir yang dimuat.
-  renderProducts(config.knowledge_base?.products || [], type);
+  if (renderProdukJuga) renderProducts(config.knowledge_base?.products || [], type);
   if (type === 'business_asset') ksMuatOtomatisKalauPerlu();
   markChanged();
 }
@@ -1876,7 +1896,7 @@ function populateKnowledgeSource(c) {
   const radio = document.querySelector(`#ks-type-group input[value="${type}"]`);
   if (radio) radio.checked = true;
   setVal('ks-root', c.knowledge_source?.business_asset?.root || '');
-  onKsTypeChange(type);
+  onKsTypeChange(type, false); // produk sudah dirender populateForm — jangan dobel
 
   const status = document.getElementById('ks-status');
   if (type === 'business_asset') {
