@@ -622,7 +622,7 @@ console.log('ukuran ringkas (KB):', Math.round(JSON.stringify(hasil.products).le
 "
 ```
 
-Diharapkan: 45 produk, punya URL minimal 35 (lebih kalau Task 3 mengisi sebagian), punya image 41, ukuran ringkas di bawah 20 KB.
+Diharapkan: 45 produk, punya URL minimal 35 (lebih kalau Task 3 mengisi sebagian), punya image 41, ukuran ringkas di bawah 45 KB (Ruling R2: 36 KB dari totalnya sudah ada sebelum task ini, didominasi target_market; yang mengikat adalah tidak adanya field teks panjang, bukan angka KB).
 
 - [ ] **Step 6: Commit**
 
@@ -1082,7 +1082,7 @@ let s=''; process.stdin.on('data',d=>s+=d).on('end',()=>{
 });"
 ```
 
-Diharapkan: 45 produk, di bawah 20 KB, tidak ada context yang bocor.
+Diharapkan: 45 produk, di bawah 60 KB, tidak ada context yang bocor.
 
 - [ ] **Step 3: Jalankan seluruh tes**
 
