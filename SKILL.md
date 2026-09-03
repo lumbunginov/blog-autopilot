@@ -27,6 +27,7 @@ Read the user's input and route to the right handler:
 | `/blog-autopilot post [filepath]` | → **[POST]** existing file |
 | `/blog-autopilot fix-image [post_id]` | → **[FIX-IMAGE]** repair missing/failed image |
 | `/blog-autopilot audit-links` | → **[AUDIT-LINKS]** periksa tautan internal semua artikel terbit |
+| `/blog-autopilot templates` | → **[TEMPLATES]** kelola template artikel |
 | `/blog-autopilot generate [input]` | → **[GENERATE]** batch planner via natural language |
 | `/blog-autopilot [keyword]` | → **[FULL WORKFLOW]** |
 
@@ -214,6 +215,11 @@ AUDIT
     → Periksa tautan internal semua artikel terbit (baca-saja, beberapa menit)
     → Laporan: data/blogs/{id}/audit/link-YYYY-MM-DD.md
 
+TEMPLATE
+  /blog-autopilot templates
+    → Kelola template artikel (prompt artikel, gambar, pola meta)
+    → Template dipilih per rencana di tab Perencanaan
+
 COMPANION MODE
   /blog-autopilot
     → Buka dashboard + masuk companion mode (pantau queue otomatis)
@@ -235,6 +241,28 @@ PENGATURAN
 Config per blog: data/blogs/{id}/config.json — kredensial di .env
 Jangan commit .env ke git (berisi API keys)!
 ```
+
+---
+
+## [TEMPLATES] — Kelola template artikel
+
+Template mengatur prompt artikel, prompt gambar, dan pola meta. Dipilih per
+rencana di tab Perencanaan.
+
+Buka dashboard (`npm start` di folder skill), lalu menu **Template**.
+
+Untuk melihat hasil render satu rencana:
+
+```bash
+node .claude/skills/blog-autopilot/scripts/blog-config.js template "<plan_id>"
+```
+
+Keluar kode 0 dengan `template_id: null` = rencana itu tanpa template (jalur
+normal). Keluar kode 1 = riset gagal, dan artikel tidak boleh ditulis.
+
+Blok `{riset}...{/riset}` di dalam template dikerjakan OpenAI sebelum artikel
+ditulis. Butuh `{ID}_TEXT_API_KEY` di `.env` — hanya kalau template memakai blok
+itu. Template tanpa `{riset}` jalan tanpa kunci sama sekali.
 
 ---
 
@@ -674,3 +702,4 @@ Struktur lengkap: lihat `config.template.json`
 - `agents/` — Instruksi detail tiap step workflow
 - `scripts/` — Node.js scripts untuk WordPress API
 - `references/` — SEO standards dan formatting rules
+- `data/blogs/{id}/templates.json` — Template artikel per blog (dikelola di tab Template)

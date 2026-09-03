@@ -56,6 +56,27 @@ Dashboard autoblog menampilkannya sebagai daftar read-only di tab Knowledge Base
 Pertanyaan `custom_entries` digabung atau dipisah: DIPISAH. `custom_entries` tetap milik
 mode manual; mode business_asset tidak memakainya.
 
+## 11. Template artikel + variabel — SELESAI (2026-09-03)
+
+Dikerjakan lewat: `docs/superpowers/specs/2026-09-03-template-artikel-design.md`.
+
+Template per blog di `data/blogs/{id}/templates.json`, dikelola di tab Template,
+dipilih per rencana. Mengendalikan prompt artikel, prompt gambar, dan pola meta.
+Variabel `{namaBisnis}`, `{keyword}`, `{produkNama}`, dst. di-resolve lewat
+`node scripts/blog-config.js template "<plan_id>"`. Blok `{riset}...{/riset}`
+dikerjakan OpenAI (`{ID}_TEXT_API_KEY`).
+
+Yang SENGAJA tidak dikerjakan:
+- **Template default dan pemilihan acak** — business-asset memilih style acak agar
+  konten sosial media bervariasi; artikel blog ditulis untuk peringkat pencarian,
+  dan hasil yang bisa diprediksi lebih berharga. Rencana tanpa template memakai
+  aturan `article-writer.md`.
+- **Versi/riwayat template** — mengedit menimpa. Artikel terbit tidak berubah.
+- **Pratinjau render di dashboard** — tombol pratinjau berarti menjalankan riset
+  berbiaya API dari klik yang mudah tak sengaja. Pakai CLI untuk melihat hasilnya.
+- **Cache hasil riset** — blok riset mengolah konteks produk artikel ini;
+  menyimpannya berarti artikel produk B memakai riset produk A.
+
 ## 9. SERP tracker
 
 Paling mahal, manfaat jangka panjang.
