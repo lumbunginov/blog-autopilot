@@ -47,10 +47,19 @@ function stripCredentials(body) {
 // sumbernya — persis yang mau dihindari mode ini.
 // knowledge_source SENGAJA tidak dibuang: user harus tetap bisa berpindah
 // mode dan mengganti bisnis lewat POST yang sama.
-function stripKnowledgeBase(body, source) {
+function stripKnowledgeBase(body, source, sourceSebelumnya) {
   const clean = JSON.parse(JSON.stringify(body || {}));
   const ignored = [];
   if (source === 'business_asset' && 'knowledge_base' in clean) {
+    delete clean.knowledge_base;
+    ignored.push('knowledge_base');
+  }
+  // Saat kembali dari business_asset ke manual, knowledge_base yang dikirim
+  // browser adalah hasil baca live yang sedang tampil di layar — bukan suntingan
+  // user. Menuliskannya berarti menimpa cadangan manual dengan data business
+  // asset, dan prohibited_topics + custom_entries (yang tidak pernah dipetakan
+  // dari business asset) hilang permanen tanpa jalan pulih lewat dashboard.
+  if (source === 'manual' && sourceSebelumnya === 'business_asset' && 'knowledge_base' in clean) {
     delete clean.knowledge_base;
     ignored.push('knowledge_base');
   }

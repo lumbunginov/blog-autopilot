@@ -77,8 +77,15 @@ if (arg === 'product') {
 
 // knowledge_base yang dicetak harus hasil resolusi, bukan isi mentah config:
 // di mode business_asset, isi mentahnya cadangan lama yang sudah tidak dipakai.
+//
+// Kegagalan membaca business asset HANYA mematikan permintaan yang memang butuh
+// knowledge base. `blog-config.js wordpress` dipakai SKILL.md untuk mendiagnosis
+// kesehatan config — kalau ia ikut mati saat business asset rusak, agent membaca
+// kegagalan itu sebagai "tenant belum disiapkan" dan menyesatkan diagnosisnya
+// justru saat paling dibutuhkan.
 const resolved = resolveKnowledgeBase(cfg);
-if (resolved.error) {
+const butuhKb = !arg || arg === 'knowledge_base';
+if (resolved.error && butuhKb) {
   console.error(`❌ Knowledge base tidak terbaca: ${resolved.error}`);
   process.exit(1);
 }

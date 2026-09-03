@@ -7,6 +7,9 @@ const { deepMerge, stripCredentials, stripKnowledgeBase } = require('../lib/conf
 const { resolveBlog, requireBlog } = require('../lib/tenant');
 const { resolveKnowledgeBase, sourceType } = require('../lib/knowledge');
 
+// Dijalankan SETELAH knowledge base diresolusi: suffix judul SEO memakai nama
+// bisnis yang berlaku sekarang, bukan nama dari cadangan manual yang sudah tidak
+// dipakai. Salah di sini mendarat diam-diam di meta title tiap artikel.
 function withSeoDefaults(cfg) {
   if (!cfg.seo_plugin) {
     const bizName = cfg.knowledge_base?.business_name;
@@ -40,18 +43,16 @@ module.exports = function registerConfig(app, deps) {
       const credMarker = { wpPasswordSet: !!process.env[envKeys(blogId).wpPassword] };
       if (fs.existsSync(configFile)) {
         const cfg = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
-        withSeoDefaults(cfg);
         const { clean: cfgClean } = stripCredentials(cfg);
-        return res.json({ ...withResolvedKnowledge(cfgClean), _credentials: credMarker });
+        return res.json({ ...withSeoDefaults(withResolvedKnowledge(cfgClean)), _credentials: credMarker });
       }
       const templatePath = path.join(paths.skillDir, 'config.template.json');
       if (fs.existsSync(templatePath)) {
         const raw = JSON.parse(fs.readFileSync(templatePath, 'utf-8'));
         delete raw._instructions;
-        withSeoDefaults(raw);
         const clean = JSON.parse(JSON.stringify(raw, (k, v) => k.startsWith('_') ? undefined : v));
         const { clean: templateClean } = stripCredentials(clean);
-        return res.json({ ...withResolvedKnowledge(templateClean), _credentials: credMarker });
+        return res.json({ ...withSeoDefaults(withResolvedKnowledge(templateClean)), _credentials: credMarker });
       }
       res.json({ _credentials: credMarker });
     } catch (e) {
@@ -68,7 +69,7 @@ module.exports = function registerConfig(app, deps) {
       // knowledge_base bisa terjadi dalam satu POST tanpa saling menjegal.
       const effective = req.body?.knowledge_source ? req.body : stored;
       const { clean: noCred, ignored: credIgnored } = stripCredentials(req.body);
-      const { clean, ignored: kbIgnored } = stripKnowledgeBase(noCred, sourceType(effective));
+      const { clean, ignored: kbIgnored } = stripKnowledgeBase(noCred, sourceType(effective), sourceType(stored));
       const merged = deepMerge(stored, clean);
       fs.writeFileSync(configFile, JSON.stringify(merged, null, 2), 'utf-8');
       const out = { success: true, path: configFile };
@@ -77,7 +78,9 @@ module.exports = function registerConfig(app, deps) {
         notes.push(`Kredensial (${credIgnored.join(', ')}) diabaikan — set lewat .env, bukan lewat dashboard.`);
       }
       if (kbIgnored.length) {
-        notes.push('knowledge_base diabaikan — sumbernya Business Asset, jadi datanya dibaca langsung dari sana.');
+        notes.push(sourceType(effective) === 'manual'
+          ? 'knowledge_base diabaikan — isinya masih data Business Asset yang tampil di layar. Cadangan manualmu dibiarkan utuh; sunting lalu simpan lagi kalau mau mengubahnya.'
+          : 'knowledge_base diabaikan — sumbernya Business Asset, jadi datanya dibaca langsung dari sana.');
       }
       if (notes.length) out.warning = notes.join(' ');
       res.json(out);

@@ -1634,6 +1634,7 @@ function onKsTypeChange(type) {
   });
   document.getElementById('ks-ba-fields').style.display = type === 'business_asset' ? '' : 'none';
   applyKnowledgeReadonly(type === 'business_asset');
+  if (type === 'business_asset') ksMuatOtomatisKalauPerlu();
   markChanged();
 }
 
@@ -1687,6 +1688,16 @@ async function ksLoadBusinesses(selectId) {
 }
 
 function ksOnBusinessChange() { markChanged(); }
+
+// Radio dipindah ke Business Asset tapi daftar belum dimuat: dropdown kosong,
+// sehingga Save akan menyimpan business_id kosong dan tenant langsung error.
+// Muat otomatis kalau root-nya sudah terisi, supaya user tidak perlu tahu bahwa
+// tombol Muat itu wajib ditekan.
+async function ksMuatOtomatisKalauPerlu() {
+  const sel = document.getElementById('ks-business');
+  if (!sel || sel.options.length || !getVal('ks-root')) return;
+  await ksLoadBusinesses();
+}
 
 // Dipanggil dari populateForm(): pasang keadaan UI dari config yang dimuat.
 function populateKnowledgeSource(c) {

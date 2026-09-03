@@ -5,7 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const {
-  toneFrom, extractProductUrl, mapProfile, mapProducts, findProduct, readBusinessAsset
+  assertBusinessId, toneFrom, extractProductUrl, mapProfile, mapProducts, findProduct, readBusinessAsset
 } = require('./business-asset');
 
 const PROFILE = {
@@ -226,4 +226,46 @@ test('products.json berupa objek ditolak, bukan diam-diam jadi daftar kosong', (
   const root = fixture();
   fs.writeFileSync(path.join(root, 'perkapcom', 'products.json'), '{"nama":"x"}');
   assert.throws(() => readBusinessAsset(root, 'perkapcom'), /products\.json bukan daftar/);
+});
+
+test('nama folder bisnis yang sah dipakai apa adanya, tidak di-mangling', () => {
+  // Nama ini datang dari disk milik skill lain. Kalau titik/underscore/huruf besar
+  // dibuang, folder yang jelas-jelas ada jadi tak pernah ketemu.
+  for (const n of ['karva.id', 'Sosmed_Test', 'Toko_Baru', 'perkapcom']) {
+    assert.strictEqual(assertBusinessId(n), n);
+  }
+});
+
+test('assertBusinessId menolak traversal dan masukan cacat', () => {
+  const B = String.fromCharCode(92);
+  const NUL = String.fromCharCode(0);
+  for (const n of ['../rahasia', '..' + B + 'x', 'a/b', 'a' + B + 'b', 'x' + NUL + 'y']) {
+    assert.throws(() => assertBusinessId(n), /tidak valid/i, `seharusnya ditolak: ${JSON.stringify(n)}`);
+  }
+});
+
+test('bisnis yang belum dipilih memberi petunjuk, bukan istilah internal', () => {
+  // Pesannya dibaca user di dashboard, jadi ia harus menyebut apa yang harus
+  // dilakukan — bukan membocorkan istilah "ID blog" yang tidak berarti apa-apa.
+  for (const n of ['', '   ', null, undefined]) {
+    assert.throws(() => assertBusinessId(n), (e) => {
+      assert.match(e.message, /belum dipilih/i);
+      assert.match(e.message, /Muat/);
+      assert.ok(!/ID blog/i.test(e.message), 'jangan pakai istilah "ID blog" untuk business asset');
+      return true;
+    }, `seharusnya ditolak: ${JSON.stringify(n)}`);
+  }
+});
+
+test('folder bisnis bernama titik/underscore benar-benar terbaca dari disk', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ba-nama-'));
+  for (const nama of ['karva.id', 'Sosmed_Test']) {
+    const dir = path.join(root, nama);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify({ nama }));
+    fs.writeFileSync(path.join(dir, 'products.json'), JSON.stringify([{ id: 'a', nama: 'Produk' }]));
+    const { profile, products } = readBusinessAsset(root, nama);
+    assert.strictEqual(profile.nama, nama);
+    assert.strictEqual(products.length, 1);
+  }
 });

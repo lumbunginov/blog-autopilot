@@ -4,7 +4,20 @@
 // apa pun ke folder business asset.
 const fs = require('fs');
 const path = require('path');
-const { sanitizeId } = require('./paths');
+// sanitizeId dari paths.js SENGAJA tidak dipakai di sini: ia untuk id blog yang
+// kita cetak sendiri, sehingga huruf besar, titik, dan underscore dibuang. Nama
+// folder business asset datang dari disk milik skill lain — "karva.id" dan
+// "Sosmed_Test" itu sah, dan me-mangling-nya membuat folder yang jelas-jelas ada
+// jadi tak pernah ketemu. Yang dibutuhkan di sini cuma penolakan traversal.
+function assertBusinessId(raw) {
+  const s = String(raw == null ? '' : raw).trim();
+  if (!s || s.includes('..') || s.includes('/') || s.includes('\\') || s.includes('\0')) {
+    throw new Error(s
+      ? `ID business asset tidak valid: "${raw}"`
+      : 'Bisnis belum dipilih. Tekan "Muat" lalu pilih salah satu di dropdown Bisnis.');
+  }
+  return s;
+}
 
 const TONE_MAP = {
   santai: 'casual',
@@ -117,7 +130,7 @@ function readJson(file, label) {
 function readBusinessAsset(root, businessId) {
   const base = String(root || '').trim();
   if (!base) throw new Error('Folder root business asset belum diisi.');
-  const id = sanitizeId(businessId);
+  const id = assertBusinessId(businessId);
   const dir = path.join(base, id);
   const profileFile = path.join(dir, 'profile.json');
   if (!fs.existsSync(profileFile)) {
@@ -140,5 +153,5 @@ function readBusinessAsset(root, businessId) {
 }
 
 module.exports = {
-  toneFrom, extractProductUrl, mapProfile, mapProducts, findProduct, readBusinessAsset
+  assertBusinessId, toneFrom, extractProductUrl, mapProfile, mapProducts, findProduct, readBusinessAsset
 };
