@@ -13,18 +13,19 @@ Skill ini mengotomasi penulisan artikel WordPress: dari keyword → riset → tu
 
 ---
 
-## Instalasi
+## Pemasangan
 
-1. **Install skill file** ke Claude Code:
-   - Buka Claude Code
-   - Ketik `/install` dan pilih file `blog-autopilot.skill`
-   - Atau drag & drop file `.skill` ke Claude Code
+1. Clone repo ini ke `.claude/skills/blog-autopilot` di dalam project kamu
+2. `cd .claude/skills/blog-autopilot && npm install`
+3. Salin `.env.example` jadi `.env`, isi kredensial tiap blog
+4. Jalankan: `npm start` (atau `node scripts/server.js`)
+5. Dashboard terbuka di http://localhost:3847
 
-2. **Verifikasi** skill terinstall:
-   ```
-   /blog-autopilot
-   ```
-   → Harus muncul pesan welcome
+**Verifikasi** skill terinstall — di Claude Code, ketik:
+```
+/blog-autopilot
+```
+→ Harus muncul pesan welcome
 
 ---
 
@@ -39,7 +40,7 @@ Di Claude Code, ketik:
 
 Atau jalankan langsung:
 ```bash
-node ".claude/skills/blog-autopilot/dashboard/server.js"
+node ".claude/skills/blog-autopilot/scripts/server.js"
 ```
 
 Browser akan terbuka otomatis di `http://localhost:3847`
@@ -121,7 +122,7 @@ Cek status: `/blog-autopilot status`
 - Artikel selalu tersimpan sebagai **Draft** — review dulu sebelum publish
 - File artikel tersimpan lokal di folder `./articles/`
 - Gambar tersimpan lokal di folder `./images/`
-- Config tersimpan di `blog-autopilot-config.json` — **jangan share file ini** (berisi API keys)
+- Config tersimpan per blog di `data/blogs/{id}/config.json`; kredensial ada di `.env` — **jangan share file `.env`** (berisi API keys)
 - Keyword bisa bahasa Indonesia atau Inggris — sesuai setting language di dashboard
 
 ---
@@ -133,7 +134,7 @@ Cek status: `/blog-autopilot status`
 | "Config belum ada" | Jalankan `/blog-autopilot setup` |
 | "401 Unauthorized" | Cek WordPress username + application password |
 | "Cannot connect" | Pastikan WordPress URL benar (pakai https://) |
-| Dashboard tidak terbuka | Jalankan manual: `node ".claude/skills/blog-autopilot/dashboard/server.js"` |
+| Dashboard tidak terbuka | Jalankan manual: `node ".claude/skills/blog-autopilot/scripts/server.js"` |
 | Port 3847 sudah dipakai | Buka langsung: http://localhost:3847 |
 
 ---

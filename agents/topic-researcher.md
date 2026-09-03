@@ -9,7 +9,7 @@ Given a keyword and business context, generate **5 distinct article ideas**. Eac
 ## Inputs
 
 - **Keyword**: provided by user
-- **Knowledge Base** (from `blog-autopilot-config.json`):
+- **Knowledge Base** (dari `node scripts/blog-config.js knowledge_base`):
   - `business_name` / `business_description` — what this business actually does
   - `products` — their offerings (mention these naturally in ideas)
   - `target_audience` — who they serve

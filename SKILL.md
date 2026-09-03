@@ -38,7 +38,7 @@ When user types `/blog-autopilot` with no keyword:
 ### Step 1: Start Dashboard
 
 ```bash
-node ".claude/skills/blog-autopilot/dashboard/server.js"
+node ".claude/skills/blog-autopilot/scripts/server.js"
 ```
 
 If port already in use, skip — dashboard is already running. Tell user:
@@ -78,7 +78,7 @@ http.get('http://localhost:3847/api/agent-queue', res => {
 If there are pending tasks (`status === 'pending'`):
 - For each task where `task.type === 'auto_generate'`:
   - Read `.claude/agents/plan-generator.md` and follow its instructions
-  - Read config: `node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('blog-autopilot-config.json','utf-8'));console.log(JSON.stringify(c.knowledge_base))"`
+  - Read config: `node .claude/skills/blog-autopilot/scripts/blog-config.js knowledge_base`
   - Pass to plan-generator: `task.input` + `knowledge_base` from config + `queue_task_id: task.id` + `dashboard_url: 'http://localhost:3847'`
 
 ### Step 4: Schedule Monitoring or Wait
@@ -112,7 +112,7 @@ Tell user: "Mengecek queue..." then process any pending tasks found.
 Run the dashboard server:
 
 ```bash
-node ".claude/skills/blog-autopilot/dashboard/server.js"
+node ".claude/skills/blog-autopilot/scripts/server.js"
 ```
 
 Tell user: "Dashboard terbuka di browser (http://localhost:3847). Isi semua settings lalu klik **Save**. Setelah selesai, ketik `/blog-autopilot status` untuk verifikasi."
@@ -121,34 +121,24 @@ Tell user: "Dashboard terbuka di browser (http://localhost:3847). Isi semua sett
 
 ## [STATUS] — Show config state
 
-Check the config file and report clearly:
+Check the active tenant's config and report clearly:
 
 ```bash
-node -e "
-const fs = require('fs'), path = require('path');
-const p = path.join(process.cwd(), '.claude/skills/blog-autopilot/blog-autopilot-config.json');
-if (!fs.existsSync(p)) { console.log('MISSING'); process.exit(); }
-const c = JSON.parse(fs.readFileSync(p, 'utf-8'));
-const checks = {
-  'WordPress URL':      !!c.wordpress?.url,
-  'WordPress Username': !!c.wordpress?.username,
-  'WordPress Password': !!c.wordpress?.app_password,
-  'Business Name':      !!c.knowledge_base?.business_name,
-  'Business Desc':      !!c.knowledge_base?.business_description,
-  'Image API':          c.image_api?.type === 'none' || !!c.image_api?.api_key,
-};
-console.log(JSON.stringify(checks));
-"
+node .claude/skills/blog-autopilot/scripts/blog-config.js --id && \
+node .claude/skills/blog-autopilot/scripts/blog-config.js wordpress
 ```
+
+WordPress password itself is not in the config output — check its presence via `.env` (`{ID}_WP_APP_PASSWORD`).
 
 Show result as a checklist:
 
 ```
 📋 STATUS KONFIGURASI
 ─────────────────────
+✅ Blog Aktif         : perkapcom
 ✅ WordPress URL      : https://yourblog.com
 ✅ WordPress Username : your-username
-✅ WordPress Password : ••••••••
+✅ WordPress Password : •••••••• (dari .env)
 ✅ Business Name      : [nama bisnis]
 ✅ Business Desc      : [ada]
 ⚠️ Image API         : belum diset
@@ -158,15 +148,28 @@ Status: Siap dipakai (image akan diskip)
 Untuk mengubah settings: /blog-autopilot setup
 ```
 
-If config is MISSING, show:
+If no active blog, show:
 ```
-❌ Config belum ada.
+❌ Belum ada blog.
 
 Jalankan setup dulu:
-  node ".claude/skills/blog-autopilot/dashboard/server.js"
+  node ".claude/skills/blog-autopilot/scripts/server.js"
 
 Atau ketik: /blog-autopilot setup
 ```
+
+---
+
+## [BLOGS] — Kelola beberapa blog
+
+Skill ini menyimpan tiap blog terpisah di `data/blogs/{id}/`.
+
+- Lihat daftar: `curl -s http://localhost:3847/api/blogs`
+- Ganti blog aktif: lewat dropdown di sidebar dashboard
+- Impor instalasi lama: `node scripts/import-blog.js "<folder>" <id>`
+
+Kredensial tiap blog ada di `.env` dengan awalan id blog huruf besar,
+misalnya `PERKAPCOM_WP_APP_PASSWORD`. Lihat `.env.example`.
 
 ---
 
@@ -223,8 +226,8 @@ PENGATURAN
     → Tampilkan halaman ini
 
 ═══════════════════════════════════════════════════
-Config tersimpan di: blog-autopilot-config.json
-Jangan commit file ini ke git (berisi API keys)!
+Config per blog: data/blogs/{id}/config.json — kredensial di .env
+Jangan commit .env ke git (berisi API keys)!
 ```
 
 ---
@@ -239,12 +242,10 @@ Use when user gives a natural language request like:
 ### Step 1: Read Config
 
 ```bash
-node -e "
-const fs = require('fs');
-const c = JSON.parse(fs.readFileSync('blog-autopilot-config.json', 'utf-8'));
-console.log(JSON.stringify({ knowledge_base: c.knowledge_base, workflow: c.workflow }));
-"
+node .claude/skills/blog-autopilot/scripts/blog-config.js
 ```
+
+Ambil `knowledge_base` dan `workflow` dari hasil JSON-nya.
 
 ### Step 2: Parse Input & Extract Parameters
 
@@ -326,7 +327,7 @@ http.get('http://localhost:3847/api/plans', res => {
 
 Jika `DOWN`: jalankan server dulu:
 ```bash
-node ".claude/skills/blog-autopilot/dashboard/server.js" &
+node ".claude/skills/blog-autopilot/scripts/server.js" &
 ```
 Tunggu 2 detik lalu lanjut.
 
@@ -364,7 +365,7 @@ Catat `TASK_ID` dari output.
 Setelah task masuk queue, langsung proses tanpa menunggu:
 
 - Baca `.claude/agents/plan-generator.md` dan ikuti instruksinya
-- Baca config lengkap dari `blog-autopilot-config.json`
+- Baca config lengkap: `node .claude/skills/blog-autopilot/scripts/blog-config.js`
 - Pass ke plan-generator: semua field dari `task.input` + `knowledge_base` + `workflow` + `queue_task_id: TASK_ID` + `dashboard_url: 'http://localhost:3847'`
 
 ### Step 8: Laporan Selesai
@@ -394,12 +395,10 @@ Input: `post_id` (WordPress post ID, e.g. `11282`) or `slug` (e.g. `sewa-stand-p
 ### Step 1: Read Config
 
 ```bash
-node -e "
-const fs = require('fs');
-const c = JSON.parse(fs.readFileSync('blog-autopilot-config.json', 'utf-8'));
-console.log(JSON.stringify({ wordpress: c.wordpress, image_api: c.image_api, knowledge_base: c.knowledge_base, output: c.output }));
-"
+node .claude/skills/blog-autopilot/scripts/blog-config.js
 ```
+
+Ambil `wordpress`, `image_api`, `knowledge_base`, `output` dari hasil JSON-nya. WordPress app password tidak ada di output ini — script yang memanggil WordPress membacanya sendiri dari `.env`.
 
 ### Step 2: Fetch Post from WordPress
 
@@ -535,14 +534,11 @@ Gambar sudah di-insert ke konten dan di-set sebagai featured image.
 ### Step 1: Check Config
 
 ```bash
-node -e "
-const fs = require('fs'), path = require('path');
-const p = path.join(process.cwd(), '.claude/skills/blog-autopilot/blog-autopilot-config.json');
-if (!fs.existsSync(p)) { console.log('MISSING'); process.exit(); }
-const c = JSON.parse(fs.readFileSync(p, 'utf-8'));
-console.log(c.wordpress?.url && c.wordpress?.username ? 'OK' : 'INCOMPLETE');
-"
+node .claude/skills/blog-autopilot/scripts/blog-config.js --id 2>/dev/null || echo MISSING
+node .claude/skills/blog-autopilot/scripts/blog-config.js wordpress 2>/dev/null
 ```
+
+Cek apakah `wordpress.url` dan `wordpress.username` ada isinya untuk menentukan `OK` vs `INCOMPLETE`.
 
 - `MISSING` → Show COMPANION MODE welcome message and suggest `/blog-autopilot setup`
 - `INCOMPLETE` → Run STATUS to show what's missing, suggest: `/blog-autopilot setup`
@@ -618,8 +614,8 @@ Skip research/writing, go straight to Steps 4–5 (Image + Posting) using the pr
 
 ## Config File Reference
 
-Config tersimpan di: **`{project_root}/blog-autopilot-config.json`**
-Jangan commit ke git (tambah ke `.gitignore`).
+Config per blog: **`data/blogs/{id}/config.json`** — kredensial di **`.env`** (bukan di config).
+`.env` sudah ada di `.gitignore`.
 
 Struktur lengkap: lihat `config.template.json`
 
