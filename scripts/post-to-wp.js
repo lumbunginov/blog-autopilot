@@ -13,6 +13,7 @@ const https = require('https');
 const http = require('http');
 const url = require('url');
 const { loadDotEnv, envKeys } = require('./lib/env');
+const { makePaths } = require('./lib/paths');
 
 loadDotEnv(path.join(__dirname, '..', '.env'));
 
@@ -52,9 +53,14 @@ if (!fs.existsSync(dataFile)) {
   process.exit(1);
 }
 
-// Load app config for SEO plugin settings
-const CONFIG_FILE = path.join(__dirname, '..', 'blog-autopilot-config.json');
-const appConfig = fs.existsSync(CONFIG_FILE) ? JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8')) : {};
+// Load tenant config for SEO plugin settings
+const skillPaths = makePaths(path.join(__dirname, '..'));
+const tenantConfigPath = skillPaths.configPath(blogId);
+if (!fs.existsSync(tenantConfigPath)) {
+  console.error(`❌ Config tenant "${blogId}" tidak ada: ${tenantConfigPath}`);
+  process.exit(1);
+}
+const appConfig = JSON.parse(fs.readFileSync(tenantConfigPath, 'utf-8'));
 const seoPlugin = appConfig.seo_plugin || { type: 'rankmath' };
 const seoType = seoPlugin.type || 'rankmath';
 
