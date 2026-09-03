@@ -67,10 +67,17 @@ if (arg === 'product') {
     id: found.id || '',
     name: found.nama || '',
     price: found.harga || '',
-    url: extractProductUrl(found.konteks, cfg.wordpress?.url || ''),
+    // Sama seperti mapProducts: url yang diketik pemilik menang atas hasil
+    // tambang dari konteks. Tanpa ini, CLI dan dashboard bisa memberi URL
+    // berbeda untuk produk yang sama.
+    url: String(found.url || '').trim() || extractProductUrl(found.konteks, cfg.wordpress?.url || ''),
     target_market: found.targetMarket || '',
     context: found.konteks || '',
-    faq: found.faq || ''
+    faq: found.faq || '',
+    troubleshooting: found.troubleshooting || '',
+    care: found.care || '',
+    image: found.foto || '',
+    gallery: Array.isArray(found.gallery) ? found.gallery : []
   }, null, 2));
   process.exit(0);
 }
