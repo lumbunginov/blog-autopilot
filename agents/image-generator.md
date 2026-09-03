@@ -19,6 +19,35 @@ Create one featured image that:
 
 ---
 
+## Step 0: Cari foto produk asli (kalau ada)
+
+Sebelum menyusun prompt, cek apakah artikel ini tentang produk yang fotonya sudah ada:
+
+```bash
+# dijalankan dari root project
+node .claude/skills/blog-autopilot/scripts/blog-config.js product-image "{ARTICLE_TITLE}"
+```
+
+Keluarannya satu baris JSON:
+
+- `{"path": "...", "product": "...", "caption": "..."}` — ada foto asli
+- `{"path": null, "reason": "..."}` — tidak ada; lanjutkan seperti biasa ke Step 1
+
+**Kalau ada `path`**, prompt berubah nada. Jangan minta AI menggambar produknya dari
+nol — mintalah ia menempatkan produk yang ADA DI FOTO ke dalam suasana pemakaian:
+
+| Tanpa foto | Dengan foto |
+|---|---|
+| "Quiz buzzer system on a table, professional photography" | "Place the exact device from the reference image on a judge's table at a school quiz competition, students in background, warm hall lighting, professional photography, no text" |
+
+Kalimat kuncinya: **"the exact device from the reference image"**. Tanpa itu, model
+memperlakukan foto sebagai inspirasi gaya, bukan sebagai produk yang harus ditampilkan
+apa adanya — dan hasilnya alat khayalan yang mirip-mirip.
+
+Lalu kirim fotonya bersama permintaan (bagian `payload.image` di Step 2).
+
+---
+
 ## Step 1: Craft the Image Prompt
 
 Think about the business type and article topic. The prompt should describe a real, specific scene — not abstract concepts.
@@ -110,6 +139,28 @@ req.write(payload);
 req.end();
 "
 ```
+
+**Kalau Step 0 memberi `path`**, sisipkan foto sebagai reference image. Ganti blok
+`const payload = JSON.stringify({...})` pada script di atas dengan:
+
+```js
+const refPath = '{REFERENCE_PATH}';   // dari Step 0; kosongkan kalau path null
+const badan = {
+  model: 'seedream-4-5-251128',
+  prompt: prompt,
+  size: '2560x1440',
+  watermark: false,
+  response_format: 'b64_json'
+};
+if (refPath) {
+  const ext = require('path').extname(refPath).toLowerCase().replace('.', '');
+  const mime = ext === 'jpg' ? 'jpeg' : ext;
+  badan.image = 'data:image/' + mime + ';base64,' + fs.readFileSync(refPath).toString('base64');
+}
+const payload = JSON.stringify(badan);
+```
+
+Sisa script (options, req handlers) tetap sama.
 
 ### Gemini (type: "gemini")
 

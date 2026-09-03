@@ -9,6 +9,8 @@
 //   node scripts/blog-config.js --id               → id tenant aktif
 //   node scripts/blog-config.js product "Sewa HT"  → satu produk LENGKAP
 //                                                    (harga, konteks, faq)
+//   node scripts/blog-config.js product-image "judul" → foto referensi produk
+//                                                    (selalu keluar kode 0)
 //
 // Kredensial TIDAK pernah ikut tercetak.
 
@@ -16,7 +18,8 @@ const fs = require('fs');
 const path = require('path');
 const { makePaths } = require('./lib/paths');
 const { resolveKnowledgeBase, sourceType } = require('./lib/knowledge');
-const { readBusinessAsset, findProduct, extractProductUrl } = require('./lib/business-asset');
+const { readBusinessAsset, findProduct, extractProductUrl, mapProducts } = require('./lib/business-asset');
+const { matchProduct } = require('./lib/product-match');
 
 const paths = makePaths(path.join(__dirname, '..'));
 const id = paths.activeBlog();
@@ -80,6 +83,51 @@ if (arg === 'product') {
     gallery: Array.isArray(found.gallery) ? found.gallery : []
   }, null, 2));
   process.exit(0);
+}
+
+// Cari foto referensi untuk artikel. SELALU keluar dengan kode 0 dan JSON
+// yang bisa dibaca: gambar hilang tidak boleh menggagalkan penulisan artikel.
+if (arg === 'product-image') {
+  const q = process.argv[3] || '';
+  const keluar = (obj) => { console.log(JSON.stringify(obj)); process.exit(0); };
+
+  if (sourceType(cfg) !== 'business_asset') {
+    keluar({ path: null, reason: 'Knowledge base tidak bersumber dari Business Asset.' });
+  }
+  const ba = cfg.knowledge_source.business_asset || {};
+  let products;
+  try {
+    ({ products } = readBusinessAsset(ba.root, ba.business_id));
+  } catch (e) {
+    keluar({ path: null, reason: `Business asset tidak terbaca: ${e.message}` });
+  }
+
+  const ringkas = mapProducts(products, cfg.wordpress?.url || '').products;
+  const cocok = matchProduct(ringkas, { productName: q, title: q });
+  if (!cocok) keluar({ path: null, reason: `Tidak ada produk yang cocok dengan "${q}".` });
+
+  const penuh = findProduct(products, cocok.product.id);
+  if (!penuh) keluar({ path: null, reason: `Produk "${cocok.product.id}" hilang saat diambil detailnya.` });
+
+  const dirFoto = path.join(ba.root, ba.business_id, 'photos');
+  // Foto utama dulu; kalau kosong, item galeri pertama.
+  const kandidat = [];
+  if (penuh.foto) kandidat.push({ file: penuh.foto, caption: '' });
+  for (const g of (Array.isArray(penuh.gallery) ? penuh.gallery : [])) {
+    if (g?.filename) kandidat.push({ file: g.filename, caption: g.caption || '' });
+  }
+  if (!kandidat.length) keluar({ path: null, reason: `Produk "${penuh.nama}" belum punya foto.` });
+
+  const MAKS_BYTE = 8 * 1024 * 1024;
+  for (const k of kandidat) {
+    const p = path.join(dirFoto, k.file);
+    if (!fs.existsSync(p)) continue;   // tercatat tapi hilang: perlakukan sama dengan tidak ada
+    // base64 membengkak 33%; permintaan raksasa gagal dengan galat yang tidak
+    // jelas dari API, jadi lewati sebelum sampai ke sana.
+    if (fs.statSync(p).size > MAKS_BYTE) continue;
+    keluar({ path: p, product: penuh.nama, caption: k.caption, reason: cocok.reason });
+  }
+  keluar({ path: null, reason: `Foto produk "${penuh.nama}" tercatat tapi tidak ada di disk (atau terlalu besar).` });
 }
 
 // knowledge_base yang dicetak harus hasil resolusi, bukan isi mentah config:
