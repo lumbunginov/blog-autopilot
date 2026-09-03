@@ -2,8 +2,9 @@
 const fs = require('fs');
 const path = require('path');
 const { envKeys } = require('../lib/env');
-const { deepMerge, stripCredentials } = require('../lib/config-merge');
+const { deepMerge, stripCredentials, stripKnowledgeBase } = require('../lib/config-merge');
 const { sanitizeId } = require('../lib/paths');
+const { resolveKnowledgeBase, sourceType } = require('../lib/knowledge');
 
 module.exports = function registerBlogs(app, deps) {
   const { paths } = deps;
@@ -44,8 +45,9 @@ module.exports = function registerBlogs(app, deps) {
       if (!fs.existsSync(p)) return res.status(404).json({ error: 'Config tidak ditemukan' });
       const raw = JSON.parse(fs.readFileSync(p, 'utf-8'));
       const { clean } = stripCredentials(raw);
+      const { knowledge_base, source, error } = resolveKnowledgeBase(clean);
       const credMarker = { wpPasswordSet: !!process.env[envKeys(req.params.id).wpPassword] };
-      res.json({ ...clean, _credentials: credMarker });
+      res.json({ ...clean, knowledge_base, _knowledge: { source, error }, _credentials: credMarker });
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
 
@@ -54,13 +56,20 @@ module.exports = function registerBlogs(app, deps) {
       const p = paths.configPath(req.params.id);
       if (!fs.existsSync(path.dirname(p))) return res.status(404).json({ error: 'Blog tidak ditemukan' });
       const stored = fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf-8')) : {};
-      const { clean, ignored } = stripCredentials(req.body);
+      const effective = req.body?.knowledge_source ? req.body : stored;
+      const { clean: noCred, ignored } = stripCredentials(req.body);
+      const { clean, ignored: kbIgnored } = stripKnowledgeBase(noCred, sourceType(effective));
       const merged = deepMerge(stored, clean);
       fs.writeFileSync(p, JSON.stringify(merged, null, 2), 'utf-8');
       const out = { success: true };
+      const notes = [];
       if (ignored.length) {
-        out.warning = `Kredensial (${ignored.join(', ')}) diabaikan — set lewat .env, bukan lewat dashboard.`;
+        notes.push(`Kredensial (${ignored.join(', ')}) diabaikan — set lewat .env, bukan lewat dashboard.`);
       }
+      if (kbIgnored.length) {
+        notes.push('knowledge_base diabaikan — sumbernya Business Asset, jadi datanya dibaca langsung dari sana.');
+      }
+      if (notes.length) out.warning = notes.join(' ');
       res.json(out);
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
