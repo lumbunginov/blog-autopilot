@@ -30,7 +30,8 @@ test('resolveCredentials ikut memakai nama tersanitasi', () => {
 test('nama variabel diturunkan dari id tenant', () => {
   assert.deepStrictEqual(envKeys('perkapcom'), {
     wpPassword: 'PERKAPCOM_WP_APP_PASSWORD',
-    imageKey: 'PERKAPCOM_IMAGE_API_KEY'
+    imageKey: 'PERKAPCOM_IMAGE_API_KEY',
+    textKey: 'PERKAPCOM_TEXT_API_KEY'
   });
   assert.strictEqual(envKeys('blog-saya').wpPassword, 'BLOG_SAYA_WP_APP_PASSWORD');
 });
@@ -118,4 +119,8 @@ test('loadDotEnv tidak mengubah kutip yang ada di tengah nilai', () => {
   const env = {};
   loadDotEnv(f, env);
   assert.strictEqual(env.FOO, 'pass"word123');
+});
+
+test('envKeys memuat kunci teks', () => {
+  assert.equal(envKeys('perkapcom').textKey, 'PERKAPCOM_TEXT_API_KEY');
 });

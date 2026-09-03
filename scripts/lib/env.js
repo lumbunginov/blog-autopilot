@@ -44,7 +44,11 @@ function envKeys(blogId) {
   const prefix = sanitizeId(blogId).toUpperCase().replace(/-/g, '_');
   return {
     wpPassword: `${prefix}_WP_APP_PASSWORD`,
-    imageKey: `${prefix}_IMAGE_API_KEY`
+    imageKey: `${prefix}_IMAGE_API_KEY`,
+    // Kunci teks hanya wajib bila template memakai blok {riset}. Tenant tanpa
+    // template, atau template tanpa riset, tidak pernah membutuhkannya —
+    // karena itu ia TIDAK divalidasi di resolveCredentials.
+    textKey: `${prefix}_TEXT_API_KEY`
   };
 }
 
