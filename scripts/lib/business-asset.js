@@ -73,12 +73,38 @@ function mapProfile(profile) {
     desc = [p.tagline, p.jenisUsaha, p.kota && `di ${p.kota}`]
       .map(x => String(x || '').trim()).filter(Boolean).join(' — ');
   }
+  const teks = (v) => String(v == null ? '' : v).trim();
+  const daftar = (v) => (Array.isArray(v) ? v.map(teks).filter(Boolean) : []);
+
   return {
-    business_name: String(p.nama || '').trim(),
+    business_name: teks(p.nama),
     business_description: desc,
-    target_audience: String(p.targetMarket || '').trim(),
+    target_audience: teks(p.targetMarket),
     tone: toneFrom(p.toneOfVoice),
-    avoid_words: Array.isArray(p.kataHindari) ? p.kataHindari.filter(Boolean) : []
+    avoid_words: daftar(p.kataHindari),
+
+    // Identitas
+    tagline: teks(p.tagline),
+    business_type: teks(p.jenisUsaha),
+    // tahunBerdiri tersimpan sebagai angka di business asset; dijadikan teks
+    // supaya bentuknya sama dengan isian manual di dashboard.
+    founded_year: teks(p.tahunBerdiri),
+
+    // Kontak & lokasi — city dan address dipakai penulis artikel untuk SEO lokal
+    // ("Sewa HT Malang"), jadi jangan sampai ia menebaknya dari judul.
+    address: teks(p.alamat),
+    city: teks(p.kota),
+    whatsapp: teks(p.whatsapp),
+    email: teks(p.email),
+    hours: teks(p.jamOperasional),
+    website: teks(p.website),
+
+    // Gaya menulis
+    usp: teks(p.usp),
+    signature_words: daftar(p.kataKataKhas),
+    cta: daftar(p.cta),
+    dos: daftar(p.dos),
+    donts: daftar(p.donts)
   };
 }
 

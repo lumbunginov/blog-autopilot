@@ -4,6 +4,9 @@
 // tidak tersebar dan menyimpang antar pemanggil.
 const { readBusinessAsset, mapProfile, mapProducts } = require('./business-asset');
 
+// Bentuk kanonik knowledge base. Semua field SELALU ada — penulis artikel tidak
+// perlu menjaga dua kemungkinan bentuk, dan mode manual dapat kolom yang sama
+// dengan mode business_asset.
 const EMPTY_KB = {
   business_name: '',
   business_description: '',
@@ -13,8 +16,35 @@ const EMPTY_KB = {
   prohibited_topics: [],
   internal_links: [],
   custom_entries: [],
-  avoid_words: []
+  avoid_words: [],
+  // Identitas
+  tagline: '',
+  business_type: '',
+  founded_year: '',
+  // Kontak & lokasi
+  address: '',
+  city: '',
+  whatsapp: '',
+  email: '',
+  hours: '',
+  website: '',
+  // Gaya menulis
+  usp: '',
+  signature_words: [],
+  cta: [],
+  dos: [],
+  donts: []
 };
+
+// Field yang kontraknya array harus benar-benar array, apa pun isi config lama.
+const FIELD_ARRAY = ['products', 'prohibited_topics', 'internal_links', 'custom_entries',
+  'avoid_words', 'signature_words', 'cta', 'dos', 'donts'];
+
+function normalkanBentuk(kb) {
+  const out = { ...kb };
+  for (const k of FIELD_ARRAY) if (!Array.isArray(out[k])) out[k] = [];
+  return out;
+}
 
 function sourceType(config) {
   return config?.knowledge_source?.type === 'business_asset' ? 'business_asset' : 'manual';
@@ -30,7 +60,10 @@ function resolveKnowledgeBase(config) {
       error: null,
       // avoid_words baru ada di mode business_asset; tenant manual belum punya.
       // Selalu kirim array supaya penulis artikel tidak perlu menjaga dua bentuk.
-      knowledge_base: { ...EMPTY_KB, ...kb, avoid_words: kb.avoid_words || [] }
+      // Spread EMPTY_KB lebih dulu menjamin field baru selalu ada untuk tenant
+      // lama; nilai dari kb menang. Field array yang tersimpan `null` di config
+      // lama dikembalikan ke array kosong supaya bentuknya tetap terjaga.
+      knowledge_base: normalkanBentuk({ ...EMPTY_KB, ...kb })
     };
   }
 

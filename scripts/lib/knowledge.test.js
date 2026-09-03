@@ -120,3 +120,42 @@ test('business_asset tanpa root: error menyebut root', () => {
   assert.ok(r.error);
   assert.match(r.error, /root/i);
 });
+
+test('tenant manual lama tanpa field baru tetap mendapat bentuk lengkap', () => {
+  const r = resolveKnowledgeBase({ knowledge_base: { business_name: 'Tenant Lama' } });
+  const kb = r.knowledge_base;
+  assert.strictEqual(kb.business_name, 'Tenant Lama');
+  for (const k of ['tagline', 'business_type', 'founded_year', 'address', 'city',
+                   'whatsapp', 'email', 'hours', 'website', 'usp']) {
+    assert.strictEqual(kb[k], '', `${k} harus ada sebagai string kosong`);
+  }
+  for (const k of ['signature_words', 'cta', 'dos', 'donts']) {
+    assert.deepStrictEqual(kb[k], [], `${k} harus ada sebagai array kosong`);
+  }
+});
+
+test('field manual yang terisi tidak tertimpa nilai kosong EMPTY_KB', () => {
+  const kb = resolveKnowledgeBase({ knowledge_base: {
+    business_name: 'Toko', city: 'Surabaya', whatsapp: '0812', cta: ['Pesan sekarang']
+  } }).knowledge_base;
+  assert.strictEqual(kb.city, 'Surabaya');
+  assert.strictEqual(kb.whatsapp, '0812');
+  assert.deepStrictEqual(kb.cta, ['Pesan sekarang']);
+});
+
+test('config lama yang menyimpan null di tempat array dinormalkan jadi array', () => {
+  const kb = resolveKnowledgeBase({ knowledge_base: {
+    products: null, cta: 'bukan array', dos: undefined, prohibited_topics: 42
+  } }).knowledge_base;
+  for (const k of ['products', 'cta', 'dos', 'prohibited_topics']) {
+    assert.ok(Array.isArray(kb[k]), `${k} harus array — penulis artikel memanggil .map/.length`);
+  }
+});
+
+test('mode business_asset mengisi identitas dan kontak dari profil', () => {
+  const r = resolveKnowledgeBase(baConfig(fixtureRoot()));
+  const kb = r.knowledge_base;
+  assert.strictEqual(kb.tagline, 'Sewa Alat Panitia');
+  assert.strictEqual(kb.city, 'Malang');
+  assert.strictEqual(kb.business_type, 'Jasa Rental');
+});

@@ -54,11 +54,21 @@
   "knowledge_base": {
     "business_name": "Your Business Name",
     "business_description": "Brief description of what your business does and sells",
+    "tagline": "Short slogan, e.g. Sewa Alat Panitia",
+    "business_type": "e.g. Jasa Rental, Toko Online, Agensi",
+    "founded_year": "",
     "products": [
       "Product or service 1",
       "Product or service 2"
     ],
     "target_audience": "Who your customers are (e.g., 'young professionals, 25-35 years old')",
+    "_kontak_note": "Dipakai penulis artikel untuk SEO lokal dan penutup artikel.",
+    "address": "",
+    "city": "e.g. Malang",
+    "whatsapp": "",
+    "email": "",
+    "hours": "e.g. 24 Jam, Senin-Jumat 09.00-17.00",
+    "website": "",
     "tone": "professional",
     "_tone_options": [
       "professional",
@@ -79,6 +89,11 @@
         "title": "Example: Pricing",
         "content": "Basic package starts at Rp 500,000. Premium package Rp 2,000,000 includes setup and technician."
       }
-    ]
+    ],
+    "usp": "What makes you different from competitors",
+    "signature_words": [],
+    "cta": [],
+    "dos": [],
+    "donts": []
   }
 }

@@ -14,10 +14,31 @@ const PROFILE = {
   tagline: 'Sewa Alat Panitia',
   deskripsi: '',
   jenisUsaha: 'Jasa Rental',
+  tahunBerdiri: 2016,
+  alamat: 'Jl. Kembang kertas no 24 Lowokwaru ',
   kota: 'Malang',
+  whatsapp: '0895412262949 ',
+  email: '',
+  jamOperasional: '24 Jam',
+  website: 'perkap.com',
   targetMarket: 'Panitia acara, Mahasiswa',
+  usp: '',
   toneOfVoice: 'santai',
-  kataHindari: ['Termurah']
+  kataKataKhas: [],
+  kataHindari: ['Termurah'],
+  cta: ['Klik link di BIO'],
+  dos: [],
+  donts: [],
+  // Field khusus sosmed — TIDAK boleh ikut ke knowledge base autoblog.
+  fbBusinessId: '517459111969934',
+  fbPageId: '336759133363437',
+  logoPath: 'logo/logo-1784332957109.png',
+  paletWarna: 'Base palette: #5AABDE',
+  hashtag: ['#sewaht'],
+  formatKonten: ['reels'],
+  frekuensiPosting: '3x sehari',
+  instagram: '@perkap_com',
+  detectedLocale: 'EN'
 };
 
 const PRODUCTS = [
@@ -272,4 +293,47 @@ test('folder bisnis bernama titik/underscore benar-benar terbaca dari disk', () 
     assert.strictEqual(profile.nama, nama);
     assert.strictEqual(products.length, 1);
   }
+});
+
+test('mapProfile memetakan identitas, kontak, dan gaya dari business asset', () => {
+  const kb = mapProfile(PROFILE);
+  assert.strictEqual(kb.tagline, 'Sewa Alat Panitia');
+  assert.strictEqual(kb.business_type, 'Jasa Rental');
+  assert.strictEqual(kb.founded_year, '2016', 'angka dijadikan teks agar sama dengan isian manual');
+  assert.strictEqual(kb.city, 'Malang');
+  assert.strictEqual(kb.hours, '24 Jam');
+  assert.strictEqual(kb.website, 'perkap.com');
+  assert.deepStrictEqual(kb.cta, ['Klik link di BIO']);
+});
+
+test('spasi berlebih di alamat dan whatsapp dipangkas', () => {
+  const kb = mapProfile(PROFILE);
+  assert.strictEqual(kb.address, 'Jl. Kembang kertas no 24 Lowokwaru');
+  assert.strictEqual(kb.whatsapp, '0895412262949');
+});
+
+test('field khusus sosmed TIDAK ikut ke knowledge base', () => {
+  const kb = mapProfile(PROFILE);
+  for (const k of ['fbBusinessId', 'fbPageId', 'logoPath', 'paletWarna', 'hashtag',
+                   'formatKonten', 'frekuensiPosting', 'instagram', 'detectedLocale']) {
+    assert.ok(!(k in kb), `${k} urusan sosmed, bukan artikel blog`);
+  }
+  assert.ok(!JSON.stringify(kb).includes('517459111969934'), 'id Facebook tidak boleh bocor');
+});
+
+test('profil kosong memberi bentuk lengkap, bukan field yang hilang', () => {
+  const kb = mapProfile({});
+  for (const k of ['tagline', 'business_type', 'founded_year', 'address', 'city',
+                   'whatsapp', 'email', 'hours', 'website', 'usp']) {
+    assert.strictEqual(kb[k], '', `${k} harus string kosong, bukan undefined`);
+  }
+  for (const k of ['signature_words', 'cta', 'dos', 'donts', 'avoid_words']) {
+    assert.deepStrictEqual(kb[k], [], `${k} harus array kosong`);
+  }
+});
+
+test('daftar membuang entri kosong dan memangkas spasi', () => {
+  const kb = mapProfile({ ...PROFILE, cta: ['  Pesan sekarang  ', '', null, '   '], dos: ['ramah'] });
+  assert.deepStrictEqual(kb.cta, ['Pesan sekarang']);
+  assert.deepStrictEqual(kb.dos, ['ramah']);
 });
