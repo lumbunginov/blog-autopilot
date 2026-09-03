@@ -2053,6 +2053,22 @@ function templateEditorClose() {
   document.getElementById('template-editor').style.display = 'none';
 }
 
+// Salin aturan gaya bawaan ke field Prompt Artikel supaya pemilik blog tidak
+// mulai dari kotak kosong. Isi yang sudah diketik TIDAK ditimpa diam-diam —
+// menimpa tanpa bertanya berarti pekerjaan yang hilang tanpa cara mengembalikan.
+function tplIsiAturanBawaan() {
+  const ta = document.getElementById('tpl-article');
+  if (!ta) return;
+  if (typeof ATURAN_BAWAAN_ARTIKEL !== 'string') {
+    toast('Aturan bawaan tidak termuat (js/aturan-bawaan.js).', 'error');
+    return;
+  }
+  if (ta.value.trim() && !confirm('Prompt Artikel sudah ada isinya.\n\nGanti dengan aturan bawaan? Isi yang sekarang akan hilang.')) return;
+  ta.value = ATURAN_BAWAAN_ARTIKEL;
+  ta.focus();
+  toast('Aturan bawaan dimuat. Silakan diedit sesuai kebutuhan.', 'success');
+}
+
 async function templateSave() {
   const body = {
     id: document.getElementById('tpl-id').value,
