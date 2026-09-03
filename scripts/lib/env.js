@@ -1,5 +1,6 @@
 'use strict';
 const fs = require('fs');
+const { sanitizeId } = require('./paths');
 
 // Tipe image_api yang tidak memerlukan API key.
 const NO_KEY_TYPES = new Set(['none', '']);
@@ -33,8 +34,14 @@ function loadDotEnv(filePath, env = process.env) {
   }
 }
 
+// Nama variabel diturunkan dari id yang SUDAH disanitasi, bukan dari masukan mentah.
+// Kalau tidak, "Perkap.com" membaca config dari folder "perkapcom" (configPath
+// menyanitasi di dalam) tapi mencari PERKAP.COM_WP_APP_PASSWORD — variabel yang
+// tak akan pernah ada, sehingga wpPasswordSet melapor false untuk tenant yang
+// password-nya justru sudah diset. Sanitasi di sini menutup seluruh pemanggil
+// sekaligus, bukan satu route saja.
 function envKeys(blogId) {
-  const prefix = String(blogId).toUpperCase().replace(/-/g, '_');
+  const prefix = sanitizeId(blogId).toUpperCase().replace(/-/g, '_');
   return {
     wpPassword: `${prefix}_WP_APP_PASSWORD`,
     imageKey: `${prefix}_IMAGE_API_KEY`

@@ -10,6 +10,23 @@ const cfg = () => ({
   image_api: { type: 'seedream' }
 });
 
+test('nama variabel disanitasi dulu — varian bentuk id memberi variabel yang sama', () => {
+  // Regresi: configPath() menyanitasi di dalam, jadi "Perkap.com" membaca folder
+  // "perkapcom". Kalau envKeys memakai id mentah, ia mencari PERKAP.COM_... yang
+  // tak pernah ada dan wpPasswordSet melapor false untuk tenant yang sudah diset.
+  const benar = 'PERKAPCOM_WP_APP_PASSWORD';
+  for (const id of ['perkapcom', 'Perkap.com', 'PERKAPCOM', '  perkapcom  ']) {
+    assert.strictEqual(envKeys(id).wpPassword, benar, `id ${JSON.stringify(id)}`);
+  }
+  assert.strictEqual(envKeys('Blog Saya!').wpPassword, 'BLOG_SAYA_WP_APP_PASSWORD');
+});
+
+test('resolveCredentials ikut memakai nama tersanitasi', () => {
+  const cfg = { wordpress: { url: 'https://x.com', username: 'u' }, image_api: { type: 'none' } };
+  const r = resolveCredentials('Perkap.com', cfg, { PERKAPCOM_WP_APP_PASSWORD: 'rahasia' });
+  assert.strictEqual(r.wordpress.app_password, 'rahasia');
+});
+
 test('nama variabel diturunkan dari id tenant', () => {
   assert.deepStrictEqual(envKeys('perkapcom'), {
     wpPassword: 'PERKAPCOM_WP_APP_PASSWORD',
