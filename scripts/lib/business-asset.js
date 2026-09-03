@@ -108,6 +108,16 @@ function mapProfile(profile) {
   };
 }
 
+// Jumlah pertanyaan FAQ = jumlah heading "### ". Dipakai untuk lencana di
+// dashboard; teks FAQ sendiri TIDAK pernah ikut tingkat ringkas.
+const FAQ_HEADING_RE = /^###\s+\S/gm;
+
+function hitungFaq(teks) {
+  const s = String(teks == null ? '' : teks);
+  if (!s.trim()) return 0;
+  return (s.match(FAQ_HEADING_RE) || []).length;
+}
+
 // Bentuk RINGKAS: tanpa konteks/faq. 143 KB konteks untuk 45 produk tidak
 // boleh ikut ke GET /api/config — ambil per produk lewat findProduct.
 function mapProducts(products, siteUrl) {
@@ -116,7 +126,10 @@ function mapProducts(products, siteUrl) {
   const internal_links = [];
   const out = list.map(p => {
     const name = String(p?.nama || '').trim();
-    const url = extractProductUrl(p?.konteks, siteUrl);
+    // URL yang diketik pemilik di form lebih otoritatif daripada yang ditambang
+    // dari markdown konteks. Ekstraksi tetap jadi jaring pengaman untuk 35
+    // produk yang URL-nya sudah benar tanpa pernah diketik ulang.
+    const url = String(p?.url || '').trim() || extractProductUrl(p?.konteks, siteUrl);
     if (url && !seen.has(url)) {
       seen.add(url);
       internal_links.push({ url, anchor: name });
@@ -126,7 +139,14 @@ function mapProducts(products, siteUrl) {
       name,
       url,
       price: String(p?.harga || '').trim(),
-      target_market: String(p?.targetMarket || '').trim()
+      target_market: String(p?.targetMarket || '').trim(),
+      // Ringkasan berukuran tetap: nama berkas, dua angka, satu boolean.
+      // Teks panjang (konteks, faq, troubleshooting, care) TIDAK pernah ke sini —
+      // 45 produk x ~3 KB akan membuat GET /api/config membengkak 143 KB.
+      image: String(p?.foto || '').trim(),
+      gallery_count: Array.isArray(p?.gallery) ? p.gallery.length : 0,
+      has_context: Boolean(String(p?.konteks || '').trim()),
+      faq_count: hitungFaq(p?.faq)
     };
   });
   return { products: out, internal_links };
@@ -179,5 +199,5 @@ function readBusinessAsset(root, businessId) {
 }
 
 module.exports = {
-  assertBusinessId, toneFrom, extractProductUrl, mapProfile, mapProducts, findProduct, readBusinessAsset
+  assertBusinessId, toneFrom, extractProductUrl, mapProfile, mapProducts, findProduct, readBusinessAsset, hitungFaq
 };

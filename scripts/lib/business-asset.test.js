@@ -5,7 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const {
-  assertBusinessId, toneFrom, extractProductUrl, mapProfile, mapProducts, findProduct, readBusinessAsset
+  assertBusinessId, toneFrom, extractProductUrl, mapProfile, mapProducts, findProduct, readBusinessAsset, hitungFaq
 } = require('./business-asset');
 
 const PROFILE = {
@@ -125,7 +125,7 @@ test('mapProducts membuat bentuk ringkas tanpa konteks dan faq', () => {
   const { products } = mapProducts(PRODUCTS, 'https://perkap.com');
   assert.strictEqual(products.length, 3);
   assert.deepStrictEqual(Object.keys(products[0]).sort(),
-    ['id', 'name', 'price', 'target_market', 'url']);
+    ['faq_count', 'gallery_count', 'has_context', 'id', 'image', 'name', 'price', 'target_market', 'url']);
   assert.strictEqual(products[0].name, 'Bel Cerdas Cermat Custom');
   assert.strictEqual(products[0].price, 'Rp 60.000 per hari');
 });
@@ -170,6 +170,74 @@ test('findProduct cocok lewat id maupun nama, tanpa peduli huruf besar-kecil', (
 
 test('findProduct cocok sebagian kalau tidak ada yang persis', () => {
   assert.strictEqual(findProduct(PRODUCTS, 'Bel Cerdas Cermat').id, 'bel-cerdas-cermat-custom');
+});
+
+test('mapProducts: url produk menang atas url yang ditambang dari konteks', () => {
+  const products = [{
+    id: 'a', nama: 'Produk A',
+    url: 'https://situs.test/dari-form/',
+    konteks: 'Link: https://situs.test/dari-konteks/'
+  }];
+  const hasil = mapProducts(products, 'https://situs.test');
+  assert.strictEqual(hasil.products[0].url, 'https://situs.test/dari-form/');
+  assert.deepStrictEqual(hasil.internal_links, [{ url: 'https://situs.test/dari-form/', anchor: 'Produk A' }]);
+});
+
+test('mapProducts: tanpa field url, ekstraksi dari konteks tetap jalan', () => {
+  const products = [{ id: 'a', nama: 'Produk A', konteks: 'Link: https://situs.test/dari-konteks/' }];
+  const hasil = mapProducts(products, 'https://situs.test');
+  assert.strictEqual(hasil.products[0].url, 'https://situs.test/dari-konteks/');
+});
+
+test('mapProducts: url kosong atau berisi spasi jatuh ke ekstraksi konteks', () => {
+  const products = [{ id: 'a', nama: 'A', url: '   ', konteks: 'https://situs.test/x/' }];
+  assert.strictEqual(mapProducts(products, 'https://situs.test').products[0].url, 'https://situs.test/x/');
+});
+
+test('mapProducts: ringkasan gambar dan konten berukuran tetap', () => {
+  const products = [{
+    id: 'a', nama: 'A', foto: 'f.png',
+    gallery: [{ id: 'g1', filename: 'g1.png' }, { id: 'g2', filename: 'g2.png' }],
+    konteks: 'ada isinya',
+    faq: '### Pertanyaan satu\njawab\n### Pertanyaan dua\njawab'
+  }];
+  const p = mapProducts(products, '').products[0];
+  assert.strictEqual(p.image, 'f.png');
+  assert.strictEqual(p.gallery_count, 2);
+  assert.strictEqual(p.has_context, true);
+  assert.strictEqual(p.faq_count, 2);
+});
+
+test('mapProducts: produk kosong memberi nilai ringkasan yang aman, bukan undefined', () => {
+  const p = mapProducts([{ id: 'a', nama: 'A' }], '').products[0];
+  assert.strictEqual(p.image, '');
+  assert.strictEqual(p.gallery_count, 0);
+  assert.strictEqual(p.has_context, false);
+  assert.strictEqual(p.faq_count, 0);
+});
+
+test('mapProducts: gallery yang bukan array dihitung nol, tidak melempar', () => {
+  const p = mapProducts([{ id: 'a', nama: 'A', gallery: 'rusak' }], '').products[0];
+  assert.strictEqual(p.gallery_count, 0);
+});
+
+test('mapProducts: ringkasan TIDAK memuat teks panjang', () => {
+  const products = [{ id: 'a', nama: 'A', konteks: 'x'.repeat(5000), faq: 'y'.repeat(5000),
+    troubleshooting: 'z'.repeat(5000), care: 'w'.repeat(5000) }];
+  const p = mapProducts(products, '').products[0];
+  for (const k of ['context', 'konteks', 'faq', 'troubleshooting', 'care', 'gallery']) {
+    assert.strictEqual(k in p, false, `field "${k}" tidak boleh ada di tingkat ringkas`);
+  }
+  assert.ok(JSON.stringify(p).length < 500, 'satu produk ringkas harus jauh di bawah 500 byte');
+});
+
+test('hitungFaq menghitung heading, bukan baris', () => {
+  assert.strictEqual(hitungFaq(''), 0);
+  assert.strictEqual(hitungFaq(null), 0);
+  assert.strictEqual(hitungFaq('teks tanpa heading sama sekali'), 0);
+  assert.strictEqual(hitungFaq('### Satu\nisi'), 1);
+  assert.strictEqual(hitungFaq('### Satu\nisi\n### Dua\nisi\n### Tiga'), 3);
+  assert.strictEqual(hitungFaq('## Bukan tiga pagar\n### Ini iya'), 1);
 });
 
 test('findProduct mengembalikan null kalau tidak ketemu', () => {
