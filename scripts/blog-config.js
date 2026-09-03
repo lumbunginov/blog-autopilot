@@ -25,8 +25,16 @@ const { makePaths } = require('./lib/paths');
 const { resolveKnowledgeBase, sourceType } = require('./lib/knowledge');
 const { readBusinessAsset, findProduct, extractProductUrl, mapProducts } = require('./lib/business-asset');
 const { matchProduct } = require('./lib/product-match');
+const { findTemplate } = require('./lib/template-store');
+const { buildVars, resolveVars } = require('./lib/template-vars');
+const { punyaRiset, resolveRiset } = require('./lib/riset');
+const { askOpenAI } = require('./lib/openai-text');
+const { envKeys, loadDotEnv } = require('./lib/env');
 
 const paths = makePaths(path.join(__dirname, '..'));
+// Kunci teks untuk blok {riset} hanya ada di .env. Subperintah lain tidak
+// membutuhkannya, tapi memuat di sini lebih murah daripada memuat bersyarat.
+loadDotEnv(path.join(__dirname, '..', '.env'));
 const id = paths.activeBlog();
 if (!id) {
   console.error('❌ Belum ada blog. Buka dashboard lalu buat satu, atau jalankan scripts/import-blog.js.');
@@ -88,6 +96,123 @@ if (arg === 'product') {
     gallery: Array.isArray(found.gallery) ? found.gallery : []
   }, null, 2));
   process.exit(0);
+}
+
+// Render template untuk satu rencana. Berbeda dari product-image yang selalu
+// keluar 0: riset yang gagal menghasilkan artikel yang diam-diam lebih miskin,
+// dan itu tidak terlihat di mana pun. Jadi gagalnya keras.
+if (arg === 'template') {
+  const planId = process.argv[3];
+  if (!planId) {
+    console.error('❌ Sebutkan id rencana: node scripts/blog-config.js template plan_123');
+    process.exit(1);
+  }
+
+  const keluar = (obj) => { console.log(JSON.stringify(obj, null, 2)); process.exit(0); };
+  const kosong = (warning) => keluar({
+    template_id: null, template_name: '', article_prompt: '', image_prompt: '',
+    meta_title: '', meta_desc: '', warning
+  });
+
+  let rencana;
+  try {
+    const data = JSON.parse(fs.readFileSync(paths.plansPath(id), 'utf-8'));
+    rencana = (data.plans || []).find(p => p.id === planId);
+  } catch (e) {
+    console.error(`❌ Rencana tidak terbaca: ${e.message}`);
+    process.exit(1);
+  }
+  if (!rencana) {
+    console.error(`❌ Rencana "${planId}" tidak ada.`);
+    process.exit(1);
+  }
+
+  // Rencana tanpa template BUKAN kegagalan: itu jalur normal untuk seluruh
+  // artikel yang sudah ada. Agen melanjutkan dengan aturan bawaannya.
+  if (!rencana.template_id) kosong(null);
+
+  const template = findTemplate(paths.templatesPath(id), rencana.template_id);
+  if (!template) {
+    kosong(`Template "${rencana.template_id}" tidak ada lagi. Rencana ini ditulis dengan aturan bawaan.`);
+  }
+
+  // Produk diambil dari field `product` rencana, TIDAK ditambang dari notes:
+  // notes berisi teks bebas dan menguraikannya berarti menebak.
+  let produk = null;
+  if (rencana.product && sourceType(cfg) === 'business_asset') {
+    const ba = cfg.knowledge_source.business_asset || {};
+    try {
+      const { products } = readBusinessAsset(ba.root, ba.business_id);
+      const found = findProduct(products, rencana.product);
+      if (found) {
+        produk = {
+          ...found,
+          // Prioritas URL sama dengan subperintah `product`: url yang diketik
+          // pemilik menang atas hasil tambang dari konteks.
+          url: String(found.url || '').trim() || extractProductUrl(found.konteks, cfg.wordpress?.url || '')
+        };
+      }
+    } catch (e) {
+      // Produk tidak terbaca tidak menggagalkan render: template masih berguna
+      // tanpa variabel produk, dan sebabnya dilaporkan lewat warning.
+      produk = null;
+    }
+  }
+
+  const { knowledge_base } = resolveKnowledgeBase(cfg);
+  const vars = buildVars(knowledge_base, rencana, produk);
+
+  const bidang = {
+    article_prompt: template.article_prompt || '',
+    image_prompt: template.image_prompt || '',
+    meta_title: template.meta_title_pattern || '',
+    meta_desc: template.meta_desc_pattern || ''
+  };
+
+  // Substitusi variabel dulu, riset belakangan: blok {riset} sering memuat
+  // {produkKonteks}, dan risetnya harus menerima konteks yang sudah terisi.
+  for (const k of Object.keys(bidang)) bidang[k] = resolveVars(bidang[k], vars);
+
+  const perluRiset = Object.values(bidang).some(punyaRiset);
+
+  const cetak = () => keluar({
+    template_id: template.id,
+    template_name: template.name,
+    ...bidang,
+    warning: (rencana.product && !produk)
+      ? `Produk "${rencana.product}" tidak ditemukan di business asset; variabel produk kosong.`
+      : null
+  });
+
+  if (!perluRiset) cetak();
+
+  // Konteks riset: profil bisnis + konteks produk bila ada. Tidak mengirim
+  // riwayat artikel — hubungan antar-artikel sudah ditangani articles-cache
+  // dan internal linking di lapisan lain.
+  const konteksRiset = [
+    `PROFIL BISNIS:`,
+    `- Nama: ${vars.namaBisnis}`,
+    `- Jenis usaha: ${vars.jenisUsaha || '-'}`,
+    `- USP: ${vars.usp || '-'}`,
+    `- Target market: ${vars.targetAudiens || '-'}`,
+    `- Tone of voice: ${vars.nada || '-'}`,
+    vars.produkNama ? `\nPRODUK: ${vars.produkNama}\n${vars.produkKonteks}` : ''
+  ].filter(Boolean).join('\n');
+
+  const kunciTeks = process.env[envKeys(id).textKey];
+  const ask = (prompt) => askOpenAI(kunciTeks, prompt);
+
+  (async () => {
+    for (const k of Object.keys(bidang)) {
+      bidang[k] = await resolveRiset(bidang[k], { ask, konteks: konteksRiset });
+    }
+    cetak();
+  })().catch(e => {
+    console.error(`❌ Riset gagal: ${e.message}`);
+    console.error(`   Artikel TIDAK ditulis. Isi ${envKeys(id).textKey} di .env, atau hapus blok {riset} dari template.`);
+    process.exit(1);
+  });
+  return;
 }
 
 // Cari foto referensi untuk artikel. SELALU keluar dengan kode 0 dan JSON
