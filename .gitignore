@@ -9,3 +9,4 @@ agent-queue.json
 *.log
 .playwright-mcp/
 build/
+tmp_*.json
