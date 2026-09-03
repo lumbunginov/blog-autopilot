@@ -7,7 +7,12 @@
   },
   "image_api": {
     "type": "gemini",
-    "_type_options": ["seedream", "gemini", "openai", "none"],
+    "_type_options": [
+      "seedream",
+      "gemini",
+      "openai",
+      "none"
+    ],
     "api_key": ""
   },
   "output": {
@@ -16,13 +21,23 @@
   },
   "workflow": {
     "language": "id",
-    "_language_options": ["id", "en", "ms", "other"],
+    "_language_options": [
+      "id",
+      "en",
+      "ms",
+      "other"
+    ],
     "auto_publish": false,
     "content_length": 1000,
     "default_category_id": null,
     "default_category_name": "",
     "auto_select_category": false,
-    "saved_categories": []
+    "saved_categories": [],
+    "site_timezone": "Asia/Jakarta",
+    "_site_timezone_note": "Nama zona IANA situs WordPress. Harus cocok dengan site_gmt_offset.",
+    "site_gmt_offset": 7,
+    "_site_gmt_offset_note": "Ukur di <url-situs>/wp-json/ pada field gmt_offset.",
+    "schedule_hour": 6
   },
   "knowledge_base": {
     "business_name": "Your Business Name",
@@ -33,7 +48,13 @@
     ],
     "target_audience": "Who your customers are (e.g., 'young professionals, 25-35 years old')",
     "tone": "professional",
-    "_tone_options": ["professional", "casual", "educational", "friendly", "authoritative"],
+    "_tone_options": [
+      "professional",
+      "casual",
+      "educational",
+      "friendly",
+      "authoritative"
+    ],
     "prohibited_topics": [],
     "internal_links": [
       {
