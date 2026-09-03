@@ -405,11 +405,17 @@ node scripts/audit-links.js
 
 Opsi:
 - `--blog <id>` — tenant tertentu (default: tenant aktif)
-- `--limit <n>` — crawl n post pertama saja (buat tes cepat)
+- `--limit <n>` — crawl n post pertama saja (buat tes cepat), `n` harus bilangan
+  bulat positif atau ditolak dengan exit bukan-nol
 
 Laporan mendarat di `data/blogs/{id}/audit/link-YYYY-MM-DD.md` (dibaca manusia)
 dan `.json` (dibaca script). Tidak ada perbaikan otomatis — lihat `docs/AGENDA.md`
 Fitur 7 untuk kenapa.
+
+`--limit` menghasilkan laporan di berkas TERPISAH (`link-YYYY-MM-DD-limitN.md`/`.json`)
+supaya tidak pernah menimpa laporan penuh, dan laporannya bertanda parsial di
+kepala berkas — angka "produk tak tertaut" dan "artikel tanpa gambar" di sana
+TIDAK sahih (crawl `--limit` melewati seluruh pages dan cuma sebagian posts).
 
 ---
 

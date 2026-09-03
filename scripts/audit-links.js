@@ -21,8 +21,8 @@ const fs = require('fs');
 const path = require('path');
 const { makePaths } = require('./lib/paths');
 const { extractLinks } = require('./lib/link-extract');
-const { produkTanpaTautan } = require('./lib/link-report');
 const { resolveKnowledgeBase } = require('./lib/knowledge');
+const { parseLimit, outputPaths, partialBanner, produkSection } = require('./lib/audit-report');
 
 const paths = makePaths(path.join(__dirname, '..'));
 
@@ -31,7 +31,13 @@ function arg(name, fallback) {
   const i = argv.indexOf(name);
   return i === -1 ? fallback : argv[i + 1];
 }
-const LIMIT = arg('--limit') ? parseInt(arg('--limit'), 10) : Infinity;
+let LIMIT;
+try {
+  LIMIT = parseLimit(arg('--limit'));
+} catch (e) {
+  console.error(`❌ ${e.message}`);
+  process.exit(1);
+}
 
 const blogId = arg('--blog') || paths.activeBlog();
 if (!blogId) {
@@ -55,8 +61,7 @@ const UA = 'Mozilla/5.0 (compatible; BlogAutopilotLinkAudit/1.0)';
 
 const today = new Date().toISOString().slice(0, 10);
 const auditDir = path.join(paths.blogDir(blogId), 'audit');
-const OUT = path.join(auditDir, `link-${today}.md`);
-const JSON_OUT = path.join(auditDir, `link-${today}.json`);
+const { md: OUT, json: JSON_OUT, partial: IS_PARTIAL } = outputPaths(auditDir, today, LIMIT);
 
 // ---------------------------------------------------------------- fetch posts
 
@@ -94,7 +99,7 @@ async function fetchAll(type) {
       process.stderr.write(`\n  ${type} page ${page}: ${lastErr.message}, retrying...`);
     }
 
-    if (res.status === 400) break; // sudah lewat halaman terakhir
+    if (res?.status === 400) break; // sudah lewat halaman terakhir
     if (lastErr) throw new Error(`${type} page ${page}: ${lastErr.message} after retries`);
     if (!res.ok) throw new Error(`${type} page ${page}: HTTP ${res.status}`);
     if (!batch || !batch.length) break;
@@ -229,6 +234,7 @@ async function mapLimit(items, limit, fn) {
   const lines = [];
   lines.push(`# Audit Tautan Internal — ${SITE}`);
   lines.push('');
+  if (IS_PARTIAL) lines.push(...partialBanner(LIMIT));
   lines.push(`- Dokumen di-crawl: **${sources.length}** (${posts.length} posts, ${pages.length} pages)`);
   lines.push(`- URL internal unik: **${urls.length}**`);
   lines.push(`- Mati (4xx): **${dead.length}**`);
@@ -265,24 +271,10 @@ async function mapLimit(items, limit, fn) {
   // mentah, karena mode business_asset menyimpan cadangan lama di sana) dengan
   // tautan yang benar-benar ditemukan saat crawl. Menjawab pertanyaan pemilik:
   // halaman produk mana yang tidak pernah mendapat tautan internal?
-  const { knowledge_base } = resolveKnowledgeBase(cfg);
   const urlTertaut = new Map();
   for (const [url, refs] of linkMap) urlTertaut.set(url, refs.length);
-  const produkTakTertaut = produkTanpaTautan(knowledge_base.products, urlTertaut);
-
-  lines.push(`- Produk tidak pernah ditautkan: **${produkTakTertaut.length}**`);
-  lines.push('');
-
-  if (produkTakTertaut.length) {
-    lines.push('## URL produk yang tidak pernah ditautkan');
-    lines.push('');
-    lines.push('| Produk | URL | Artikel menautkan |');
-    lines.push('|---|---|---|');
-    for (const p of produkTakTertaut) {
-      lines.push(`| ${p.name} | ${p.url || '(belum ada URL)'} | ${p.count === null ? '—' : p.count} |`);
-    }
-    lines.push('');
-  }
+  const { produkTakTertaut, lines: produkLines } = produkSection(resolveKnowledgeBase(cfg), urlTertaut);
+  lines.push(...produkLines);
 
   // Artikel tanpa gambar utama: featured_media === 0 berarti WordPress tidak
   // punya gambar unggulan terpasang untuk post/page ini.
@@ -327,6 +319,7 @@ async function mapLimit(items, limit, fn) {
   fs.writeFileSync(OUT, lines.join('\n'), 'utf8');
   fs.writeFileSync(JSON_OUT, JSON.stringify({
     summary: {
+      partial: IS_PARTIAL, limit: IS_PARTIAL ? LIMIT : null,
       documents: sources.length, urls: urls.length, dead: dead.length,
       inconclusive: inconclusive.length, redirected: redirected.length,
       produkTakTertaut: produkTakTertaut.length, tanpaGambar: tanpaGambar.length

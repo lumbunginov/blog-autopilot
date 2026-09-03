@@ -555,6 +555,11 @@ function renderProducts(arr, source) {
 
 function renderProductCards(arr, container) {
   pasangKlikKartuProduk(container);
+  // Ganti bisnis (dropdown + Save) tidak reload halaman, jadi cache lama
+  // (berkunci id produk saja) bisa nempel — dua bisnis gampang punya id sama
+  // (slugify "Sewa HT" -> "sewa-ht" di bisnis mana pun). Bersihkan tiap render
+  // ulang daftar supaya kartu bisnis baru tidak menampilkan detail bisnis lama.
+  cacheDetailProduk.clear();
   if (!arr.length) {
     container.innerHTML = '<div class="kb-kosong">Belum ada produk di business asset ini.</div>';
     return;
