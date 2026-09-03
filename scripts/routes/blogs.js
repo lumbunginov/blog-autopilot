@@ -3,10 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const { envKeys } = require('../lib/env');
 const { deepMerge, stripCredentials } = require('../lib/config-merge');
+const { sanitizeId } = require('../lib/paths');
 
 module.exports = function registerBlogs(app, deps) {
   const { paths } = deps;
-  const { sanitizeId } = require('../lib/paths');
 
   app.get('/api/blogs', (req, res) => {
     const blogs = paths.listBlogs().map(id => {
@@ -44,7 +44,7 @@ module.exports = function registerBlogs(app, deps) {
       if (!fs.existsSync(p)) return res.status(404).json({ error: 'Config tidak ditemukan' });
       const raw = JSON.parse(fs.readFileSync(p, 'utf-8'));
       const { clean } = stripCredentials(raw);
-      const credMarker = { wpPasswordSet: !!process.env[envKeys(req.params.id).wpPassword] };
+      const credMarker = { wpPasswordSet: !!process.env[envKeys(sanitizeId(req.params.id)).wpPassword] };
       res.json({ ...clean, _credentials: credMarker });
     } catch (e) { res.status(400).json({ error: e.message }); }
   });

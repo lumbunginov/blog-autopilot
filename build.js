@@ -25,8 +25,15 @@ const EXCLUDE = new Set([
   'package-lock.json',
   '.git',
   '.gitignore',
+  // Rahasia dan data hidup — JANGAN PERNAH masuk zip yang dibagikan.
+  '.env',
+  'data',
+  '.superpowers',
+  '.playwright-mcp',
 ]);
 const EXCLUDE_PATTERNS = [
+  /^\.env$/,                // .env asli; .env.example SENGAJA ikut (mendokumentasikan nama variabel)
+  /^\.env\.(?!example$).*$/, // .env.simpan, .env.local, dst — tapi bukan .env.example
   /^.*-config\.json$/,      // *-config.json (runtime settings)
   /^articles-cache\.json$/,
   /^article-plans\.json$/,

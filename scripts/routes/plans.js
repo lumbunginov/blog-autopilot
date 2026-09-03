@@ -3,31 +3,26 @@ const fs = require('fs');
 const { slugify, checkSlug, normalizeSlug } = require('../lib/slug-guard');
 const { readArticlesCache } = require('../lib/articles-cache');
 const { deepMerge } = require('../lib/config-merge');
+const { resolveBlog, requireBlog } = require('../lib/tenant');
 
 module.exports = function registerPlans(app, deps) {
   const { paths, broadcast } = deps;
 
-  function resolveBlog(req) {
-    const id = req.query.blog || req.body?.blog || paths.activeBlog();
-    if (!id) throw new Error('Belum ada blog. Buat dulu lewat POST /api/blogs.');
-    return id;
-  }
-
   function readPlans(plansFile) {
     if (!fs.existsSync(plansFile)) return { plans: [] };
     try { return JSON.parse(fs.readFileSync(plansFile, 'utf-8')); }
-    catch (e) { return { plans: [] }; }
+    catch (e) { console.error('Failed to parse plans file:', e.message); return { plans: [] }; }
   }
 
   app.get('/api/plans', (req, res) => {
-    try { res.json(readPlans(paths.plansPath(resolveBlog(req)))); }
-    catch (e) { res.status(400).json({ error: e.message }); }
+    try { res.json(readPlans(paths.plansPath(resolveBlog(req, paths)))); }
+    catch (e) { res.status(e.status || 400).json({ error: e.message }); }
   });
 
   app.post('/api/plans', (req, res) => {
     let blogId, plansFile;
-    try { blogId = resolveBlog(req); plansFile = paths.plansPath(blogId); }
-    catch (e) { return res.status(400).json({ error: e.message }); }
+    try { blogId = requireBlog(req, paths); plansFile = paths.plansPath(blogId); }
+    catch (e) { return res.status(e.status || 400).json({ error: e.message }); }
 
     const plan = req.body || {};
     if (!plan.keyword) return res.status(400).json({ error: 'keyword is required' });
@@ -71,8 +66,8 @@ module.exports = function registerPlans(app, deps) {
 
   app.delete('/api/plans', (req, res) => {
     let plansFile;
-    try { plansFile = paths.plansPath(resolveBlog(req)); }
-    catch (e) { return res.status(400).json({ error: e.message }); }
+    try { plansFile = paths.plansPath(requireBlog(req, paths)); }
+    catch (e) { return res.status(e.status || 400).json({ error: e.message }); }
 
     const { id } = req.body || {};
     if (!id) return res.status(400).json({ error: 'id is required' });

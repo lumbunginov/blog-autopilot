@@ -4,14 +4,13 @@ const cacheLib = require('../lib/articles-cache');
 const { basicAuth, httpPost } = require('../lib/wp-client');
 const wpSync = require('../lib/wp-sync');
 const { resolveCredentials } = require('../lib/env');
+const { resolveBlog: resolveBlogTenant } = require('../lib/tenant');
 
 module.exports = function registerArticles(app, deps) {
   const { paths } = deps;
 
   function resolveBlog(req) {
-    const id = req.query.blog || req.body?.blog || paths.activeBlog();
-    if (!id) throw new Error('Belum ada blog. Buat dulu lewat POST /api/blogs.');
-    return id;
+    return resolveBlogTenant(req, paths);
   }
 
   async function doFullSync(cfg, cachePath) {

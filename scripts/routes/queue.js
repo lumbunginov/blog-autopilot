@@ -1,14 +1,9 @@
 'use strict';
 const fs = require('fs');
+const { resolveBlog, requireBlog } = require('../lib/tenant');
 
 module.exports = function registerQueue(app, deps) {
   const { paths, broadcast } = deps;
-
-  function resolveBlog(req) {
-    const id = req.query.blog || req.body?.blog || paths.activeBlog();
-    if (!id) throw new Error('Belum ada blog. Buat dulu lewat POST /api/blogs.');
-    return id;
-  }
 
   function readQueue(queueFile) {
     if (!fs.existsSync(queueFile)) return { tasks: [] };
@@ -17,14 +12,14 @@ module.exports = function registerQueue(app, deps) {
   }
 
   app.get('/api/agent-queue', (req, res) => {
-    try { res.json(readQueue(paths.queuePath(resolveBlog(req)))); }
-    catch (e) { res.status(400).json({ error: e.message }); }
+    try { res.json(readQueue(paths.queuePath(resolveBlog(req, paths)))); }
+    catch (e) { res.status(e.status || 400).json({ error: e.message }); }
   });
 
   app.post('/api/agent-queue', (req, res) => {
     let queueFile;
-    try { queueFile = paths.queuePath(resolveBlog(req)); }
-    catch (e) { return res.status(400).json({ error: e.message }); }
+    try { queueFile = paths.queuePath(requireBlog(req, paths)); }
+    catch (e) { return res.status(e.status || 400).json({ error: e.message }); }
 
     const task = req.body || {};
     if (!task.type || !task.input) return res.status(400).json({ error: 'type and input are required' });
@@ -47,8 +42,8 @@ module.exports = function registerQueue(app, deps) {
 
   app.patch('/api/agent-queue', (req, res) => {
     let queueFile;
-    try { queueFile = paths.queuePath(resolveBlog(req)); }
-    catch (e) { return res.status(400).json({ error: e.message }); }
+    try { queueFile = paths.queuePath(requireBlog(req, paths)); }
+    catch (e) { return res.status(e.status || 400).json({ error: e.message }); }
 
     const update = req.body || {};
     if (!update.id) return res.status(400).json({ error: 'id is required' });

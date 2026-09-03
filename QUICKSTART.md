@@ -43,7 +43,7 @@ Ganti `namablog` dengan id pendek (huruf/angka/strip). Ini jadi tenant aktif oto
 ```bash
 node scripts/import-blog.js "<folder-instalasi-lama>" namablog
 ```
-Script ini mengkopi config + cache + plans, lalu **mencetak dua baris ke layar** — tempelkan ke `.env` (kredensial TIDAK ditulis otomatis ke file manapun):
+Script ini mengkopi config + cache + plans, lalu **mencetak baris kredensial yang ditemukan ke layar** — tempelkan ke `.env` (kredensial TIDAK ditulis otomatis ke file manapun):
 ```
 NAMABLOG_WP_APP_PASSWORD=...
 NAMABLOG_IMAGE_API_KEY=...

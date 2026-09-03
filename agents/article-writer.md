@@ -113,12 +113,15 @@ If `knowledge_base.custom_entries` has entries, treat each as additional busines
 
 ### Internal Linking dari Cache Lokal
 
-Sebelum menulis artikel, cek apakah file `articles-cache.json` ada di project root (direktori kerja saat ini):
+Sebelum menulis artikel, cek apakah `articles-cache.json` ada di folder tenant aktif (`data/blogs/{id}/articles-cache.json`):
 
 ```javascript
 // Cara membaca cache
 const fs = require('fs');
-const cachePath = require('path').join(process.cwd(), '.claude/skills/blog-autopilot/articles-cache.json');
+const { execSync } = require('child_process');
+const skillDir = require('path').join(process.cwd(), '.claude/skills/blog-autopilot');
+const blogId = execSync('node scripts/blog-config.js --id', { cwd: skillDir }).toString().trim();
+const cachePath = require('path').join(skillDir, 'data/blogs', blogId, 'articles-cache.json');
 if (fs.existsSync(cachePath)) {
   const cache = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
   const related = cache.articles

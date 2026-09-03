@@ -4,6 +4,7 @@ const path = require('path');
 const { basicAuth, fetchCategories } = require('../lib/wp-client');
 const { resolveCredentials, envKeys } = require('../lib/env');
 const { deepMerge, stripCredentials } = require('../lib/config-merge');
+const { resolveBlog, requireBlog } = require('../lib/tenant');
 
 function withSeoDefaults(cfg) {
   if (!cfg.seo_plugin) {
@@ -24,15 +25,9 @@ function withSeoDefaults(cfg) {
 module.exports = function registerConfig(app, deps) {
   const { paths } = deps;
 
-  function resolveBlog(req) {
-    const id = req.query.blog || req.body?.blog || paths.activeBlog();
-    if (!id) throw new Error('Belum ada blog. Buat dulu lewat POST /api/blogs.');
-    return id;
-  }
-
   app.get('/api/config', (req, res) => {
     try {
-      const blogId = resolveBlog(req);
+      const blogId = resolveBlog(req, paths);
       const configFile = paths.configPath(blogId);
       const credMarker = { wpPasswordSet: !!process.env[envKeys(blogId).wpPassword] };
       if (fs.existsSync(configFile)) {
@@ -58,8 +53,7 @@ module.exports = function registerConfig(app, deps) {
 
   app.post('/api/config', (req, res) => {
     try {
-      const configFile = paths.configPath(resolveBlog(req));
-      fs.mkdirSync(path.dirname(configFile), { recursive: true });
+      const configFile = paths.configPath(requireBlog(req, paths));
       const stored = fs.existsSync(configFile) ? JSON.parse(fs.readFileSync(configFile, 'utf-8')) : {};
       const { clean, ignored } = stripCredentials(req.body);
       const merged = deepMerge(stored, clean);
@@ -70,14 +64,14 @@ module.exports = function registerConfig(app, deps) {
       }
       res.json(out);
     } catch (e) {
-      res.status(400).json({ error: e.message });
+      res.status(e.status || 400).json({ error: e.message });
     }
   });
 
   app.get('/api/categories', async (req, res) => {
     let cfg;
     try {
-      const blogId = resolveBlog(req);
+      const blogId = resolveBlog(req, paths);
       const configFile = paths.configPath(blogId);
       if (!fs.existsSync(configFile)) {
         return res.status(400).json({ error: 'Config not found. Save your WordPress credentials first.' });

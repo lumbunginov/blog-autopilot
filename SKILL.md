@@ -408,7 +408,15 @@ If input is a number → use as `post_id`. If it's a slug → fetch by slug firs
 # By post_id
 node -e "
 const https = require('https');
-const auth = Buffer.from('USERNAME:PASSWORD').toString('base64');
+const { loadDotEnv, envKeys } = require('./.claude/skills/blog-autopilot/scripts/lib/env');
+loadDotEnv('./.claude/skills/blog-autopilot/.env');
+const blogId = 'BLOG_ID';
+const wpPassword = process.env[envKeys(blogId).wpPassword];
+if (!wpPassword) {
+  console.error('ERROR:' + envKeys(blogId).wpPassword + ' belum diset di .env');
+  process.exit(1);
+}
+const auth = Buffer.from('USERNAME:' + wpPassword).toString('base64');
 https.get({ hostname: 'WPURL_HOST', path: '/wp-json/wp/v2/posts/POST_ID', headers: { Authorization: 'Basic ' + auth } }, res => {
   let d=''; res.on('data',c=>d+=c);
   res.on('end',()=>{
@@ -476,7 +484,15 @@ Fetch the current raw post content, then insert a `<figure>` block after the fir
 ```bash
 node -e "
 const https = require('https');
-const auth = Buffer.from('USERNAME:PASSWORD').toString('base64');
+const { loadDotEnv, envKeys } = require('./.claude/skills/blog-autopilot/scripts/lib/env');
+loadDotEnv('./.claude/skills/blog-autopilot/.env');
+const blogId = 'BLOG_ID';
+const wpPassword = process.env[envKeys(blogId).wpPassword];
+if (!wpPassword) {
+  console.error('ERROR:' + envKeys(blogId).wpPassword + ' belum diset di .env');
+  process.exit(1);
+}
+const auth = Buffer.from('USERNAME:' + wpPassword).toString('base64');
 const imageUrl = 'IMAGE_URL';
 const mediaId = MEDIA_ID;
 const altText = 'ALT_TEXT';
