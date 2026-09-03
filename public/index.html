@@ -458,6 +458,109 @@
             <input type="text" id="kb-audience" placeholder="e.g., event organizers, newlyweds, SME owners who need AV equipment for events">
           </div>
         </div>
+
+        <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:14px;">
+          <div class="form-group">
+            <label>Tagline <span class="hint">slogan singkat</span></label>
+            <input type="text" id="kb-tagline" placeholder="e.g. Sewa Alat Panitia">
+          </div>
+          <div class="form-group">
+            <label>Jenis Usaha</label>
+            <input type="text" id="kb-type" placeholder="e.g. Jasa Rental, Toko Online">
+          </div>
+          <div class="form-group">
+            <label>Tahun Berdiri</label>
+            <input type="text" id="kb-founded" placeholder="e.g. 2016">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:14px;">
+          <label>Keunggulan (USP) <span class="hint">apa yang membedakanmu dari pesaing</span></label>
+          <input type="text" id="kb-usp" placeholder="e.g. Stok ready saat alat lain habis, antar 24 jam">
+        </div>
+      </div>
+    </div>
+
+    <!-- Kontak & Lokasi -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📍 Kontak &amp; Lokasi</h3>
+        <span class="badge badge-green">Dipakai untuk SEO lokal</span>
+      </div>
+      <div class="card-body">
+        <p style="font-size:13px; color:var(--text-secondary); margin-bottom:14px;">
+          Penulis artikel memakai kota dan alamat untuk artikel berbasis lokasi, dan kontak untuk penutup artikel.
+        </p>
+        <div class="form-grid" style="display:grid; grid-template-columns:2fr 1fr; gap:14px;">
+          <div class="form-group">
+            <label>Alamat</label>
+            <input type="text" id="kb-address" placeholder="e.g. Jl. Kembang Kertas no 24 Lowokwaru">
+          </div>
+          <div class="form-group">
+            <label>Kota</label>
+            <input type="text" id="kb-city" placeholder="e.g. Malang">
+          </div>
+        </div>
+        <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:14px;">
+          <div class="form-group">
+            <label>WhatsApp</label>
+            <input type="text" id="kb-whatsapp" placeholder="e.g. 08123456789">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="text" id="kb-email" placeholder="e.g. halo@bisnismu.com">
+          </div>
+          <div class="form-group">
+            <label>Jam Operasional</label>
+            <input type="text" id="kb-hours" placeholder="e.g. 24 Jam">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:14px;">
+          <label>Website</label>
+          <input type="text" id="kb-website" placeholder="e.g. bisnismu.com">
+        </div>
+      </div>
+    </div>
+
+    <!-- Gaya Menulis -->
+    <div class="card">
+      <div class="card-header">
+        <h3>✍️ Gaya Menulis</h3>
+        <span class="badge badge-green">Optional</span>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label>Kata Khas <span class="hint">kata/frasa yang sering dipakai — Enter untuk menambah</span></label>
+          <div class="tag-container" id="signature-tags" onclick="focusTagInput('signature-input')">
+            <input class="tag-input" id="signature-input" placeholder="Ketik lalu Enter..." onkeydown="addTag(event, 'signature')">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:14px;">
+          <label>Kata Dihindari <span class="hint">jangan dipakai di artikel — topiknya tetap boleh</span></label>
+          <div class="tag-container" id="avoid-tags" onclick="focusTagInput('avoid-input')">
+            <input class="tag-input" id="avoid-input" placeholder="Ketik lalu Enter..." onkeydown="addTag(event, 'avoid')">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:14px;">
+          <label>Call to Action <span class="hint">ajakan di penutup artikel</span></label>
+          <div class="tag-container" id="cta-tags" onclick="focusTagInput('cta-input')">
+            <input class="tag-input" id="cta-input" placeholder="Ketik lalu Enter..." onkeydown="addTag(event, 'cta')">
+          </div>
+        </div>
+        <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px;">
+          <div class="form-group">
+            <label>Dos <span class="hint">yang sebaiknya dilakukan</span></label>
+            <div class="tag-container" id="dos-tags" onclick="focusTagInput('dos-input')">
+              <input class="tag-input" id="dos-input" placeholder="Ketik lalu Enter..." onkeydown="addTag(event, 'dos')">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Donts <span class="hint">yang harus dihindari</span></label>
+            <div class="tag-container" id="donts-tags" onclick="focusTagInput('donts-input')">
+              <input class="tag-input" id="donts-input" placeholder="Ketik lalu Enter..." onkeydown="addTag(event, 'donts')">
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

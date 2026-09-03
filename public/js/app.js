@@ -83,6 +83,7 @@ function populateForm(c) {
   renderProducts(c.knowledge_base?.products || []);
   renderLinks(c.knowledge_base?.internal_links || []);
   renderCustomEntries(c.knowledge_base?.custom_entries || []);
+  isiProfilLengkap(c.knowledge_base || {});
   populateKnowledgeSource(c);
   // SEO Plugin
   const sp = c.seo_plugin || {};
@@ -155,7 +156,8 @@ function collectForm() {
       tone: selectedTone,
       prohibited_topics: prohibited,
       internal_links: links,
-      custom_entries: collectCustomEntries()
+      custom_entries: collectCustomEntries(),
+      ...kumpulkanProfilLengkap()
     },
     knowledge_source: collectKnowledgeSource(),
     seo_plugin: {
@@ -492,7 +494,10 @@ async function wizardSave() {
     image_api: { type: imgType, api_key: imgKey },
     output: config.output || { articles_dir: './articles', images_dir: './images' },
     workflow: config.workflow || { language: 'id', auto_publish: false, content_length: 1000, auto_select_category: false, saved_categories: [] },
-    knowledge_base: config.knowledge_base || { business_name: '', business_description: '', products: [], target_audience: '', tone: 'professional', prohibited_topics: [], internal_links: [] }
+    // Bentuk lengkap knowledge_base dijaga server (EMPTY_KB di lib/knowledge.js).
+    // Menyalin daftar field ke sini cuma membuat dua sumber kebenaran yang pasti
+    // menyimpang — kirim apa adanya, atau biarkan server yang mengisi.
+    knowledge_base: config.knowledge_base || {}
   };
 
   try {
@@ -1623,6 +1628,52 @@ loadConfig();
 initSSE();
 loadBlogs();
 
+// ==================== PROFIL BISNIS LENGKAP ====================
+// Peta id elemen -> nama field knowledge_base. Satu tempat supaya pengisian
+// dan pengumpulan tidak bisa menyimpang satu sama lain.
+const FIELD_PROFIL_TEKS = {
+  'kb-tagline': 'tagline',
+  'kb-type': 'business_type',
+  'kb-founded': 'founded_year',
+  'kb-usp': 'usp',
+  'kb-address': 'address',
+  'kb-city': 'city',
+  'kb-whatsapp': 'whatsapp',
+  'kb-email': 'email',
+  'kb-hours': 'hours',
+  'kb-website': 'website'
+};
+const FIELD_PROFIL_TAG = {
+  signature: 'signature_words',
+  avoid: 'avoid_words',
+  cta: 'cta',
+  dos: 'dos',
+  donts: 'donts'
+};
+
+function isiProfilLengkap(kb) {
+  for (const [id, field] of Object.entries(FIELD_PROFIL_TEKS)) setVal(id, kb[field]);
+  for (const [tipe, field] of Object.entries(FIELD_PROFIL_TAG)) renderTags(tipe, kb[field] || []);
+}
+
+function renderTags(tipe, arr) {
+  const container = document.getElementById(tipe + '-tags');
+  if (!container) return;
+  container.querySelectorAll('.tag').forEach(t => t.remove());
+  (Array.isArray(arr) ? arr : []).forEach(v => addTagItem(tipe, v));
+}
+
+function bacaTags(tipe) {
+  return [...document.querySelectorAll(`#${tipe}-tags .tag`)].map(t => t.dataset.value);
+}
+
+function kumpulkanProfilLengkap() {
+  const out = {};
+  for (const [id, field] of Object.entries(FIELD_PROFIL_TEKS)) out[field] = getVal(id);
+  for (const [tipe, field] of Object.entries(FIELD_PROFIL_TAG)) out[field] = bacaTags(tipe);
+  return out;
+}
+
 // ==================== SUMBER KNOWLEDGE BASE ====================
 function ksCurrentType() {
   return document.querySelector('#ks-type-group input:checked')?.value || 'manual';
@@ -1651,6 +1702,31 @@ function applyKnowledgeReadonly(readonly) {
     else if (el.type === 'radio' || el.type === 'checkbox') el.disabled = readonly;
     else { el.readOnly = readonly; el.disabled = readonly; }
   });
+  // Field kosong yang terkunci: sembunyikan placeholder-nya. Contoh isian pada
+  // kolom yang tidak bisa diketik membuat user mengira ia boleh mengisinya.
+  page.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
+    if (el.closest('#ks-type-group') || el.closest('#ks-ba-fields')) return;
+    if (readonly) {
+      if (el.dataset.phAsli === undefined) el.dataset.phAsli = el.placeholder;
+      el.placeholder = el.value ? '' : '—';
+    } else if (el.dataset.phAsli !== undefined) {
+      el.placeholder = el.dataset.phAsli;
+    }
+  });
+  // Kotak tag: input pengetiknya disembunyikan, bukan sekadar dimatikan.
+  page.querySelectorAll('.tag-container').forEach(box => {
+    const inp = box.querySelector('.tag-input');
+    if (inp) inp.style.display = readonly ? 'none' : '';
+    if (readonly && !box.querySelector('.tag') && !box.querySelector('.ks-kosong')) {
+      const span = document.createElement('span');
+      span.className = 'ks-kosong';
+      span.style.cssText = 'color:var(--text-secondary); font-size:13px;';
+      span.textContent = '—';
+      box.appendChild(span);
+    }
+    if (!readonly) box.querySelectorAll('.ks-kosong').forEach(x => x.remove());
+  });
+
   const scrapeCard = document.getElementById('scrape-url')?.closest('.card');
   if (scrapeCard) scrapeCard.style.display = readonly ? 'none' : '';
   // Tombol Save TETAP hidup: ia satu-satunya jalan menyimpan knowledge_source
