@@ -11,7 +11,7 @@ const path = require('path');
 // jadi tak pernah ketemu. Yang dibutuhkan di sini cuma penolakan traversal.
 function assertBusinessId(raw) {
   const s = String(raw == null ? '' : raw).trim();
-  if (!s || s.includes('..') || s.includes('/') || s.includes('\\') || s.includes('\0')) {
+  if (!s || s === '.' || s.includes('..') || s.includes('/') || s.includes('\\') || s.includes('\0')) {
     throw new Error(s
       ? `ID business asset tidak valid: "${raw}"`
       : 'Bisnis belum dipilih. Tekan "Muat" lalu pilih salah satu di dropdown Bisnis.');

@@ -239,7 +239,7 @@ test('nama folder bisnis yang sah dipakai apa adanya, tidak di-mangling', () => 
 test('assertBusinessId menolak traversal dan masukan cacat', () => {
   const B = String.fromCharCode(92);
   const NUL = String.fromCharCode(0);
-  for (const n of ['../rahasia', '..' + B + 'x', 'a/b', 'a' + B + 'b', 'x' + NUL + 'y']) {
+  for (const n of ['../rahasia', '..' + B + 'x', 'a/b', 'a' + B + 'b', 'x' + NUL + 'y', '.', '..']) {
     assert.throws(() => assertBusinessId(n), /tidak valid/i, `seharusnya ditolak: ${JSON.stringify(n)}`);
   }
 });
@@ -255,6 +255,10 @@ test('bisnis yang belum dipilih memberi petunjuk, bukan istilah internal', () =>
       return true;
     }, `seharusnya ditolak: ${JSON.stringify(n)}`);
   }
+});
+
+test('nama sah yang mengandung titik tetap lolos — hanya "." dan ".." yang ditolak', () => {
+  for (const n of ['karva.id', 'toko.', '.hidden-ish']) assert.strictEqual(assertBusinessId(n), n);
 });
 
 test('folder bisnis bernama titik/underscore benar-benar terbaca dari disk', () => {
