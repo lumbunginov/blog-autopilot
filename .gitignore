@@ -10,3 +10,4 @@ agent-queue.json
 .playwright-mcp/
 build/
 tmp_*.json
+.superpowers/
