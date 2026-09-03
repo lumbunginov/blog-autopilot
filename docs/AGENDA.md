@@ -6,25 +6,38 @@ Antrean setelah refactor Fitur 1–5 selesai
 Urutan sudah disusun dari yang paling ringan. Tiap fitur brainstorm + spec sendiri
 sebelum dikerjakan — jangan langsung implementasi dari daftar ini.
 
-## 6. Reference image produk
+## 6. Reference image produk — SELESAI (2026-09-03)
 
-Gambar dihasilkan dari foto produk asli, bukan hanya dari prompt teks.
+Dikerjakan lewat: `docs/superpowers/specs/2026-09-03-reference-image-dan-audit-link-design.md`.
 
-- Sumber pola: `Perkap_com/project/article/.claude/skills/gen-image/` (Seedream 4.5,
-  reference image di-encode base64 ke request)
-- Yang baru: folder `data/blogs/{id}/reference/{produk}/` per tenant + pemetaan
-  produk → folder, dan `context.md` opsional per produk
-- Perkap sudah punya 20+ folder referensi di `Content/Article/image/reference/`
-- Kenapa relatif mudah: pipeline Seedream sudah jalan di autoblog; yang ditambah cuma
-  pencarian file referensi
+Gambar produk (`found.foto` / `found.gallery`, sudah ada di Business Asset) dikirim
+sebagai reference image ke Seedream — lihat `agents/image-generator.md` Step 0 dan
+`node scripts/blog-config.js product-image "<judul artikel>"`. Tidak ada folder referensi
+baru di autoblog: sumber foto satu-satunya adalah Business Asset.
 
-## 7. Audit + perbaikan internal link
+Yang SENGAJA tidak dikerjakan: folder legacy `Content/Article/image/reference/` (20+
+folder Perkap) ditinggalkan begitu saja — Business Asset sudah jadi satu-satunya sumber
+foto, memindahkan folder itu cuma menduplikasi data yang sudah ada di tempat lain.
 
-- Sumber: `post-article/scripts/audit-internal-links.js`, `suggest-link-fixes.js`,
-  `apply-link-fixes.js`, `apply-link-fixes-elementor.js`
-- Butuh peta produk → URL per tenant (di autoblog sudah ada
-  `knowledge_base.internal_links`, tinggal diperluas)
-- Sekalian: `audit-featured-media.js` (artikel tanpa featured image)
+## 7. Audit internal link — SELESAI (2026-09-03)
+
+Dikerjakan lewat: `docs/superpowers/specs/2026-09-03-reference-image-dan-audit-link-design.md`.
+
+`node scripts/audit-links.js` (opsi `--blog <id>`, `--limit <n>`) crawl semua post + page
+terbit, cek tiap URL internal (mati/redirect/ok), dan cocokkan dengan produk yang belum
+pernah ditautkan. Laporan mendarat di `data/blogs/{id}/audit/link-YYYY-MM-DD.md` + `.json`.
+Audit ini baca-saja — tidak menulis apa pun ke WordPress.
+
+Hasil audit penuh pertama (perkap.com, 2026-09-03): 663 dokumen (587 post + 76 page)
+di-crawl, 365 URL internal unik, **0 tautan mati**, 0 tak pasti, 37 redirect, 48 artikel
+tanpa gambar utama, 10 produk tak pernah ditautkan (kesepuluhnya memang belum punya URL).
+
+Yang SENGAJA tidak dikerjakan dari rencana awal:
+- **Perbaikan tautan otomatis** (`suggest-link-fixes.js`, `apply-link-fixes.js`) —
+  menunggu keputusan setelah laporan pertama ini benar-benar dibaca. Audit tetap
+  baca-saja sampai ada keputusan itu.
+- **Unggah gambar di mode manual** — butuh penyimpanan gambar tersendiri di autoblog
+  yang belum ada; mode manual sekarang tetap tanpa reference image.
 
 ## 8. Product knowledge — SELESAI (2026-09-03)
 

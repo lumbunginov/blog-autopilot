@@ -13,7 +13,10 @@ Given a keyword and business context, generate **5 distinct article ideas**. Eac
   - `business_name` / `business_description` — what this business actually does
   - `products` — their offerings (mention these naturally in ideas). Daftarnya bisa
     panjang (puluhan produk kalau bersumber dari Business Asset) — pilih yang relevan
-    dengan keyword, jangan menyebut semuanya.
+    dengan keyword, jangan menyebut semuanya. Tiap produk juga punya `has_context`,
+    `faq_count`, `gallery_count` — produk dengan `has_context: true` dan `faq_count` besar
+    adalah kandidat artikel yang lebih kaya (ada spesifikasi/FAQ nyata untuk dibahas,
+    bukan cuma nama dan harga).
   - `target_audience` — who they serve
   - `tone` — how they communicate
   - `city` — kota bisnis. Ide artikel berbasis lokasi memakai ini, bukan tebakan.

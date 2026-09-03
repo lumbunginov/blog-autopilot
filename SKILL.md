@@ -26,6 +26,7 @@ Read the user's input and route to the right handler:
 | `/blog-autopilot write [keyword]` | → **[WRITE]** no posting |
 | `/blog-autopilot post [filepath]` | → **[POST]** existing file |
 | `/blog-autopilot fix-image [post_id]` | → **[FIX-IMAGE]** repair missing/failed image |
+| `/blog-autopilot audit-links` | → **[AUDIT-LINKS]** periksa tautan internal semua artikel terbit |
 | `/blog-autopilot generate [input]` | → **[GENERATE]** batch planner via natural language |
 | `/blog-autopilot [keyword]` | → **[FULL WORKFLOW]** |
 
@@ -208,6 +209,11 @@ REPAIR / FIX
     → Generate + upload + insert gambar ke artikel yang belum punya gambar
     → Contoh: /blog-autopilot fix-image 11282
 
+AUDIT
+  /blog-autopilot audit-links
+    → Periksa tautan internal semua artikel terbit (baca-saja, beberapa menit)
+    → Laporan: data/blogs/{id}/audit/link-YYYY-MM-DD.md
+
 COMPANION MODE
   /blog-autopilot
     → Buka dashboard + masuk companion mode (pantau queue otomatis)
@@ -383,6 +389,27 @@ Setelah semua artikel selesai diproses:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Cek hasil di: http://localhost:3847
 ```
+
+---
+
+## [AUDIT-LINKS] — Periksa tautan internal semua artikel terbit
+
+Baca-saja: tidak menulis apa pun ke WordPress. Crawl semua post + page terbit,
+kumpulkan URL internal, cek satu-satu (mati/redirect/ok), dan cocokkan dengan
+produk yang belum pernah ditautkan. Untuk ratusan artikel ini makan waktu
+beberapa menit.
+
+```bash
+node scripts/audit-links.js
+```
+
+Opsi:
+- `--blog <id>` — tenant tertentu (default: tenant aktif)
+- `--limit <n>` — crawl n post pertama saja (buat tes cepat)
+
+Laporan mendarat di `data/blogs/{id}/audit/link-YYYY-MM-DD.md` (dibaca manusia)
+dan `.json` (dibaca script). Tidak ada perbaikan otomatis — lihat `docs/AGENDA.md`
+Fitur 7 untuk kenapa.
 
 ---
 

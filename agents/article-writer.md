@@ -153,16 +153,25 @@ Kalau artikel yang ditulis membahas satu produk tertentu, ambil detailnya:
 node .claude/skills/blog-autopilot/scripts/blog-config.js product "Sewa HT"
 ```
 
-Hasilnya: `{ id, name, price, url, target_market, context, faq }`.
+Hasilnya: `{ id, name, price, url, target_market, context, faq, troubleshooting, care, image, gallery }`.
 
 - `context` — spesifikasi, varian, cara kerja. Pakai untuk bagian teknis artikel.
 - `faq` — pertanyaan yang benar-benar sering ditanya pembeli. Boleh diangkat jadi bagian
   FAQ di artikel, tapi tulis ulang dengan gaya artikel, jangan disalin mentah.
+- `troubleshooting` — masalah umum + solusinya. Berguna untuk artikel "cara mengatasi"
+  atau bagian FAQ tambahan.
+- `care` — perawatan/penggunaan sehari-hari. Berguna untuk artikel tips pemakaian.
 - `price` — harga asli. Sebutkan kalau relevan; jangan mengarang harga sendiri.
+- `image`, `gallery` — untuk keperluan generator gambar (lihat `agents/image-generator.md`),
+  bukan untuk ditulis ulang jadi teks artikel.
 
 Perintah ini hanya bekerja kalau knowledge base bersumber dari Business Asset. Kalau ia
 menjawab bahwa sumbernya bukan Business Asset, lanjutkan menulis dengan `knowledge_base`
 yang ada — itu bukan kegagalan.
+
+**Kalau `url` produk kosong** — jangan mengarang tautan. Tulis nama produknya tanpa link.
+Menautkan ke URL karangan menghasilkan tautan mati, persis yang ditemukan audit
+(`node scripts/audit-links.js`).
 
 ### Profil Bisnis: Lokasi, Kontak, Gaya
 
