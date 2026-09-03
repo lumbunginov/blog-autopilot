@@ -57,15 +57,33 @@ Lalu kirim fotonya bersama permintaan (bagian `payload.image` di Step 2).
 
 ## Step 1: Craft the Image Prompt
 
-**Kalau rencana memakai template**, jalankan lebih dulu:
+**Kalau `image_prompt` sudah dioper kepadamu** (agen penulis artikel berjalan
+lebih dulu dan sudah memanggil subperintah `template`), **pakai itu** dan JANGAN
+memanggil perintahnya lagi. Blok `{riset}` sengaja tidak di-cache: panggilan
+kedua berarti panggilan OpenAI berbayar kedua, dan hasil risetnya beda dari yang
+dipakai artikelnya.
+
+Hanya kalau kamu **tidak** diberi `image_prompt` sama sekali, panggil sendiri:
 
 ```bash
 node .claude/skills/blog-autopilot/scripts/blog-config.js template "{PLAN_ID}"
 ```
 
-Kalau `image_prompt` terisi, **pakai itu sebagai dasar prompt** — jangan menyusun
-adegan dari nol. Kalau kosong atau `template_id: null`, susun sendiri dengan
-formula di bawah.
+`plan_id` yang tidak dioper bisa kamu cari sendiri di
+`data/blogs/{BLOG_ID}/article-plans.json`: cocokkan `keyword` atau `slug`
+rencana dengan artikel ini, `id`-nya adalah `plan_id`. Tidak ada rencana yang
+cocok = **jalur normal, bukan galat**; langsung pakai formula di bawah.
+
+Baca keluarannya begini:
+
+- Perintah keluar dengan kode **1** → riset gagal, dan artikelnya pun TIDAK
+  ditulis. **JANGAN membuat gambar.** Laporkan pesan galatnya dan berhenti —
+  gambar untuk artikel yang tidak ada hanya menghabiskan kuota.
+- `warning` terisi (entah dari keluaran ini atau yang dioper agen penulis) →
+  sebutkan di laporan akhirmu, jangan diam-diam.
+- `image_prompt` terisi → **pakai itu sebagai dasar prompt**, jangan menyusun
+  adegan dari nol.
+- Kosong atau `template_id: null` → susun sendiri dengan formula di bawah.
 
 Template mengatur gaya visual; ia **tidak** membatalkan Step 0. Kalau Step 0
 memberi `path`, kalimat `"the exact device from the reference image"` tetap wajib

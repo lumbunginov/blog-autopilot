@@ -14,7 +14,13 @@ Write a complete, SEO-optimized blog article based on the chosen idea. Save it a
 
 ## Template Artikel (kalau rencana memilihnya)
 
-Sebelum menulis, kalau kamu punya `plan_id` rencana ini:
+Kalau `plan_id` TIDAK dioper kepadamu, cari sendiri: buka
+`data/blogs/{BLOG_ID}/article-plans.json` dan cocokkan `keyword` atau `slug`
+rencana dengan artikel yang mau kamu tulis; `id` rencana yang cocok itulah
+`plan_id`-nya. Tidak ada rencana yang cocok = **jalur normal, bukan galat** —
+lewati bagian ini dan tulis dengan aturan bawaan di bawah.
+
+Dengan `plan_id` di tangan, jalankan sebelum menulis:
 
 ```bash
 # dijalankan dari root project
@@ -39,6 +45,12 @@ Keluarannya JSON:
 `meta_title` dan `meta_desc` dari keluaran itu adalah **saran**. Meta yang sudah
 diketik pemilik di rencana menang; pola template dipakai hanya kalau field meta
 rencana kosong. Perintah `template` sendiri tidak pernah menulis ke rencana.
+
+**Simpan JSON keluarannya, dan oper `image_prompt` beserta `warning` ke agen
+gambar** di laporan akhirmu. Kamulah satu-satunya yang boleh memanggil
+subperintah `template`: blok `{riset}` sengaja tidak di-cache, jadi pemanggilan
+kedua oleh agen gambar berarti panggilan OpenAI berbayar kedua **dan** teks
+riset yang berbeda dari yang kamu pakai.
 
 ## Article File Format
 

@@ -638,12 +638,24 @@ Read `agents/article-writer.md` and follow its instructions.
 Input: chosen idea + full `knowledge_base` + `workflow` config
 Output: markdown file saved to `config.output.articles_dir` (default: `./articles/`)
 
+Kalau artikel ini punya rencana di `data/blogs/{id}/article-plans.json`, cari
+rencananya dengan mencocokkan `keyword` atau `slug` terhadap artikel yang mau
+ditulis, lalu **oper `id` rencana itu ke agen sebagai `plan_id`** — tanpa itu
+template yang dipilih pemilik tidak pernah terpakai. Tidak ada rencana yang
+cocok = jalur normal; agen menulis dengan aturan bawaannya.
+
 ### Step 4: Image Generation
 
 Read `agents/image-generator.md` and follow its instructions.
 
 Input: article title + business context (the API key comes from `.env`, not from config — see image-generator.md)
 Output: image file saved to `config.output.images_dir` (default: `./images/`)
+
+Oper juga `plan_id` yang sama seperti Step 3 (dicari dengan cara yang sama di
+`data/blogs/{id}/article-plans.json`). Kalau Step 3 sudah memanggil subperintah
+`template`, **oper `image_prompt` dan `warning` hasilnya** ke agen gambar dan
+jangan suruh ia memanggil ulang — blok `{riset}` tidak di-cache, panggilan kedua
+berbayar lagi dan teksnya beda.
 
 Skip if `config.image_api.type` is `"none"`.
 
