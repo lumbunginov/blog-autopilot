@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "node scripts/server.js",
-    "test": "node --test scripts/lib/*.test.js"
+    "test": "node --test scripts/lib/*.test.js scripts/routes/*.test.js"
   },
   "devDependencies": {
     "archiver": "^7.0.1"
