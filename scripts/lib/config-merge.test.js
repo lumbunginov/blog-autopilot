@@ -101,3 +101,26 @@ test('knowledge_source di body tetap lewat di kedua mode', () => {
   assert.ok(stripKnowledgeBase(body, 'business_asset').clean.knowledge_source);
   assert.ok(stripKnowledgeBase(body, 'manual').clean.knowledge_source);
 });
+
+test('parameter sourceSebelumnya: arah business_asset -> manual ikut dibuang', () => {
+  const body = { knowledge_source: { type: 'manual' }, knowledge_base: { business_name: 'Data BA' } };
+  const { clean, ignored } = stripKnowledgeBase(body, 'manual', 'business_asset');
+  assert.ok(!('knowledge_base' in clean),
+    'isinya data live yang tampil di layar, bukan suntingan user');
+  assert.deepStrictEqual(ignored, ['knowledge_base']);
+  assert.ok(clean.knowledge_source, 'perpindahan mode tetap harus tersimpan');
+});
+
+test('manual -> manual biasa TIDAK ikut dibuang', () => {
+  const body = { knowledge_base: { business_name: 'Suntingan User' } };
+  const { clean, ignored } = stripKnowledgeBase(body, 'manual', 'manual');
+  assert.strictEqual(clean.knowledge_base.business_name, 'Suntingan User');
+  assert.deepStrictEqual(ignored, []);
+});
+
+test('tanpa argumen ketiga, perilaku lama tetap berlaku', () => {
+  // Pemanggil lama (2 argumen) tidak boleh berubah perilakunya.
+  assert.deepStrictEqual(stripKnowledgeBase({ knowledge_base: { x: 1 } }, 'manual').ignored, []);
+  assert.deepStrictEqual(stripKnowledgeBase({ knowledge_base: { x: 1 } }, 'business_asset').ignored,
+    ['knowledge_base']);
+});

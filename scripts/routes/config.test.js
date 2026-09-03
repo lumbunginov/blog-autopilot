@@ -202,7 +202,14 @@ test('siklus manual → business_asset → manual tidak menghapus cadangan manua
       tone: 'professional',
       prohibited_topics: ['judi', 'rokok'],
       internal_links: [{ url: 'https://x.test/a/', anchor: 'a' }],
-      custom_entries: [{ title: 'catatan penting', body: 'isi' }]
+      custom_entries: [{ title: 'catatan penting', body: 'isi' }],
+      // Profil lengkap ikut diuji: kalau suatu saat strip diubah jadi allowlist
+      // per-field dan field baru terlupa, test ini yang menangkapnya.
+      city: 'Surabaya',
+      whatsapp: '0812345',
+      tagline: 'Slogan Manual',
+      cta: ['Hubungi kami'],
+      signature_words: ['khas']
     },
     workflow: { language: 'id', saved_categories: [{ id: 9, name: 'kat' }] }
   };
@@ -244,6 +251,12 @@ test('siklus manual → business_asset → manual tidak menghapus cadangan manua
       'prohibited_topics tidak pernah dipetakan dari business asset — kalau tertimpa, hilang permanen');
     assert.strictEqual(disk.knowledge_base.custom_entries.length, 1);
     assert.strictEqual(disk.workflow.saved_categories.length, 1);
+    // Profil lengkap juga harus selamat, bukan tertimpa data business asset.
+    assert.strictEqual(disk.knowledge_base.city, 'Surabaya');
+    assert.strictEqual(disk.knowledge_base.whatsapp, '0812345');
+    assert.strictEqual(disk.knowledge_base.tagline, 'Slogan Manual');
+    assert.deepStrictEqual(disk.knowledge_base.cta, ['Hubungi kami']);
+    assert.deepStrictEqual(disk.knowledge_base.signature_words, ['khas']);
   });
 });
 
