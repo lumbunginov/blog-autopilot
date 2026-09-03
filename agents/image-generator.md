@@ -57,6 +57,21 @@ Lalu kirim fotonya bersama permintaan (bagian `payload.image` di Step 2).
 
 ## Step 1: Craft the Image Prompt
 
+**Kalau rencana memakai template**, jalankan lebih dulu:
+
+```bash
+node .claude/skills/blog-autopilot/scripts/blog-config.js template "{PLAN_ID}"
+```
+
+Kalau `image_prompt` terisi, **pakai itu sebagai dasar prompt** — jangan menyusun
+adegan dari nol. Kalau kosong atau `template_id: null`, susun sendiri dengan
+formula di bawah.
+
+Template mengatur gaya visual; ia **tidak** membatalkan Step 0. Kalau Step 0
+memberi `path`, kalimat `"the exact device from the reference image"` tetap wajib
+disisipkan ke prompt akhir — tanpa itu model memperlakukan foto sebagai inspirasi
+gaya, bukan produk yang harus tampil apa adanya.
+
 Think about the business type and article topic. The prompt should describe a real, specific scene — not abstract concepts.
 
 **Prompt formula:**

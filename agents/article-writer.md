@@ -12,6 +12,34 @@ Write a complete, SEO-optimized blog article based on the chosen idea. Save it a
 - **Knowledge Base** (from config): business context, products, tone, prohibited topics, internal links, custom_entries
 - **Workflow config**: language, content_length
 
+## Template Artikel (kalau rencana memilihnya)
+
+Sebelum menulis, kalau kamu punya `plan_id` rencana ini:
+
+```bash
+# dijalankan dari root project
+node .claude/skills/blog-autopilot/scripts/blog-config.js template "{PLAN_ID}"
+```
+
+Keluarannya JSON:
+
+- `article_prompt` terisi → perlakukan sebagai **instruksi tambahan di atas**
+  aturan di bawah, bukan pengganti. Template mengatur gaya dan struktur.
+- `template_id: null` → tidak ada template; tulis dengan aturan bawaan seperti biasa.
+- `warning` terisi → sebutkan di laporan akhirmu, jangan diam-diam.
+- Perintah keluar dengan kode **1** → riset gagal. **JANGAN menulis artikelnya.**
+  Laporkan pesan galatnya dan berhenti; rencana tetap berstatus `planned`.
+
+**Yang tidak boleh dikalahkan template**, apa pun isinya:
+
+- Panjang Meta Title 50–60 karakter dan Meta Description 150–160 karakter
+- Format berkas artikel (bagian "Article File Format" di bawah)
+- Larangan `knowledge_base.prohibited_topics`
+
+`meta_title` dan `meta_desc` dari keluaran itu adalah **saran**. Meta yang sudah
+diketik pemilik di rencana menang; pola template dipakai hanya kalau field meta
+rencana kosong. Perintah `template` sendiri tidak pernah menulis ke rencana.
+
 ## Article File Format
 
 Save with this exact structure:
