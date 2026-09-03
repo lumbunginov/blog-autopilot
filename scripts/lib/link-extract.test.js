@@ -2,6 +2,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
 const { normalizeLink, extractLinks } = require('./link-extract');
+const { produkTanpaTautan } = require('./link-report');
 
 const SITUS = 'https://perkap.com';
 
@@ -52,4 +53,28 @@ test('extractLinks tahan terhadap html kosong atau rusak', () => {
 
 test('situs kosong berarti tidak ada tautan internal yang bisa dikenali', () => {
   assert.equal(normalizeLink('https://perkap.com/x/', ''), null);
+});
+
+test('produk yang tidak pernah ditautkan terdaftar dengan hitungan nol', () => {
+  const produk = [
+    { name: 'A', url: 'https://s.test/a/' },
+    { name: 'B', url: 'https://s.test/b/' },
+    { name: 'C', url: '' }
+  ];
+  const tertaut = new Map([['https://s.test/a/', 5]]);
+  const hasil = produkTanpaTautan(produk, tertaut);
+  assert.equal(hasil.length, 2);
+  assert.deepEqual(hasil.find(x => x.name === 'B'), { name: 'B', url: 'https://s.test/b/', count: 0 });
+  assert.equal(hasil.find(x => x.name === 'C').url, '');
+});
+
+test('produk tanpa URL dan produk ber-URL-tak-tertaut dibedakan', () => {
+  const hasil = produkTanpaTautan([{ name: 'C', url: '' }], new Map());
+  assert.equal(hasil[0].count, null, 'tanpa URL: hitungan tidak berlaku, bukan nol');
+});
+
+test('perbandingan URL mengabaikan garis miring akhir dan www', () => {
+  const produk = [{ name: 'A', url: 'https://www.s.test/a' }];
+  const tertaut = new Map([['https://s.test/a/', 3]]);
+  assert.equal(produkTanpaTautan(produk, tertaut).length, 0);
 });

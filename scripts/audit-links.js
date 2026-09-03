@@ -21,6 +21,8 @@ const fs = require('fs');
 const path = require('path');
 const { makePaths } = require('./lib/paths');
 const { extractLinks } = require('./lib/link-extract');
+const { produkTanpaTautan } = require('./lib/link-report');
+const { resolveKnowledgeBase } = require('./lib/knowledge');
 
 const paths = makePaths(path.join(__dirname, '..'));
 
@@ -62,7 +64,7 @@ async function fetchAll(type) {
   const items = [];
   let page = 1;
   for (;;) {
-    const url = `${API}/${type}?per_page=100&page=${page}&status=publish&_fields=id,slug,link,title,content`;
+    const url = `${API}/${type}?per_page=100&page=${page}&status=publish&_fields=id,slug,link,title,content,featured_media`;
 
     // Origin men-throttle bacaan massal. Dua kegagalan berbeda, dulu sama-sama
     // membatalkan seluruh crawl di tengah jalan:
@@ -259,6 +261,46 @@ async function mapLimit(items, limit, fn) {
     lines.push('');
   }
 
+  // Silang katalog produk (Task 4, lewat resolveKnowledgeBase — bukan config
+  // mentah, karena mode business_asset menyimpan cadangan lama di sana) dengan
+  // tautan yang benar-benar ditemukan saat crawl. Menjawab pertanyaan pemilik:
+  // halaman produk mana yang tidak pernah mendapat tautan internal?
+  const { knowledge_base } = resolveKnowledgeBase(cfg);
+  const urlTertaut = new Map();
+  for (const [url, refs] of linkMap) urlTertaut.set(url, refs.length);
+  const produkTakTertaut = produkTanpaTautan(knowledge_base.products, urlTertaut);
+
+  lines.push(`- Produk tidak pernah ditautkan: **${produkTakTertaut.length}**`);
+  lines.push('');
+
+  if (produkTakTertaut.length) {
+    lines.push('## URL produk yang tidak pernah ditautkan');
+    lines.push('');
+    lines.push('| Produk | URL | Artikel menautkan |');
+    lines.push('|---|---|---|');
+    for (const p of produkTakTertaut) {
+      lines.push(`| ${p.name} | ${p.url || '(belum ada URL)'} | ${p.count === null ? '—' : p.count} |`);
+    }
+    lines.push('');
+  }
+
+  // Artikel tanpa gambar utama: featured_media === 0 berarti WordPress tidak
+  // punya gambar unggulan terpasang untuk post/page ini.
+  const tanpaGambar = sources.filter((s) => s.featured_media === 0);
+  lines.push(`- Artikel tanpa gambar utama: **${tanpaGambar.length}**`);
+  lines.push('');
+
+  if (tanpaGambar.length) {
+    lines.push('## Artikel tanpa gambar utama');
+    lines.push('');
+    lines.push('| ID | Slug | Judul |');
+    lines.push('|---|---|---|');
+    for (const s of tanpaGambar) {
+      lines.push(`| ${s.id} | ${s.slug} | ${(s.title && s.title.rendered) || ''} |`);
+    }
+    lines.push('');
+  }
+
   if (inconclusive.length) {
     lines.push('## Tak Pasti — cek manual');
     lines.push('');
@@ -283,7 +325,14 @@ async function mapLimit(items, limit, fn) {
 
   fs.mkdirSync(auditDir, { recursive: true });
   fs.writeFileSync(OUT, lines.join('\n'), 'utf8');
-  fs.writeFileSync(JSON_OUT, JSON.stringify({ summary: { documents: sources.length, urls: urls.length, dead: dead.length, inconclusive: inconclusive.length, redirected: redirected.length }, rows }, null, 2), 'utf8');
+  fs.writeFileSync(JSON_OUT, JSON.stringify({
+    summary: {
+      documents: sources.length, urls: urls.length, dead: dead.length,
+      inconclusive: inconclusive.length, redirected: redirected.length,
+      produkTakTertaut: produkTakTertaut.length, tanpaGambar: tanpaGambar.length
+    },
+    rows, produkTakTertaut, tanpaGambar
+  }, null, 2), 'utf8');
 
   console.error(`\nLaporan: ${OUT}`);
   console.error(`JSON:    ${JSON_OUT}`);
