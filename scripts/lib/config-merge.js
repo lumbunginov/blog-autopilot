@@ -41,4 +41,20 @@ function stripCredentials(body) {
   return { clean, ignored };
 }
 
-module.exports = { deepMerge, stripCredentials };
+// Di mode business_asset, knowledge_base dihitung ulang dari file business
+// asset tiap kali dibaca. Kalau kiriman browser dibiarkan tertulis, hasil
+// live langsung membeku jadi salinan di config.json dan berhenti mengikuti
+// sumbernya — persis yang mau dihindari mode ini.
+// knowledge_source SENGAJA tidak dibuang: user harus tetap bisa berpindah
+// mode dan mengganti bisnis lewat POST yang sama.
+function stripKnowledgeBase(body, source) {
+  const clean = JSON.parse(JSON.stringify(body || {}));
+  const ignored = [];
+  if (source === 'business_asset' && 'knowledge_base' in clean) {
+    delete clean.knowledge_base;
+    ignored.push('knowledge_base');
+  }
+  return { clean, ignored };
+}
+
+module.exports = { deepMerge, stripCredentials, stripKnowledgeBase };

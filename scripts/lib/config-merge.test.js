@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { deepMerge, stripCredentials } = require('./config-merge');
+const { deepMerge, stripCredentials, stripKnowledgeBase } = require('./config-merge');
 
 test('deepMerge partial workflow object tidak menghapus field lain', () => {
   const stored = {
@@ -68,4 +68,36 @@ test('stripCredentials membersihkan config penuh (skenario GET /api/config) tanp
   assert.strictEqual(clean.image_api.api_key, undefined);
   assert.strictEqual(clean.wordpress.url, 'https://x.com');
   assert.deepStrictEqual(clean.workflow.saved_categories, [1, 2, 3]);
+});
+
+test('mode business_asset membuang knowledge_base kiriman browser', () => {
+  const body = { wordpress: { url: 'https://x.test' }, knowledge_base: { business_name: 'Palsu' } };
+  const { clean, ignored } = stripKnowledgeBase(body, 'business_asset');
+  assert.ok(!('knowledge_base' in clean));
+  assert.deepStrictEqual(ignored, ['knowledge_base']);
+  assert.strictEqual(clean.wordpress.url, 'https://x.test');
+});
+
+test('mode manual membiarkan knowledge_base lewat', () => {
+  const body = { knowledge_base: { business_name: 'Asli' } };
+  const { clean, ignored } = stripKnowledgeBase(body, 'manual');
+  assert.strictEqual(clean.knowledge_base.business_name, 'Asli');
+  assert.deepStrictEqual(ignored, []);
+});
+
+test('business_asset tanpa knowledge_base di body tidak melaporkan apa-apa', () => {
+  const { ignored } = stripKnowledgeBase({ workflow: { language: 'id' } }, 'business_asset');
+  assert.deepStrictEqual(ignored, []);
+});
+
+test('stripKnowledgeBase tidak mengubah objek asal', () => {
+  const body = { knowledge_base: { business_name: 'Palsu' } };
+  stripKnowledgeBase(body, 'business_asset');
+  assert.strictEqual(body.knowledge_base.business_name, 'Palsu');
+});
+
+test('knowledge_source di body tetap lewat di kedua mode', () => {
+  const body = { knowledge_source: { type: 'manual' }, knowledge_base: { business_name: 'x' } };
+  assert.ok(stripKnowledgeBase(body, 'business_asset').clean.knowledge_source);
+  assert.ok(stripKnowledgeBase(body, 'manual').clean.knowledge_source);
 });
