@@ -1747,7 +1747,7 @@ grep -c "yourblog.com" /tmp/kb-check.json || echo "yourblog.com: 0 (benar)"
 grep -c "konteks" /tmp/kb-check.json || echo "konteks: 0 (benar)"
 ```
 
-Expected: 45 produk, ~35 internal link, nama `Perkap.com`, tone `casual`, `avoid_words` berisi `Termurah`, sumber `business_asset` tanpa error, tidak ada `yourblog.com`, tidak ada `konteks`.
+Expected: 45 produk, 27 internal link (sudah dedup — beberapa produk berbagi satu halaman), nama `Perkap.com`, tone `casual`, `avoid_words` berisi `Termurah`, sumber `business_asset` tanpa error, tidak ada `yourblog.com`, tidak ada `konteks`.
 
 - [ ] **Step 4: Uji live read**
 

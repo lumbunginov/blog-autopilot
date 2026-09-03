@@ -83,7 +83,7 @@ Tidak pernah ikut di `GET /api/config`.
 | `target_audience` | `profile.targetMarket` | |
 | `tone` | `profile.toneOfVoice` dipetakan | `santai`→`casual`, `formal`/`profesional`→`professional`, `edukatif`→`educational`; tak dikenal → `professional` |
 | `products[]` | `products.json` | `name`←`nama`, `price`←`harga`, `url` diekstrak dari `konteks` |
-| `internal_links[]` | URL unik hasil ekstraksi | anchor = nama produk |
+| `internal_links[]` | URL unik hasil ekstraksi | anchor = nama produk; 45 produk perkap → 27 link unik |
 | `avoid_words[]` | `profile.kataHindari` | **field baru** |
 | `prohibited_topics` | — | selalu `[]` |
 | `custom_entries` | — | selalu `[]` |
@@ -202,7 +202,7 @@ Kalau resolusi gagal, kartu menampilkan kotak merah berisi path yang dicari dan 
 | Pemetaan | `node --test scripts/lib/business-asset.test.js` hijau |
 | Live read | ubah `nama` di `profile.json` → muat ulang dashboard → nama ikut berubah tanpa import |
 | Produk | `GET /api/config` → `knowledge_base.products.length === 45` |
-| Internal link | `internal_links` berisi URL perkap.com asli; `yourblog.com` tidak ada |
+| Internal link | `internal_links` berisi 27 URL perkap.com asli (unik; sebagian produk berbagi halaman); `yourblog.com` tidak ada |
 | Read-only | POST config berisi `knowledge_base` palsu → file di disk tidak berubah + ada `warning` |
 | Tingkat penuh | `blog-config.js product "Bel Cerdas Cermat"` memuat `context`; `GET /api/config` tidak |
 | Traversal | `business_id: "../../rahasia"` ditolak, menyebut id tidak valid |
