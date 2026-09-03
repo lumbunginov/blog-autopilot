@@ -57,6 +57,27 @@ test('masukan kosong atau rusak tidak melempar', () => {
   assert.equal(matchProduct(PRODUK, null), null);
 });
 
+test('elemen null/undefined dalam array produk dilewati, tidak melempar', () => {
+  const r1 = matchProduct([null, { id: 'a', name: 'Produk A' }], { title: 'Produk A bagus' });
+  assert.equal(r1.product.id, 'a');
+
+  const r2 = matchProduct([undefined, { id: 'a', name: 'Produk A' }], { productName: 'a' });
+  assert.equal(r2.product.id, 'a');
+
+  assert.equal(
+    matchProduct([{ id: 'a', name: 'Produk A' }, null], { title: 'judul yang tidak cocok apa pun' }),
+    null
+  );
+});
+
+test('elemen bukan objek dalam array produk dilewati, tidak melempar', () => {
+  assert.equal(matchProduct(['teks', 42, true], { title: 'apa saja' }), null);
+});
+
+test('field name yang bukan string tidak melempar', () => {
+  assert.equal(matchProduct([{ id: 'a', name: 42 }], { title: 'apa saja' }), null);
+});
+
 test('produk bernama sangat pendek tidak menyapu segalanya', () => {
   // "Sewa HT" — "ht" hanya 2 huruf, di bawah ambang kata bermakna.
   assert.equal(matchProduct(PRODUK, { title: 'Tips Sewa Peralatan Acara' }), null);

@@ -25,7 +25,9 @@ function kataBermakna(s) {
 }
 
 function matchProduct(products, opsi) {
-  const list = Array.isArray(products) ? products : [];
+  // Saring elemen null/undefined/non-objek sekali di awal supaya seluruh
+  // jalur di bawah bisa aman mengakses p.id / p.name tanpa guard berulang.
+  const list = (Array.isArray(products) ? products : []).filter(p => p && typeof p === 'object');
   const o = opsi || {};
   if (!list.length) return null;
 
