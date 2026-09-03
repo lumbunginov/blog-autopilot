@@ -16,6 +16,29 @@ test('tanggal terpakai diambil dari field date di cache', () => {
   assert.deepStrictEqual([...takenDatesFromCache(cache)].sort(), ['2026-04-13', '2026-04-15']);
 });
 
+test('draft tidak menempati slot — tanggalnya cuma waktu simpan-terakhir', () => {
+  const cache = { articles: [{ id: 1, date: '2026-04-13', status: 'draft' }] };
+  assert.strictEqual(takenDatesFromCache(cache).size, 0);
+});
+
+test('publish menempati slot', () => {
+  const cache = { articles: [{ id: 1, date: '2026-04-13', status: 'publish' }] };
+  assert.deepStrictEqual([...takenDatesFromCache(cache)], ['2026-04-13']);
+});
+
+test('future (terjadwal) menempati slot', () => {
+  const cache = { articles: [{ id: 1, date: '2026-04-13', status: 'future' }] };
+  assert.deepStrictEqual([...takenDatesFromCache(cache)], ['2026-04-13']);
+});
+
+test('status tidak dikenal atau hilang tetap dianggap menempati slot (default konservatif)', () => {
+  const cache = { articles: [
+    { id: 1, date: '2026-04-13', status: 'pending' },
+    { id: 2, date: '2026-04-14' }
+  ]};
+  assert.deepStrictEqual([...takenDatesFromCache(cache)].sort(), ['2026-04-13', '2026-04-14']);
+});
+
 test('cache kosong atau null menghasilkan himpunan kosong', () => {
   assert.strictEqual(takenDatesFromCache(null).size, 0);
   assert.strictEqual(takenDatesFromCache({}).size, 0);
@@ -33,8 +56,20 @@ test('addDays melewati batas bulan dan tahun', () => {
 });
 
 test('string jadwal tidak membawa offset UTC', () => {
-  assert.strictEqual(toScheduleString('2026-07-21', 6), '2026-07-21T06:00:00');
-  assert.doesNotMatch(toScheduleString('2026-07-21', 6), /Z|\+/);
+  assert.strictEqual(toScheduleString('2026-07-21', 6, WIB), '2026-07-21T06:00:00');
+  assert.doesNotMatch(toScheduleString('2026-07-21', 6, WIB), /Z|\+/);
+});
+
+test('toScheduleString menolak mencetak tanpa ctx zona terverifikasi', () => {
+  assert.throws(() => toScheduleString('2026-07-21', 6), /ctx.*terverifikasi/i);
+  assert.throws(() => toScheduleString('2026-07-21', 6, {}), /ctx.*terverifikasi/i);
+});
+
+test('toScheduleString menjalankan kontrak zona — ctx yang tidak cocok GAGAL mencetak', () => {
+  assert.throws(
+    () => toScheduleString('2026-07-21', 6, { timeZone: 'Asia/Makassar', gmtOffset: 7 }),
+    /kontrak zona/i
+  );
 });
 
 test('utcOffsetHours membaca basis data zona sungguhan', () => {
