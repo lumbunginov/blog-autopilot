@@ -1693,7 +1693,19 @@ function populateKnowledgeSource(c) {
 
   const status = document.getElementById('ks-status');
   if (type === 'business_asset') {
-    ksLoadBusinesses(c.knowledge_source?.business_asset?.business_id);
+    // ksLoadBusinesses async dan ikut menulis ks-status. Tunggu ia selesai dulu,
+    // kalau tidak pesan "2 bisnis ditemukan" mendarat belakangan dan menimpa
+    // ringkasan "Terbaca: N produk" yang justru dicari user.
+    ksLoadBusinesses(c.knowledge_source?.business_asset?.business_id).then(() => {
+      tulisStatusKnowledge(c, status);
+    });
+  }
+}
+
+// Ringkasan hasil resolusi knowledge base — sumber kebenarannya _knowledge dari server.
+function tulisStatusKnowledge(c, status) {
+  if (!status) return;
+  {
     if (c._knowledge?.error) {
       status.innerHTML = `<span style="color:var(--danger)">⚠️ ${escHtml(c._knowledge.error)}</span>`;
     } else {
