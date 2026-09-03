@@ -1586,7 +1586,7 @@ Buka `http://localhost:3847` → tab Knowledge Base. Yang harus terjadi:
 
 1. Kartu "Sumber Knowledge Base" muncul di paling atas, "Input manual" terpilih.
 2. Field knowledge base masih bisa diketik; tombol Save aktif.
-3. Pilih "Business Asset" → field root + dropdown muncul, seluruh field di bawahnya redup, kartu Auto-fill hilang, tombol Save berubah jadi "Sumber: Business Asset" dan mati.
+3. Pilih "Business Asset" → field root + dropdown muncul, seluruh field di bawahnya redup, kartu Auto-fill hilang, tombol Save TETAP HIDUP dengan label "💾 Simpan Sumber" (ia satu-satunya jalan menyimpan pilihan mode).
 4. Isi root dengan `G:\Project\Paperclip\Perkap_com\project\sosmed_content\data\businesses`, tekan Muat → dropdown berisi **Perkap.com (45 produk)** dan **Karva.id (7 produk)**.
 5. Pilih Perkap.com, tekan **💾 Simpan Sumber** di save-bar. Tombol ini harus hidup —
    kalau mati, mode business_asset tidak bisa disimpan sama sekali dan itu cacat yang
