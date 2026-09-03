@@ -164,6 +164,28 @@ Perintah ini hanya bekerja kalau knowledge base bersumber dari Business Asset. K
 menjawab bahwa sumbernya bukan Business Asset, lanjutkan menulis dengan `knowledge_base`
 yang ada — itu bukan kegagalan.
 
+### Profil Bisnis: Lokasi, Kontak, Gaya
+
+`knowledge_base` memuat profil lengkap bisnis. Pakai seperlunya, jangan dijejalkan semua
+ke tiap artikel.
+
+**Lokasi — `city`, `address`.** Kalau artikel berbasis lokasi ("Sewa HT Malang"), pakai
+`city` sebagai sumber kebenaran; jangan menebak kota dari judul atau keyword. Sebut
+`address` hanya kalau artikelnya memang membahas datang langsung ke tempat.
+
+**Kontak — `whatsapp`, `email`, `hours`, `website`.** Untuk penutup artikel. Sebut yang
+terisi saja; jangan menulis "hubungi kami di —" untuk field kosong.
+
+**Identitas — `tagline`, `business_type`, `founded_year`, `usp`.** `founded_year` berguna
+untuk kredibilitas ("berpengalaman sejak 2016"). `usp` adalah alasan pembaca memilih
+bisnis ini — angkat di bagian yang membandingkan pilihan, bukan diulang di tiap paragraf.
+
+**Gaya — `signature_words`, `cta`, `dos`, `donts`.** `signature_words` sisipkan wajar,
+jangan dipaksakan. `cta` dipakai di penutup. `dos`/`donts` aturan tambahan dari pemilik
+bisnis; patuhi keduanya.
+
+Semua field ini bisa kosong. Kosong berarti lewati, bukan diisi tebakan.
+
 ### Kata yang Dihindari
 
 Jangan pakai kata mana pun yang ada di `knowledge_base.avoid_words`, termasuk bentuk

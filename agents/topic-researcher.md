@@ -16,6 +16,9 @@ Given a keyword and business context, generate **5 distinct article ideas**. Eac
     dengan keyword, jangan menyebut semuanya.
   - `target_audience` — who they serve
   - `tone` — how they communicate
+  - `city` — kota bisnis. Ide artikel berbasis lokasi memakai ini, bukan tebakan.
+  - `business_type`, `usp` — jenis usaha dan keunggulannya; berguna untuk sudut pandang
+    yang membedakan dari pesaing
 
 ## The 5 Angles to Cover
 
