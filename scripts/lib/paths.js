@@ -55,6 +55,7 @@ function makePaths(skillDir) {
     blogsDir, blogDir, listBlogs, activeBlog, setActiveBlog,
     configPath: (id) => path.join(blogDir(id), 'config.json'),
     cachePath: (id) => path.join(blogDir(id), 'articles-cache.json'),
+    pagesCachePath: (id) => path.join(blogDir(id), 'pages-cache.json'),
     plansPath: (id) => path.join(blogDir(id), 'article-plans.json'),
     templatesPath: (id) => path.join(blogDir(id), 'templates.json'),
     queuePath: (id) => path.join(blogDir(id), 'agent-queue.json')

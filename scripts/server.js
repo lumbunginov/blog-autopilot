@@ -28,7 +28,7 @@ function broadcast(event, data) {
   });
 }
 
-const state = { syncState: { done: true, updated: 0, lastSync: null }, sseClients };
+const state = { syncState: { done: true, updated: 0, lastSync: null }, pagesSyncState: { done: true, updated: 0, lastSync: null }, sseClients };
 const paths = makePaths(SKILL_DIR);
 const deps = { paths, state, broadcast };
 
@@ -37,6 +37,7 @@ require('./routes/plans')(app, deps);
 require('./routes/queue')(app, deps);
 require('./routes/config')(app, deps);
 require('./routes/articles')(app, deps);
+require('./routes/pages')(app, deps);
 require('./routes/scrape')(app, deps);
 require('./routes/blogs')(app, deps);
 require('./routes/knowledge-source')(app, deps);

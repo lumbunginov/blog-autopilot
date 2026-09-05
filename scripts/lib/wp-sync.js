@@ -4,15 +4,16 @@ const { mapPost, writeArticlesCache } = require('./articles-cache');
 
 const FIELDS = '_fields=id,title,status,date,modified,slug,link,categories';
 
-async function fullSync({ wpUrl, auth, cachePath }) {
+async function fullSync({ wpUrl, auth, cachePath, resource = 'posts' }) {
   const base = (wpUrl || '').replace(/\/$/, '');
-  const categoryMap = await fetchCategoryMap(base, auth);
+  // Page WordPress tidak punya kategori, lewati satu panggilan API.
+  const categoryMap = resource === 'posts' ? await fetchCategoryMap(base, auth) : {};
   let allArticles = [];
   let page = 1;
   let totalPages = 1;
   do {
     const { body, totalPages: tp } = await httpGet(
-      `${base}/wp-json/wp/v2/posts?${FIELDS}&status=publish,draft&per_page=100&page=${page}&orderby=date&order=desc`,
+      `${base}/wp-json/wp/v2/${resource}?${FIELDS}&status=publish,draft&per_page=100&page=${page}&orderby=date&order=desc`,
       auth
     );
     totalPages = tp || 1;
@@ -29,13 +30,13 @@ async function fullSync({ wpUrl, auth, cachePath }) {
   return cache;
 }
 
-async function incrementalSync({ wpUrl, auth, cachePath, existingCache }) {
+async function incrementalSync({ wpUrl, auth, cachePath, existingCache, resource = 'posts' }) {
   const base = (wpUrl || '').replace(/\/$/, '');
   const after = existingCache.lastSync;
-  const categoryMap = await fetchCategoryMap(base, auth);
+  const categoryMap = resource === 'posts' ? await fetchCategoryMap(base, auth) : {};
 
   const { body, totalPages } = await httpGet(
-    `${base}/wp-json/wp/v2/posts?${FIELDS}&status=publish,draft&per_page=100&orderby=modified&order=desc&modified_after=${after}`,
+    `${base}/wp-json/wp/v2/${resource}?${FIELDS}&status=publish,draft&per_page=100&orderby=modified&order=desc&modified_after=${after}`,
     auth
   );
 
@@ -45,7 +46,7 @@ async function incrementalSync({ wpUrl, auth, cachePath, existingCache }) {
 
   // Lebih dari 100 post berubah: cache parsial tidak bisa dipercaya, ulang penuh.
   if (totalPages > 1) {
-    const cache = await fullSync({ wpUrl, auth, cachePath });
+    const cache = await fullSync({ wpUrl, auth, cachePath, resource });
     return { cache, updated: cache.totalCount };
   }
 

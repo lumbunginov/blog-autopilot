@@ -28,6 +28,9 @@
       <span class="icon">📄</span> Articles
       <span class="nav-badge" id="draft-count-badge"></span>
     </div>
+    <div class="nav-item" data-page="pages" onclick="showPage('pages', this)">
+      <span class="icon">📑</span> Pages
+    </div>
     <div class="nav-item" data-page="planning" onclick="showPage('planning', this)">
       <span class="icon">📋</span> Perencanaan
       <span class="nav-badge" id="plan-count-badge" style="display:none;"></span>
@@ -366,6 +369,44 @@
 
     <!-- Pagination -->
     <div class="articles-pagination" id="articles-pagination"></div>
+  </div>
+
+  <!-- PAGES (WordPress pages, read-only) -->
+  <div id="page-pages" class="page">
+    <div class="page-header">
+      <div>
+        <h1>Pages</h1>
+        <p class="subtitle">Semua halaman WordPress &mdash; published &amp; draft</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="sync-status-text" id="pages-sync-status"></span>
+        <button class="btn btn-secondary" onclick="pagesForceSync()">&#128260; Sync</button>
+      </div>
+    </div>
+
+    <div class="articles-toolbar">
+      <input type="text" class="articles-search" id="pages-search"
+             placeholder="&#128269; Cari judul halaman..."
+             oninput="pagesFilter()">
+    </div>
+
+    <div class="articles-table-wrap" id="pages-table-wrap">
+      <table class="articles-table">
+        <thead>
+          <tr>
+            <th>Judul</th>
+            <th>Status</th>
+            <th>Tanggal</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="pages-tbody">
+          <tr><td colspan="4" class="articles-empty">Memuat halaman...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="articles-pagination" id="pages-pagination"></div>
   </div>
 
   <!-- KNOWLEDGE BASE PAGE -->

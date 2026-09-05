@@ -13,7 +13,12 @@ function showPage(pageId, navEl) {
     clearInterval(articlesPollTimer);
     articlesPollTimer = null;
   }
+  if (pageId !== 'pages' && pagesPollTimer) {
+    clearInterval(pagesPollTimer);
+    pagesPollTimer = null;
+  }
   if (pageId === 'articles' && articlesAll.length === 0) articlesLoad();
+  if (pageId === 'pages' && pagesAll.length === 0) pagesLoad();
   if (pageId === 'planning') { planFillCategorySelect(null); plansLoad(); agentStatusBarRefresh(); }
   if (pageId === 'templates') templatesLoad();
 }
@@ -984,10 +989,7 @@ function articlesRenderTable() {
 
   tbody.innerHTML = rows.map(a => {
     const isDraft = a.status === 'draft';
-    const dateStr = a.date ? a.date.substring(0, 10).split('-').reverse().join(' ').replace(
-      /(\d+) (\d+) (\d+)/,
-      (_, d, m, y) => `${d} ${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][+m-1]} ${y}`
-    ) : '—';
+    const dateStr = fmtTanggalId(a.date);
     const checked = isDraft ? '' : 'checked';
     const badgeCls = isDraft ? 'draft' : 'published';
     const badgeLabel = isDraft ? 'Draft' : 'Published';
@@ -1169,6 +1171,161 @@ function articlesShowSyncTime(iso) {
   else                  label = 'Synced >1 hour ago';
   el.textContent = label;
   el.className = 'sync-status-text';
+}
+
+const BULAN_ID = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
+// "2026-03-08" -> "08 Mar 2026"
+function fmtTanggalId(iso) {
+  if (!iso) return '—';
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return '—';
+  return `${m[3]} ${BULAN_ID[+m[2] - 1]} ${m[1]}`;
+}
+
+// ==================== PAGES (WordPress pages, baca saja) ====================
+let pagesAll = [];
+let pagesFiltered = [];
+let pagesPage = 1;
+let pagesPollTimer = null;
+
+function pagesApply(data) {
+  pagesAll = data.articles || [];
+  pagesFilteredUpdate();
+  pagesRenderTable();
+}
+
+function pagesLoad() {
+  const tbody = document.getElementById('pages-tbody');
+  tbody.innerHTML = '<tr><td colspan="4" class="articles-empty">Memuat halaman...</td></tr>';
+  pagesSetStatus('Memuat...', 'syncing');
+
+  fetch('/api/pages')
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) throw new Error(data.error);
+      pagesApply(data);
+      if (data.syncing) { pagesSetStatus('Syncing...', 'syncing'); pagesStartPoll(); }
+      else pagesShowSyncTime(data.lastSync);
+    })
+    .catch(() => {
+      tbody.innerHTML = '<tr><td colspan="4" class="articles-empty">Gagal memuat halaman. Coba lagi.</td></tr>';
+      pagesSetStatus('', '');
+    });
+}
+
+function pagesFilteredUpdate() {
+  const q = (document.getElementById('pages-search').value || '').toLowerCase().trim();
+  pagesFiltered = pagesAll.filter(p => !q || (p.title || '').toLowerCase().includes(q));
+  pagesPage = 1;
+}
+
+function pagesFilter() {
+  pagesFilteredUpdate();
+  pagesRenderTable();
+}
+
+function pagesRenderTable() {
+  const tbody = document.getElementById('pages-tbody');
+  const start = (pagesPage - 1) * ARTICLES_PER_PAGE;
+  const rows = pagesFiltered.slice(start, start + ARTICLES_PER_PAGE);
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="articles-empty">Tidak ada halaman ditemukan.</td></tr>';
+    document.getElementById('pages-pagination').innerHTML = '';
+    return;
+  }
+
+  const wpBase = (config.wordpress?.url || '').replace(/\/$/, '');
+  tbody.innerHTML = rows.map(p => {
+    const isDraft = p.status === 'draft';
+    const editUrl = wpBase ? wpBase + '/wp-admin/post.php?post=' + p.id + '&action=edit' : '#';
+    return `<tr class="${isDraft ? 'draft-row' : ''}">
+      <td><a class="article-title-link" href="${escHtml(p.url)}" target="_blank" title="${escHtml(p.title)}">${escHtml(p.title)}</a></td>
+      <td><span class="status-badge ${isDraft ? 'draft' : 'published'}">${isDraft ? 'Draft' : 'Published'}</span></td>
+      <td style="white-space:nowrap;color:#64748b">${fmtTanggalId(p.date)}</td>
+      <td style="white-space:nowrap">
+        <a class="article-action-btn" href="${escHtml(p.url)}" target="_blank">&#128065; Preview</a>
+        <a class="article-action-btn" href="${escHtml(editUrl)}" target="_blank">&#9999;&#65039; Edit</a>
+      </td>
+    </tr>`;
+  }).join('');
+
+  pagesRenderPagination();
+}
+
+function pagesRenderPagination() {
+  const pages = Math.ceil(pagesFiltered.length / ARTICLES_PER_PAGE);
+  const pag = document.getElementById('pages-pagination');
+  if (pages <= 1) { pag.innerHTML = ''; return; }
+
+  const range = paginationRange(pagesPage, pages);
+  pag.innerHTML = [
+    `<button class="page-btn" ${pagesPage === 1 ? 'disabled' : ''} onclick="pagesGoPage(${pagesPage-1})">‹</button>`,
+    ...range.map(p => p === '…'
+      ? `<button class="page-btn" disabled>…</button>`
+      : `<button class="page-btn ${p === pagesPage ? 'active' : ''}" onclick="pagesGoPage(${p})">${p}</button>`
+    ),
+    `<button class="page-btn" ${pagesPage === pages ? 'disabled' : ''} onclick="pagesGoPage(${pagesPage+1})">›</button>`
+  ].join('');
+}
+
+function pagesGoPage(p) {
+  pagesPage = p;
+  pagesRenderTable();
+  document.getElementById('pages-table-wrap').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+function pagesForceSync() {
+  pagesSetStatus('Syncing...', 'syncing');
+  fetch('/api/pages?force=true')
+    .then(r => (r.status === 409 ? null : r.json()))
+    .then(data => {
+      if (data && !data.error) pagesApply(data);
+      pagesStartPoll();
+    })
+    .catch(() => pagesSetStatus('Sync gagal', ''));
+}
+
+function pagesStartPoll() {
+  if (pagesPollTimer) clearInterval(pagesPollTimer);
+  let attempts = 0;
+  pagesPollTimer = setInterval(() => {
+    if (++attempts > 30) { clearInterval(pagesPollTimer); pagesPollTimer = null; return; }
+    fetch('/api/pages/sync-status')
+      .then(r => r.json())
+      .then(st => {
+        if (!st.done) return;
+        clearInterval(pagesPollTimer);
+        pagesPollTimer = null;
+        fetch('/api/pages?nosync=true')
+          .then(r => r.json())
+          .then(d => {
+            if (d.error) return pagesSetStatus('Sync gagal', '');
+            pagesApply(d);
+            pagesShowSyncTime(st.lastSync);
+          });
+      })
+      .catch(() => { /* abaikan galat poll */ });
+  }, 2000);
+}
+
+function pagesSetStatus(text, cls) {
+  const el = document.getElementById('pages-sync-status');
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'sync-status-text' + (cls ? ' ' + cls : '');
+}
+
+function pagesShowSyncTime(iso) {
+  if (!iso) return pagesSetStatus('', '');
+  const diff = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+  let label;
+  if (diff < 30)        label = 'Synced just now';
+  else if (diff < 120)  label = 'Synced 1 min ago';
+  else if (diff < 3600) label = `Synced ${Math.round(diff/60)} min ago`;
+  else                  label = 'Synced >1 hour ago';
+  pagesSetStatus(label, '');
 }
 
 // ==================== PLANNING ====================
