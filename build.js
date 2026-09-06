@@ -20,6 +20,9 @@ const BUILD_DIR = path.join(SKILL_DIR, 'build');
 // File/folder yang tidak masuk ZIP
 const EXCLUDE = new Set([
   'build.js',
+  // Keluaran build sendiri. Tanpa ini copyDir menyalin build/ ke dalam
+  // build/_temp_.../build/ berulang sampai path Windows terlalu panjang.
+  'build',
   'node_modules',
   'package.json',
   'package-lock.json',
@@ -30,6 +33,8 @@ const EXCLUDE = new Set([
   'data',
   '.superpowers',
   '.playwright-mcp',
+  // Catatan pengembangan internal — bukan bagian dari skill yang dibagikan.
+  'docs',
 ]);
 const EXCLUDE_PATTERNS = [
   /^\.env$/,                // .env asli; .env.example SENGAJA ikut (mendokumentasikan nama variabel)
@@ -39,6 +44,9 @@ const EXCLUDE_PATTERNS = [
   /^article-plans\.json$/,
   /^agent-queue\.json$/,
   /^.*\.upload\.json$/,
+  // Test hanya berguna di repo pengembangan; di paket rilis ia cuma menambah
+  // berat dan bikin pengguna menjalankan sesuatu yang bukan untuk mereka.
+  /^.*\.test\.js$/,
 ];
 
 function shouldExclude(name) {

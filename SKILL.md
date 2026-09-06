@@ -1,6 +1,6 @@
 ---
 name: blog-autopilot
-description: "Full-cycle WordPress blog content automation for any business — keyword to published post. Use this skill whenever someone wants to automate blog article writing, create WordPress content, run content marketing automation, generate SEO articles with AI images, set up a blog content pipeline, post articles to WordPress, open blog autopilot dashboard, or configure settings. Trigger on 'tulis artikel', 'write blog', 'buat konten', 'post ke wordpress', 'content automation', 'blog autopilot', 'setup blog', 'open dashboard', or any multi-step article creation workflow. Also trigger on natural language batch article requests like 'buatkan artikel', 'generate artikel', 'buat konten untuk produk', 'buatkan X artikel keyword Y untuk produk Z', 'jadwalkan artikel mulai tanggal', or any request to create multiple articles for a product page."
+description: "Full-cycle WordPress blog content automation for any business — keyword to published post. Use this skill whenever someone wants to automate blog article writing, create WordPress content, run content marketing automation, generate SEO articles with AI images, set up a blog content pipeline, post articles to WordPress, open blog autopilot dashboard, or configure settings. Trigger on 'tulis artikel', 'write blog', 'buat konten', 'post ke wordpress', 'content automation', 'blog autopilot', 'setup blog', 'open dashboard', or any multi-step article creation workflow. Also trigger on natural language batch article requests like 'buatkan artikel', 'generate artikel', 'buat konten untuk produk', 'buatkan X artikel keyword Y untuk produk Z', 'jadwalkan artikel mulai tanggal', or any request to create multiple articles for a product page. Also handles WordPress *pages* built with Elementor — trigger on 'edit halaman', 'buat page', 'clone template page', 'edit elementor', 'ubah landing page', 'edit page wordpress'."
 ---
 
 # Blog Autopilot
@@ -29,6 +29,7 @@ Read the user's input and route to the right handler:
 | `/blog-autopilot audit-links` | → **[AUDIT-LINKS]** periksa tautan internal semua artikel terbit |
 | `/blog-autopilot templates` | → **[TEMPLATES]** kelola template artikel |
 | `/blog-autopilot generate [input]` | → **[GENERATE]** batch planner via natural language |
+| `/blog-autopilot page [...]` | → **[PAGE]** kelola halaman Elementor |
 | `/blog-autopilot [keyword]` | → **[FULL WORKFLOW]** |
 
 ---
@@ -215,6 +216,11 @@ AUDIT
     → Periksa tautan internal semua artikel terbit (baca-saja, beberapa menit)
     → Laporan: data/blogs/{id}/audit/link-YYYY-MM-DD.md
 
+HALAMAN (PAGE BUILDER)
+  /blog-autopilot page [download|edit|clone|upload] [slug]
+    → Kelola halaman Elementor (bukan artikel)
+    → Aktif bila Settings → Page Builder = Elementor
+
 TEMPLATE
   /blog-autopilot templates
     → Kelola template artikel (prompt artikel, gambar, pola meta)
@@ -241,6 +247,35 @@ PENGATURAN
 Config per blog: data/blogs/{id}/config.json — kredensial di .env
 Jangan commit .env ke git (berisi API keys)!
 ```
+
+---
+
+## [PAGE] — Kelola halaman Elementor
+
+Untuk **halaman** (page), bukan artikel/post. Hanya berlaku bila situs memakai
+Elementor.
+
+**Langkah 1 — pastikan aktif:**
+
+```bash
+node .claude/skills/blog-autopilot/scripts/blog-config.js page_builder
+```
+
+Kalau `type` bukan `"elementor"`, hentikan dan beri tahu pengguna: buka
+dashboard → **Settings → Page Builder** dan pilih Elementor. Jangan jalankan
+script Elementor pada situs yang page builder-nya `none`.
+
+**Langkah 2 — baca `references/elementor.md`** dan ikuti alurnya. Berkas itu
+memuat seluruh perintah, lokasi berkas per blog, dan aturan keselamatan
+(upload mengubah halaman live; halaman baru selalu draft).
+
+Referensi lain, dibuka hanya saat dibutuhkan:
+
+| Berkas | Kapan dibuka |
+|---|---|
+| `references/elementor.md` | selalu — alur & perintah |
+| `references/elementor-widgets.md` | menyusun/menyunting widget & settings |
+| `references/elementor-troubleshooting.md` | ada error atau halaman rusak |
 
 ---
 
