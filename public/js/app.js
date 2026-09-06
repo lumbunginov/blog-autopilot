@@ -102,6 +102,8 @@ function populateForm(c) {
   setVal('seo-rm-robots-meta',   rm.robots_meta   || 'index,follow');
   setVal('seo-rm-content-type',  rm.content_type  || 'article');
   updateTitleSuffixPreview();
+  // Page Builder
+  selectPageBuilder(c.page_builder?.type || 'none');
 }
 
 function collectForm() {
@@ -177,6 +179,9 @@ function collectForm() {
       yoast: {
         title_separator: '|'
       }
+    },
+    page_builder: {
+      type: document.querySelector('#pb-type-group .img-option.selected input')?.value || 'none'
     }
   };
 }
@@ -249,6 +254,16 @@ function updateStatusDot(c) {
 }
 
 // ==================== RADIO BUTTONS ====================
+function selectPageBuilder(val, el) {
+  document.querySelectorAll('#pb-type-group .img-option').forEach(b => b.classList.remove('selected'));
+  const target = el || document.querySelector(`#pb-type-group .img-option input[value="${val}"]`)?.closest('.img-option');
+  if (target) {
+    target.classList.add('selected');
+    target.querySelector('input').checked = true;
+  }
+  if (el) setChangeStatus(true);
+}
+
 function selectImageType(val, el) {
   document.querySelectorAll('#img-type-group .img-option').forEach(b => b.classList.remove('selected'));
   if (el) {

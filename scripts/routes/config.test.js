@@ -338,3 +338,23 @@ test('label tenant di daftar blog memakai nama yang berlaku', async () => {
       'sidebar dan tab Knowledge Base harus menyebut nama yang sama');
   });
 });
+
+test('GET /api/config mengisi page_builder default "none" bila belum ada', async () => {
+  await withServer(MANUAL, async (base) => {
+    const r = await (await fetch(`${base}/api/config`)).json();
+    assert.strictEqual(r.page_builder.type, 'none');
+  });
+});
+
+test('POST lalu GET /api/config mempertahankan page_builder tersimpan', async () => {
+  await withServer(MANUAL, async (base) => {
+    const post = await fetch(`${base}/api/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...MANUAL, page_builder: { type: 'elementor' } })
+    });
+    assert.strictEqual(post.status, 200);
+    const r = await (await fetch(`${base}/api/config`)).json();
+    assert.strictEqual(r.page_builder.type, 'elementor');
+  });
+});

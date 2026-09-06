@@ -26,6 +26,14 @@ function withSeoDefaults(cfg) {
   return cfg;
 }
 
+// Page builder ikut default 'none': situs tanpa builder adalah kasus umum, dan
+// menebak 'elementor' akan membuat skill edit-elementor tampak berlaku di situs
+// yang halamannya sebenarnya HTML biasa.
+function withPageBuilderDefaults(cfg) {
+  if (!cfg.page_builder) cfg.page_builder = { type: 'none' };
+  return cfg;
+}
+
 // Ganti knowledge_base tersimpan dengan hasil resolusi (manual apa adanya,
 // business_asset dibaca live), lalu lampirkan penanda sumber untuk UI.
 function withResolvedKnowledge(cfg) {
@@ -44,7 +52,7 @@ module.exports = function registerConfig(app, deps) {
       if (fs.existsSync(configFile)) {
         const cfg = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
         const { clean: cfgClean } = stripCredentials(cfg);
-        return res.json({ ...withSeoDefaults(withResolvedKnowledge(cfgClean)), _credentials: credMarker });
+        return res.json({ ...withPageBuilderDefaults(withSeoDefaults(withResolvedKnowledge(cfgClean))), _credentials: credMarker });
       }
       const templatePath = path.join(paths.skillDir, 'config.template.json');
       if (fs.existsSync(templatePath)) {
@@ -52,7 +60,7 @@ module.exports = function registerConfig(app, deps) {
         delete raw._instructions;
         const clean = JSON.parse(JSON.stringify(raw, (k, v) => k.startsWith('_') ? undefined : v));
         const { clean: templateClean } = stripCredentials(clean);
-        return res.json({ ...withSeoDefaults(withResolvedKnowledge(templateClean)), _credentials: credMarker });
+        return res.json({ ...withPageBuilderDefaults(withSeoDefaults(withResolvedKnowledge(templateClean))), _credentials: credMarker });
       }
       res.json({ _credentials: credMarker });
     } catch (e) {

@@ -39,6 +39,14 @@
     "_site_gmt_offset_note": "Ukur di <url-situs>/wp-json/ pada field gmt_offset.",
     "schedule_hour": 6
   },
+  "page_builder": {
+    "type": "none",
+    "_type_options": [
+      "elementor",
+      "none"
+    ],
+    "_note": "elementor = halaman dikelola lewat skill edit-elementor."
+  },
   "knowledge_source": {
     "type": "manual",
     "_type_options": [

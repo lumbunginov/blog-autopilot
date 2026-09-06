@@ -292,6 +292,35 @@
       </div>
     </div>
 
+    <!-- Page Builder -->
+    <div class="card">
+      <div class="card-header">
+        <h3>🧱 Page Builder</h3>
+        <span class="badge">Optional</span>
+      </div>
+      <div class="card-body">
+        <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+          Page builder yang dipakai situs ini. Menentukan cara skill mengedit halaman (page), bukan artikel.
+        </p>
+        <div class="img-options" id="pb-type-group">
+          <label class="img-option" onclick="selectPageBuilder('elementor', this)">
+            <input type="radio" name="pb-type" value="elementor">
+            <div class="img-option-icon">📐</div>
+            <div class="img-option-name">Elementor</div>
+            <div class="img-option-desc">Edit halaman lewat skill <code>edit-elementor</code> — download, edit JSON, upload</div>
+            <span class="img-option-badge badge-free">Didukung</span>
+          </label>
+          <label class="img-option" onclick="selectPageBuilder('none', this)">
+            <input type="radio" name="pb-type" value="none">
+            <div class="img-option-icon">⏭️</div>
+            <div class="img-option-name">Tidak pakai page builder</div>
+            <div class="img-option-desc">Halaman diedit langsung di WordPress</div>
+            <span class="img-option-badge badge-skip">Default</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
     <div class="save-bar">
       <div class="save-status" id="save-status">No unsaved changes</div>
       <div style="display:flex; gap: 10px;">
