@@ -1,6 +1,6 @@
 ---
 name: blog-autopilot
-description: "Full-cycle WordPress blog content automation for any business — keyword to published post. Use this skill whenever someone wants to automate blog article writing, create WordPress content, run content marketing automation, generate SEO articles with AI images, set up a blog content pipeline, post articles to WordPress, open blog autopilot dashboard, or configure settings. Trigger on 'tulis artikel', 'write blog', 'buat konten', 'post ke wordpress', 'content automation', 'blog autopilot', 'setup blog', 'open dashboard', or any multi-step article creation workflow. Also trigger on natural language batch article requests like 'buatkan artikel', 'generate artikel', 'buat konten untuk produk', 'buatkan X artikel keyword Y untuk produk Z', 'jadwalkan artikel mulai tanggal', or any request to create multiple articles for a product page. Also handles WordPress *pages* built with Elementor — trigger on 'edit halaman', 'buat page', 'clone template page', 'edit elementor', 'ubah landing page', 'edit page wordpress'."
+description: "Full-cycle WordPress blog content automation for any business — keyword to published post. Use this skill whenever someone wants to automate blog article writing, create WordPress content, run content marketing automation, generate SEO articles with AI images, set up a blog content pipeline, post articles to WordPress, open blog autopilot dashboard, or configure settings. Trigger on 'tulis artikel', 'write blog', 'buat konten', 'post ke wordpress', 'content automation', 'blog autopilot', 'setup blog', 'open dashboard', or any multi-step article creation workflow. Also trigger on natural language batch article requests like 'buatkan artikel', 'generate artikel', 'buat konten untuk produk', 'buatkan X artikel keyword Y untuk produk Z', 'jadwalkan artikel mulai tanggal', or any request to create multiple articles for a product page. Also handles WordPress *pages* built with Elementor — trigger on 'edit halaman', 'buat page', 'clone template page', 'edit elementor', 'ubah landing page', 'edit page wordpress'. Also publishes queued drafts on a schedule — trigger on 'publish draft', 'terbitkan draft', 'draft menumpuk', 'set draft ke publish'."
 ---
 
 # Blog Autopilot
@@ -30,6 +30,7 @@ Read the user's input and route to the right handler:
 | `/blog-autopilot templates` | → **[TEMPLATES]** kelola template artikel |
 | `/blog-autopilot generate [input]` | → **[GENERATE]** batch planner via natural language |
 | `/blog-autopilot page [...]` | → **[PAGE]** kelola halaman Elementor |
+| `/blog-autopilot publish-drafts` | → **[PUBLISH-DRAFTS]** terbitkan draft antrean |
 | `/blog-autopilot [keyword]` | → **[FULL WORKFLOW]** |
 
 ---
@@ -216,6 +217,11 @@ AUDIT
     → Periksa tautan internal semua artikel terbit (baca-saja, beberapa menit)
     → Laporan: data/blogs/{id}/audit/link-YYYY-MM-DD.md
 
+TERBITKAN DRAFT
+  /blog-autopilot publish-drafts
+    → Terbitkan draft tertua yang mengantre, sesuai jadwal di config
+    → Atur di config.json: publish_schedule { runDays, count, minDate }
+
 HALAMAN (PAGE BUILDER)
   /blog-autopilot page [download|edit|clone|upload] [slug]
     → Kelola halaman Elementor (bukan artikel)
@@ -247,6 +253,48 @@ PENGATURAN
 Config per blog: data/blogs/{id}/config.json — kredensial di .env
 Jangan commit .env ke git (berisi API keys)!
 ```
+
+---
+
+## [PUBLISH-DRAFTS] — Terbitkan draft yang mengantre
+
+Menaikkan draft lama jadi `publish`, sedikit per hari, supaya tumpukan draft
+terurai tanpa membanjiri situs sekaligus. **Tidak membuat artikel baru.**
+
+Satu perintah, semua keputusan ada di dalamnya:
+
+```bash
+node .claude/skills/blog-autopilot/scripts/publish-drafts.js
+```
+
+Tambahkan `--dry-run` untuk melihat apa yang akan naik tanpa menyentuh
+WordPress. Jalankan itu dulu kalau ragu.
+
+Skrip mengurus sendiri: hari jalan, berapa banyak, mana yang boleh naik, dan
+memperbarui cache. **Jangan menyusun langkahnya sendiri** — jangan memanggil
+REST WordPress langsung, jangan menyunting cache manual.
+
+Baca JSON keluarannya:
+
+| Keluaran | Arti | Tindakan |
+|---|---|---|
+| `ok:true, scheduled:false` | bukan hari jalan | selesai, tidak ada yang salah |
+| `ok:true, published:[]` + `draftsEligible:0` | antrean habis | selesai, laporkan antrean kosong |
+| `ok:true, published:[…]` | berhasil naik | laporkan judul + URL-nya |
+| `ok:false` | gagal sebagian/seluruhnya | laporkan `error` apa adanya |
+
+Atur jadwalnya di `data/blogs/<id>/config.json` — bukan di berkas ini:
+
+```json
+"publish_schedule": {
+  "runDays": [1, 3, 5],
+  "count": 1,
+  "minDate": "2026-01-01"
+}
+```
+
+`runDays` 0=Minggu…6=Sabtu. `minDate` melindungi draft lawas yang ditinggalkan
+bertahun-tahun agar tidak ikut tayang tanpa diperiksa.
 
 ---
 

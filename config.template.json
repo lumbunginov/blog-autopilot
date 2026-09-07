@@ -39,6 +39,14 @@
     "_site_gmt_offset_note": "Ukur di <url-situs>/wp-json/ pada field gmt_offset.",
     "schedule_hour": 6
   },
+  "publish_schedule": {
+    "runDays": [1, 3, 5],
+    "_runDays_note": "0=Minggu, 1=Senin ... 6=Sabtu. Hari saat draft antrean diterbitkan.",
+    "count": 1,
+    "_count_note": "Berapa draft dinaikkan tiap hari jalan.",
+    "minDate": "2026-01-01",
+    "_minDate_note": "Draft yang lebih tua dari tanggal ini tidak pernah diterbitkan otomatis."
+  },
   "page_builder": {
     "type": "none",
     "_type_options": [
