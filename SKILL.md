@@ -1,6 +1,6 @@
 ---
 name: blog-autopilot
-description: "Full-cycle WordPress blog content automation for any business — keyword to published post. Use this skill whenever someone wants to automate blog article writing, create WordPress content, run content marketing automation, generate SEO articles with AI images, set up a blog content pipeline, post articles to WordPress, open blog autopilot dashboard, or configure settings. Trigger on 'tulis artikel', 'write blog', 'buat konten', 'post ke wordpress', 'content automation', 'blog autopilot', 'setup blog', 'open dashboard', or any multi-step article creation workflow. Also trigger on natural language batch article requests like 'buatkan artikel', 'generate artikel', 'buat konten untuk produk', 'buatkan X artikel keyword Y untuk produk Z', 'jadwalkan artikel mulai tanggal', or any request to create multiple articles for a product page. Also handles WordPress *pages* built with Elementor — trigger on 'edit halaman', 'buat page', 'clone template page', 'edit elementor', 'ubah landing page', 'edit page wordpress'. Also publishes queued drafts on a schedule — trigger on 'publish draft', 'terbitkan draft', 'draft menumpuk', 'set draft ke publish'."
+description: "Full-cycle WordPress blog content automation for any business — keyword to published post. Use this skill whenever someone wants to automate blog article writing, create WordPress content, run content marketing automation, generate SEO articles with AI images, set up a blog content pipeline, post articles to WordPress, open blog autopilot dashboard, or configure settings. Trigger on 'tulis artikel', 'write blog', 'buat konten', 'post ke wordpress', 'content automation', 'blog autopilot', 'setup blog', 'open dashboard', or any multi-step article creation workflow. Also trigger on natural language batch article requests like 'buatkan artikel', 'generate artikel', 'buat konten untuk produk', 'buatkan X artikel keyword Y untuk produk Z', 'jadwalkan artikel mulai tanggal', or any request to create multiple articles for a product page. Also handles WordPress *pages* built with Elementor — trigger on 'edit halaman', 'buat page', 'clone template page', 'edit elementor', 'ubah landing page', 'edit page wordpress'. Also publishes queued drafts on a schedule — trigger on 'publish draft', 'terbitkan draft', 'draft menumpuk', 'set draft ke publish'. Also does bulk find/replace across published posts — trigger on 'edit massal', 'ganti di semua artikel', 'bulk edit', 'perbaiki semua post'."
 ---
 
 # Blog Autopilot
@@ -31,6 +31,7 @@ Read the user's input and route to the right handler:
 | `/blog-autopilot generate [input]` | → **[GENERATE]** batch planner via natural language |
 | `/blog-autopilot page [...]` | → **[PAGE]** kelola halaman Elementor |
 | `/blog-autopilot publish-drafts` | → **[PUBLISH-DRAFTS]** terbitkan draft antrean |
+| `/blog-autopilot wp-edit [...]` | → **[WP-EDIT]** cari/ganti massal di post terbit |
 | `/blog-autopilot [keyword]` | → **[FULL WORKFLOW]** |
 
 ---
@@ -222,6 +223,11 @@ TERBITKAN DRAFT
     → Terbitkan draft tertua yang mengantre, sesuai jadwal di config
     → Atur di config.json: publish_schedule { runDays, count, minDate }
 
+EDIT MASSAL
+  /blog-autopilot wp-edit
+    → Cari & ganti pola di banyak post sekaligus, dengan cadangan
+    → Selalu mode kering dulu; --apply baru menulis
+
 HALAMAN (PAGE BUILDER)
   /blog-autopilot page [download|edit|clone|upload] [slug]
     → Kelola halaman Elementor (bukan artikel)
@@ -295,6 +301,69 @@ Atur jadwalnya di `data/blogs/<id>/config.json` — bukan di berkas ini:
 
 `runDays` 0=Minggu…6=Sabtu. `minDate` melindungi draft lawas yang ditinggalkan
 bertahun-tahun agar tidak ikut tayang tanpa diperiksa.
+
+---
+
+## [WP-EDIT] — Cari & ganti massal di post
+
+Untuk memperbaiki pola yang sama di banyak artikel sekaligus: sisa penanda,
+tautan lama, format yang salah.
+
+**Jangan tulis skrip sendiri untuk ini.** Menulisnya sekali pakai berarti
+mengulang tiga kesalahan yang sama — tanpa cadangan, tanpa mode kering, dan
+seluruh HTML tiap post ikut terbaca padahal yang dicari satu pola.
+
+**Langkah 1 — lihat dulu apa yang kena (tidak menulis apa pun):**
+
+```bash
+node .claude/skills/blog-autopilot/scripts/wp-edit.js scan   --find '<strong>Keywords</strong>\s*:'
+```
+
+Keluarannya berisi `matched` dan daftar id + judul, **bukan** isi artikelnya.
+Tambahkan `--show 3` kalau perlu mengintip markup beberapa contoh.
+
+**Langkah 2 — coba penggantiannya, masih kering:**
+
+```bash
+node .claude/skills/blog-autopilot/scripts/wp-edit.js replace   --find '<p><strong>Keywords</strong>\s*:[^<]*</p>' --replace ''
+```
+
+**Langkah 3 — baru tulis:** ulangi dengan `--apply`. Cadangan sebelum-edit
+otomatis tersimpan di `data/blogs/<id>/backups/wp-edit-<waktu>/`, dan jalurnya
+disebut di keluaran. Salah? Kembalikan:
+
+```bash
+node .claude/skills/blog-autopilot/scripts/wp-edit.js restore --backup <folder>
+```
+
+Pilihan lain: `--status publish,draft` (bawaan), `--flags gi`, `--blog <id>`.
+
+Post yang polanya **masih tersisa** setelah penggantian dilewati, tidak ditulis
+separuh jalan — muncul sebagai `skippedLeftover`. Kalau angkanya besar, regexmu
+belum mengenai seluruh bentuk yang ada; perbaiki dulu, jangan dipaksa.
+
+### Kalau perlu perubahan yang lebih rumit dari cari-ganti
+
+Pakai `scripts/lib/wp-bulk.js` dari skrip Node pendek — jangan merakit ulang
+autentikasi WordPress:
+
+```js
+const { resolveBlog } = require('./scripts/lib/blog');
+const { scanPosts, transformPosts } = require('./scripts/lib/wp-bulk');
+
+const { api, auth, blogId, paths } = resolveBlog();   // tenant + kredensial siap
+const { hits } = await scanPosts({ api, auth, match: (raw) => /pola/.test(raw) });
+const r = await transformPosts({
+  api, auth, posts: hits,
+  transform: (raw) => ({ out: raw.replace(/pola/g, 'ganti'), notes: [] }),
+  apply: false,                    // true + backupDir untuk menulis
+  verify: (out) => !/pola/.test(out)
+});
+```
+
+`resolveBlog()` sudah membaca `.env`, mencocokkan nama variabel bertenant, dan
+menyusun header auth. Membacanya sendiri dari `.env` selalu berakhir sama:
+salah tebak nama variabel, lalu 401 tanpa penjelasan.
 
 ---
 
