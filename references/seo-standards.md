@@ -131,3 +131,62 @@ Quality > quantity. Never add filler to hit a word count.
 - Use H2/H3 every 200–300 words
 - Use lists for 3+ items
 - Short intro (no more than 2 paragraphs before first H2)
+
+---
+
+## Menulis meta Rank Math lewat REST
+
+**Jangan pakai `wp/v2` untuk ini.** Rank Math mendaftarkan meta `rank_math_*`
+ke REST hanya untuk sebagian post type. Pada WordPress lazim, `post` terdaftar
+tapi **`page` tidak** — dan kegagalannya sunyi total:
+
+```
+POST /wp-json/wp/v2/pages/<id>  {meta:{rank_math_title:'X'}}
+  → 200 OK, meta:{}          ← TIDAK tersimpan
+GET  /wp-json/wp/v2/pages/<id>?context=edit
+  → meta tanpa rank_math_*   ← padahal nilainya ADA di database
+```
+
+Bacaannya gagal terpisah dari tulisannya, dan itu yang paling menyesatkan:
+`wp/v2` melaporkan meta kosong untuk page yang metanya sebenarnya sudah benar.
+Jadi pembacaan balik lewat `wp/v2` **tidak bisa dipakai sebagai verifikasi** —
+ia akan bilang "gagal" pada pekerjaan yang berhasil.
+
+Yang bekerja untuk post **maupun** page:
+
+```
+POST /wp-json/rankmath/v1/updateMeta
+  { "objectID": <id>, "objectType": "post", "meta": { ... } }
+```
+
+`objectType` selalu `"post"`, juga untuk page — itu tipe objek WordPress, bukan
+post type. Mengisi `"page"` ditolak diam-diam.
+
+Pakai perkakasnya, jangan menyusun permintaan sendiri:
+
+```bash
+node scripts/seo-meta.js get <id|url>
+node scripts/seo-meta.js set <id> --title "..." --desc "..." --keyword "..."
+node scripts/seo-meta.js set <id> --json '{"rank_math_schema_Product":{...}}'
+```
+
+`set` selalu memverifikasi dari **HTML yang tersaji** — satu-satunya pembacaan
+yang jujur untuk page, dan kebetulan juga yang dilihat mesin pencari. Keluar
+kode 1 bila yang tersaji tak sama dengan yang diminta.
+
+### Yang perlu diketahui
+
+| Hal | Aturan |
+|---|---|
+| Schema | Kunci `rank_math_schema_<Tipe>`, mis. `rank_math_schema_Product`. Endpoint `updateSchemas` ada tapi no-op — balas `200 []` tanpa menyimpan. |
+| `rank_math_robots` | Array, bukan string. String diterima 200 lalu diabaikan saat render. |
+| Kunci salah ketik | Diterima server dengan 200 lalu hilang tanpa jejak. `seo-meta.js` menolaknya lebih dulu. |
+| Focus keyword | Tidak pernah tampak di HTML — untuk analyzer, bukan pengunjung. Tak bisa diverifikasi dari halaman tersaji. |
+| Header auth | `blog.js` mengembalikan base64 **telanjang**; header butuh awalan `Basic `. Salah bentuk → 401 `rest_not_logged_in`, pesan yang menuduh kredensial padahal formatnya. |
+
+### Skor Rank Math 0/100 pada halaman Elementor
+
+Analyzer Rank Math membaca editor Gutenberg, yang untuk halaman Elementor
+memang kosong — isinya ada di `_elementor_data`. **Setiap** halaman Elementor
+di situs seperti ini berskor 0/100, termasuk halaman yang sudah lama berperingkat
+baik. Skor itu bukan sinyal mutu di sini; verifikasi lewat HTML tersaji.

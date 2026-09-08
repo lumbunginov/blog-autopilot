@@ -14,6 +14,7 @@ const http = require('http');
 const url = require('url');
 const { loadDotEnv, envKeys } = require('./lib/env');
 const { makePaths } = require('./lib/paths');
+const rankmath = require('./lib/rankmath');
 
 loadDotEnv(path.join(__dirname, '..', '.env'));
 
@@ -192,6 +193,25 @@ async function createPost() {
   // Attach featured image to post (critical step!)
   if (mediaId && mediaId > 0) {
     await makeRequest(`/media/${mediaId}`, 'POST', { post: postId }).catch(() => {});
+  }
+
+  // Rank Math: tulis ulang lewat endpoint pluginnya sendiri.
+  //
+  // Meta di payload wp/v2 di atas dibiarkan — untuk `post` ia memang bekerja,
+  // dan membuangnya berarti mengubah jalur yang sudah terbukti. Yang ditambah
+  // di sini adalah jaring pengaman: kalau meta rank_math_* TIDAK terdaftar di
+  // REST untuk post type ini (yang terjadi pada `page`, dan bisa terjadi pada
+  // post type lain tergantung tema/plugin), wp/v2 menerimanya dengan 200 lalu
+  // membuangnya tanpa jejak. updateMeta bekerja untuk keduanya.
+  if (seoType === 'rankmath' && payload.meta && Object.keys(payload.meta).length > 0) {
+    try {
+      await rankmath.tulisMeta({ baseUrl, auth: authHeader }, postId, payload.meta);
+    } catch (e) {
+      // Bukan alasan menggagalkan post yang sudah terbit — tapi harus terlihat,
+      // karena artikel tanpa meta SEO adalah separuh pekerjaan yang hilang.
+      console.error(`⚠ Meta Rank Math mungkin tidak tersimpan: ${e.message}`);
+      console.error(`  Periksa: node scripts/seo-meta.js get ${postId}`);
+    }
   }
 
   const result = {

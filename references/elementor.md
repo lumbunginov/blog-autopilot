@@ -157,6 +157,20 @@ sebelum-edit; itu jalan pulang bila hasilnya salah.
 mem-publish tanpa diminta — periksa dulu di editor Elementor, baru ubah
 statusnya.
 
+## Meta SEO halaman
+
+Meta Rank Math untuk **page** tidak bisa ditulis lewat `wp/v2` — diterima
+dengan 200 lalu hilang, dan dibaca kembali sebagai kosong walau nilainya ada.
+Pakai `scripts/seo-meta.js`:
+
+```bash
+node ../seo-meta.js get <id|url>
+node ../seo-meta.js set <id> --title "..." --desc "..." --keyword "..."
+```
+
+Selengkapnya, termasuk schema dan kenapa skor Rank Math selalu 0/100 untuk
+halaman Elementor: `references/seo-standards.md`.
+
 ## Kalau gagal
 
 | Gejala | Sebab | Tindakan |

@@ -393,6 +393,7 @@ Referensi lain, dibuka hanya saat dibutuhkan:
 | `references/elementor.md` | selalu — alur & perintah |
 | `references/elementor-widgets.md` | menyusun/menyunting widget & settings |
 | `references/elementor-troubleshooting.md` | ada error atau halaman rusak |
+| `references/seo-standards.md` | menulis meta Rank Math (post & page) |
 
 ---
 
