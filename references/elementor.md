@@ -27,7 +27,9 @@ Semua dijalankan dari `.claude/skills/blog-autopilot/scripts/elementor/`:
 ```bash
 node download-page.js <slug|pageId|all>      # WordPress → pages/
 node extract-elementor.js <slug.json|all>    # pages/ → elementor/   (edit di sini)
-node validate-elementor.js <slug.json>       # cek struktur elementor/
+node validate-elementor.js <slug.json>       # cek JSON-nya sehat
+node check-blueprint.js <slug.json|all>      # cek bentuknya konsisten
+node capture-blueprint.js <slug.json> <nama> # rekam kerangka jadi blueprint
 node compress-elementor.js <slug.json|all>   # elementor/ → compress/
 node upload-page.js <slug>                   # compress/ → halaman yang SUDAH ada
 node create-page.js <file.json> "Judul"      # elementor/ → halaman BARU
@@ -59,6 +61,7 @@ node download-page.js sewa-ht-malang
 node extract-elementor.js sewa-ht-malang.json
 # edit elementor/sewa-ht-malang.json
 node validate-elementor.js sewa-ht-malang.json
+node check-blueprint.js sewa-ht-malang.json
 node compress-elementor.js sewa-ht-malang.json
 node upload-page.js sewa-ht-malang
 ```
@@ -88,6 +91,49 @@ node create-page.js sewa-ht-denpasar.json "Sewa HT Denpasar" \
 slug dari judul. Respons WordPress otomatis disimpan ke `pages/<slug>.json`,
 jadi siklus edit berikutnya bisa langsung `extract-elementor.js`.
 
+## Blueprint halaman — menjaga halaman sejenis tetap sebentuk
+
+`validate-elementor.js` memeriksa JSON-nya **sehat**; ia tidak tahu apa-apa soal
+bentuk. Halaman dengan seksi ekstra, seksi hilang, atau seksi tertukar lolos
+validasi dengan mulus dan baru ketahuan setelah terbit — itulah cara satu
+halaman produk keluar dengan format berbeda dari saudaranya.
+
+Blueprint merekam **kerangka** satu halaman: urutan seksi dan widget di dalamnya.
+Isinya — teks, gambar, harga — tidak direkam, jadi halaman sejenis tetap bebas
+berbeda isi tapi wajib sebentuk.
+
+Rekam sekali dari halaman yang bentuknya sudah benar:
+
+```bash
+node capture-blueprint.js sewa-kabel-aux-to-rca.json produk-sewa   --note "Halaman produk sewa: hook, spek, galeri, harga, blog list"
+```
+
+Tandai halaman lain yang harus mengikutinya (cukup sekali per halaman):
+
+```bash
+node check-blueprint.js sewa-tripod-kamera-malang.json --blueprint produk-sewa
+```
+
+Sesudah itu `node check-blueprint.js <slug>` — atau `all` untuk semua yang sudah
+ditandai — cukup dijalankan tanpa argumen lain. Keluar kode 1 bila ada yang
+menyimpang, jadi aman dipakai sebagai gerbang sebelum compress.
+
+Halaman tanpa tanda **dilewati, bukan digagalkan**: halaman yang memang tidak
+sejenis tidak perlu dipaksa masuk cetakan mana pun.
+
+Semua ini juga ada di dashboard: menu **Template → Halaman**.
+
+### Kalau sebuah halaman memang harus beda
+
+Ada dua jalan, dan pilihannya milik pemilik situs, bukan otomatis:
+
+1. **Halaman yang dibetulkan** — kalau bedanya memang tak disengaja.
+2. **Blueprint kedua** — kalau memang jenis halaman yang lain. Rekam blueprint
+   baru dari halaman itu dan petakan halaman sejenisnya ke sana.
+
+Yang tidak dianjurkan: melebarkan satu blueprint sampai menerima segala bentuk.
+Blueprint yang menerima apa saja tidak menahan apa pun.
+
 ## Aturan yang tidak boleh dilanggar
 
 **Jangan pernah menyusun ulang JSON dengan tangan** — tanpa `sed`, tanpa
@@ -99,6 +145,9 @@ Elementor menolak memuatnya. Gunakan `clone-template.js`, atau Node dengan
 **Selalu `validate-elementor.js` sebelum compress.** Validator menangkap
 sintaks rusak, `id`/`elType` yang hilang, dan id duplikat — tiga penyebab
 halaman rusak yang paling sering.
+
+**Lalu `check-blueprint.js`, kalau halamannya sudah ditandai.** Validator
+meloloskan halaman yang bentuknya menyimpang; pemeriksa blueprint menahannya.
 
 **Upload mengubah halaman live.** Konfirmasi dulu ke pemilik situs, atau
 arahkan ke halaman staging dengan `--page-id`. `pages/` menyimpan salinan
@@ -117,6 +166,8 @@ statusnya.
 | `No _elementor_data found` | berkas `pages/` diambil bukan dengan `context=edit` | Download ulang dengan `download-page.js` |
 | HTTP 401/403 saat upload | app password tidak punya hak edit page | Pakai akun editor/admin |
 | `bukan array section Elementor maupun format halaman WordPress` | berkas sumber create-page salah bentuk | Pakai hasil `extract-elementor.js` atau `clone-template.js` |
+| `menyimpang dari blueprint` | bentuk halaman beda dari saudaranya | Betulkan halamannya, atau rekam blueprint terpisah bila memang beda jenis |
+| `blueprint "..." tidak ada` | nama salah ketik, atau blueprint sudah dihapus | `capture-blueprint.js` ulang, atau lepas tandanya di dashboard |
 | Halaman baru tak muncul di situs | dibuat sebagai draft (default) | Publish di WP admin, atau `--status publish` |
 | Halaman kosong setelah upload | JSON rusak lolos ke compress | `pages/` → extract ulang, edit lagi, validate |
 | Tampilan lama masih muncul | cache Elementor/CDN | Elementor → Tools → Regenerate CSS, lalu purge cache |

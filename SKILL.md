@@ -27,7 +27,7 @@ Read the user's input and route to the right handler:
 | `/blog-autopilot post [filepath]` | → **[POST]** existing file |
 | `/blog-autopilot fix-image [post_id]` | → **[FIX-IMAGE]** repair missing/failed image |
 | `/blog-autopilot audit-links` | → **[AUDIT-LINKS]** periksa tautan internal semua artikel terbit |
-| `/blog-autopilot templates` | → **[TEMPLATES]** kelola template artikel |
+| `/blog-autopilot templates` | → **[TEMPLATES]** kelola template artikel & blueprint halaman |
 | `/blog-autopilot generate [input]` | → **[GENERATE]** batch planner via natural language |
 | `/blog-autopilot page [...]` | → **[PAGE]** kelola halaman Elementor |
 | `/blog-autopilot publish-drafts` | → **[PUBLISH-DRAFTS]** terbitkan draft antrean |
@@ -396,12 +396,22 @@ Referensi lain, dibuka hanya saat dibutuhkan:
 
 ---
 
-## [TEMPLATES] — Kelola template artikel
+## [TEMPLATES] — Kelola template artikel & blueprint halaman
+
+Menu **Template** di dashboard punya dua sub-tab, karena artikel dan halaman
+dicetak dengan cara yang berbeda:
+
+| Sub-tab | Isi | Berlaku untuk |
+|---|---|---|
+| **Artikel** | prompt artikel, prompt gambar, pola meta | post/artikel |
+| **Halaman** | blueprint: kerangka seksi halaman Elementor | page |
+
+Buka dashboard (`npm start` di folder skill), lalu menu **Template**.
+
+### Sub-tab Artikel
 
 Template mengatur prompt artikel, prompt gambar, dan pola meta. Dipilih per
 rencana di tab Perencanaan.
-
-Buka dashboard (`npm start` di folder skill), lalu menu **Template**.
 
 Untuk melihat hasil render satu rencana:
 
@@ -415,6 +425,29 @@ normal). Keluar kode 1 = riset gagal, dan artikel tidak boleh ditulis.
 Blok `{riset}...{/riset}` di dalam template dikerjakan OpenAI sebelum artikel
 ditulis. Butuh `{ID}_TEXT_API_KEY` di `.env` — hanya kalau template memakai blok
 itu. Template tanpa `{riset}` jalan tanpa kunci sama sekali.
+
+### Sub-tab Halaman — blueprint
+
+Blueprint merekam **kerangka** satu halaman Elementor: urutan seksi dan widget
+di dalamnya, tanpa isinya. Gunanya menahan halaman yang bentuknya menyimpang
+dari saudaranya sebelum terbit — `validate-elementor.js` hanya memeriksa
+JSON-nya sehat, bukan bentuknya konsisten.
+
+Alurnya: **Rekam dari Halaman** (pilih halaman yang bentuknya sudah benar) →
+petakan halaman sejenis lewat dropdown di daftar **Halaman Elementor** →
+**Periksa Semua**. Halaman tanpa blueprint dilewati, bukan digagalkan.
+
+Dari baris perintah, alurnya sama:
+
+```bash
+cd scripts/elementor
+node capture-blueprint.js <slug.json> <nama> --note "<keterangan>"
+node check-blueprint.js <slug.json> --blueprint <nama>   # tandai sekali
+node check-blueprint.js all                              # keluar 1 bila menyimpang
+```
+
+Selengkapnya, termasuk apa yang harus dilakukan saat sebuah halaman memang
+harus beda: `references/elementor.md`.
 
 ---
 
@@ -866,4 +899,5 @@ Struktur lengkap: lihat `config.template.json`
 - `agents/` — Instruksi detail tiap step workflow
 - `scripts/` — Node.js scripts untuk WordPress API
 - `references/` — SEO standards dan formatting rules
-- `data/blogs/{id}/templates.json` — Template artikel per blog (dikelola di tab Template)
+- `data/blogs/{id}/templates.json` — Template artikel per blog (tab Template → Artikel)
+- `data/blogs/{id}/page-blueprints/` — Blueprint halaman Elementor (tab Template → Halaman)

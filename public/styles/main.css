@@ -1308,3 +1308,9 @@
   .plan-act.post { border-color: #86efac; color: #15803d; }
   .plan-act.danger { border-color: #fca5a5; color: #991b1b; }
 
+
+/* Sub-tab menu Template (Artikel / Halaman). Tab aktif dibedakan warna isi,
+   bukan cuma tebal huruf, supaya jelas di layar kecil. */
+.tpl-tab { font-weight: 500; }
+.tpl-tab-active { background: var(--primary, #2563eb); color: #fff; border-color: var(--primary, #2563eb); }
+.tpl-tab-active:hover { background: var(--primary, #2563eb); }

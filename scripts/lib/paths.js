@@ -58,7 +58,8 @@ function makePaths(skillDir) {
     pagesCachePath: (id) => path.join(blogDir(id), 'pages-cache.json'),
     plansPath: (id) => path.join(blogDir(id), 'article-plans.json'),
     templatesPath: (id) => path.join(blogDir(id), 'templates.json'),
-    queuePath: (id) => path.join(blogDir(id), 'agent-queue.json')
+    queuePath: (id) => path.join(blogDir(id), 'agent-queue.json'),
+    blueprintsDir: (id) => path.join(blogDir(id), 'page-blueprints')
   };
 }
 
