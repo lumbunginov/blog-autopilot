@@ -190,3 +190,71 @@ Analyzer Rank Math membaca editor Gutenberg, yang untuk halaman Elementor
 memang kosong — isinya ada di `_elementor_data`. **Setiap** halaman Elementor
 di situs seperti ini berskor 0/100, termasuk halaman yang sudah lama berperingkat
 baik. Skor itu bukan sinyal mutu di sini; verifikasi lewat HTML tersaji.
+
+---
+
+## Audit meta seluruh situs
+
+```bash
+node scripts/seo-audit.js                 # semua page + post terbit
+node scripts/seo-audit.js --pages         # page saja
+node scripts/seo-audit.js --orphan        # + statistik tautan internal
+node scripts/seo-audit.js --json hasil.json
+```
+
+Dibaca dari HTML tersaji, satu-satunya pembacaan yang jujur untuk page. Keluar
+kode 1 bila ada temuan berat, jadi bisa dipakai sebagai gerbang.
+
+Tingkat temuan:
+
+| Tingkat | Arti |
+|---|---|
+| **berat** | Halaman tidak muncul atau salah dikenali: meta kosong, `noindex`, canonical menunjuk halaman lain |
+| **sedang** | Terpotong di hasil pencarian, atau canonical hilang |
+| **ringan** | Ruang yang tersedia belum terpakai |
+
+Dua hal yang sengaja TIDAK dilaporkan sebagai masalah:
+
+- **Halaman yang gagal dibaca.** Halaman error tidak punya meta, dan menilainya
+  berarti melaporkan kerusakan buatan sendiri. Audit memakai konkurensi 2 dan
+  satu kali coba ulang — pada 5 permintaan bersamaan perkap.com mulai membalas
+  503, dan laporan yang berubah tiap dijalankan tidak bisa dipercaya.
+- **Skor Rank Math.** Selalu 0/100 untuk halaman Elementor; lihat bagian di atas.
+
+## Redirect saat slug berubah
+
+Slug yang berubah tanpa redirect berarti URL lama jadi 404, dan peringkat yang
+sudah didapat hilang bersamanya.
+
+```bash
+node scripts/seo-redirect.js add <slug-lama> <url-baru> --object-id <id>
+node scripts/seo-redirect.js check <slug|url>
+node scripts/seo-redirect.js remove <redirectionID> --object-id <id>
+```
+
+`add` memverifikasi sendiri: respons 200 dari Rank Math cuma berarti redirect
+tersimpan, bukan bahwa polanya cocok. Keluar kode 1 bila URL lama belum benar-
+benar mengalihkan.
+
+`--object-id` adalah post/page penanda asal. Endpointnya mewajibkannya walau
+redirect tidak terikat pada konten itu; pakai id halaman tujuan supaya jejaknya
+masuk akal saat dibaca orang lain.
+
+Bentuk parameter `/rankmath/v1/updateRedirection` tidak terdokumentasi resmi —
+dipetakan dari perilaku editor Rank Math dan diverifikasi langsung:
+
+| Aksi | Parameter |
+|---|---|
+| Buat | `{objectID, objectType:'post', hasRedirect:true, redirectionSources, redirectionUrl, redirectionType}` |
+| Hapus | `{objectID, objectType:'post', hasRedirect:false, redirectionID}` — **id harus STRING**, angka ditolak 400 |
+
+Penghapusan bisa tampak gagal bila langsung dicek: cache masih menyajikan 301
+beberapa detik. Itu cache, bukan penghapusan yang gagal.
+
+### Catatan Git Bash di Windows
+
+Argumen berawalan `/` diterjemahkan jadi path Windows: `/sewa-webcam/` sampai
+ke skrip sebagai `C:/Program Files/Git/sewa-webcam/`. Tulis **tanpa** garis
+miring awal (`sewa-webcam/`) atau pakai URL penuh. Skripnya menolak bentuk
+yang sudah dirusak — tanpa penjagaan itu, redirect "berhasil dibuat" atas pola
+yang tak akan pernah cocok.

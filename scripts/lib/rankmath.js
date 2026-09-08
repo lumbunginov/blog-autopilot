@@ -19,48 +19,9 @@
 //
 // Diverifikasi di perkap.com 2026-09-08 pada halaman draft sekali pakai.
 
-const https = require('https');
-const http = require('http');
-
-// Di skill ini beredar dua bentuk: blog.js mengembalikan base64 telanjang
-// (pemanggil lama menambahkan "Basic " sendiri), sementara post-to-wp.js sudah
-// menyimpan header lengkap. Base64 telanjang yang lolos ke header menghasilkan
-// 401 rest_not_logged_in — yang terbaca seperti kredensial salah, bukan format
-// salah, dan itu mengirim orang mencari di tempat yang keliru.
-function headerAuth(auth) {
-  const s = String(auth || '');
-  return /^(Basic|Bearer)\s/i.test(s) ? s : 'Basic ' + s;
-}
-
-function request(base, auth, path, method, body) {
-  const url = new URL(base);
-  const lib = url.protocol === 'http:' ? http : https;
-  const data = body ? JSON.stringify(body) : null;
-  return new Promise((resolve, reject) => {
-    const req = lib.request({
-      hostname: url.hostname,
-      port: url.port || undefined,
-      path,
-      method,
-      headers: {
-        Authorization: headerAuth(auth),
-        'Content-Type': 'application/json',
-        ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {})
-      }
-    }, res => {
-      let b = '';
-      res.on('data', c => b += c);
-      res.on('end', () => {
-        let parsed = null;
-        try { parsed = JSON.parse(b); } catch { /* biarkan mentah */ }
-        resolve({ status: res.statusCode, body: parsed, raw: b });
-      });
-    });
-    req.on('error', reject);
-    if (data) req.write(data);
-    req.end();
-  });
-}
+// HTTP dan normalisasi header ada di rankmath-http.js supaya modul redirect
+// memakai jalur yang sama persis, bukan salinan yang bisa berbeda diam-diam.
+const { request, headerAuth } = require('./rankmath-http');
 
 // Kunci yang boleh ditulis. Daftar tertutup supaya salah ketik (mis.
 // rank_math_desc) tertangkap di sini, bukan diterima 200 lalu hilang.

@@ -27,6 +27,7 @@ Read the user's input and route to the right handler:
 | `/blog-autopilot post [filepath]` | → **[POST]** existing file |
 | `/blog-autopilot fix-image [post_id]` | → **[FIX-IMAGE]** repair missing/failed image |
 | `/blog-autopilot audit-links` | → **[AUDIT-LINKS]** periksa tautan internal semua artikel terbit |
+| `/blog-autopilot audit-seo` | → **[AUDIT-SEO]** periksa meta SEO semua post & page |
 | `/blog-autopilot templates` | → **[TEMPLATES]** kelola template artikel & blueprint halaman |
 | `/blog-autopilot generate [input]` | → **[GENERATE]** batch planner via natural language |
 | `/blog-autopilot page [...]` | → **[PAGE]** kelola halaman Elementor |
@@ -630,6 +631,37 @@ Fitur 7 untuk kenapa.
 supaya tidak pernah menimpa laporan penuh, dan laporannya bertanda parsial di
 kepala berkas — angka "produk tak tertaut" dan "artikel tanpa gambar" di sana
 TIDAK sahih (crawl `--limit` melewati seluruh pages dan cuma sebagian posts).
+
+---
+
+## [AUDIT-SEO] — Periksa meta SEO semua post & page
+
+Menjawab pertanyaan yang sebelumnya harus dibuka satu-satu: halaman mana yang
+meta description-nya kosong, judulnya kepanjangan, canonical-nya menunjuk
+tempat lain, atau tak sengaja `noindex`.
+
+```bash
+node .claude/skills/blog-autopilot/scripts/seo-audit.js            # page + post
+node .claude/skills/blog-autopilot/scripts/seo-audit.js --pages    # page saja
+node .claude/skills/blog-autopilot/scripts/seo-audit.js --orphan   # + tautan internal
+```
+
+Dibaca dari HTML tersaji — untuk page, `wp/v2` melaporkan meta kosong walau
+nilainya ada. Keluar kode 1 bila ada temuan berat.
+
+Untuk menyunting hasilnya:
+
+```bash
+node .claude/skills/blog-autopilot/scripts/seo-meta.js set <id> --title "..." --desc "..."
+```
+
+Kalau slug berubah, buat redirect supaya peringkat URL lama tidak hilang:
+
+```bash
+node .claude/skills/blog-autopilot/scripts/seo-redirect.js add <slug-lama> <url-baru> --object-id <id>
+```
+
+Aturan lengkap, ambang panjang, dan jebakan REST-nya: `references/seo-standards.md`.
 
 ---
 
