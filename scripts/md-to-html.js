@@ -14,7 +14,10 @@ if (!inputFile || !fs.existsSync(inputFile)) {
   process.exit(1);
 }
 
-const raw = fs.readFileSync(inputFile, 'utf-8');
+// CRLF wajib dinormalkan dulu: regex /^...$/m berhenti sebelum \r, jadi
+// body.replace(match[0] + '\n') tak pernah cocok dan baris **Meta Title** dkk
+// ikut bocor ke isi artikel.
+const raw = fs.readFileSync(inputFile, 'utf-8').replace(/\r\n/g, '\n');
 
 // ==================== PARSE FRONTMATTER ====================
 function parseFrontmatter(text) {
