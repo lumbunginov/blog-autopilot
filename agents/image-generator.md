@@ -16,6 +16,10 @@ Create one featured image that:
 - **Blog ID** — which tenant this is for (from `node scripts/blog-config.js --id`); used to look up the `.env` key
 - **Config**: `image_api.type` — the API key is NOT in config; it comes from `.env` (variable `{ID}_IMAGE_API_KEY`, e.g. `PERKAPCOM_IMAGE_API_KEY`) and must never be pasted into a script literal
 - **Knowledge Base**: `business_name`, `business_description`
+- **Output path** - path berkas PNG tujuan. **Tulis dengan forward slash**: `C:/path/ke/images/slug.png`, bukan `C:\path\ke\...`.
+  Template di bawah menyisipkan path ini ke dalam string literal JS ber-quote tunggal, dan JS **membuang setiap backslash** sebagai escape yang tidak dikenal (`\P` -> `P`), atau lebih buruk mengubahnya jadi karakter kontrol (`\f` -> form feed).
+  Sisa `C:` lalu dibaca Windows sebagai path drive-relative, jadi berkasnya mendarat di root project dengan nama path yang dipipihkan - **tanpa satu pun error**. Ini pernah terjadi di pemakaian nyata.
+  `assertOutPath()` di tiap template sekarang menolak bentuk rusak itu.
 
 ---
 
@@ -138,7 +142,8 @@ if (!apiKey) {
   console.error('ERROR:' + envKeys(blogId).imageKey + ' belum diset di .env');
   process.exit(1);
 }
-const outputPath = '{OUTPUT_PATH}';
+const { assertOutPath } = require('./.claude/skills/blog-autopilot/scripts/lib/outpath');
+const outputPath = assertOutPath('{OUTPUT_PATH}');
 
 const payload = JSON.stringify({
   model: 'seedream-4-5-251128',
@@ -184,7 +189,9 @@ req.end();
 `const payload = JSON.stringify({...})` pada script di atas dengan:
 
 ```js
-const refPath = '{REFERENCE_PATH}';   // dari Step 0; kosongkan kalau path null
+const { assertOutPath } = require('./.claude/skills/blog-autopilot/scripts/lib/outpath');
+const refPathRaw = '{REFERENCE_PATH}';   // dari Step 0; kosongkan kalau path null
+const refPath = refPathRaw ? assertOutPath(refPathRaw, 'reference path') : '';
 const badan = {
   model: 'seedream-4-5-251128',
   prompt: prompt,
@@ -219,7 +226,8 @@ if (!apiKey) {
   console.error('ERROR:' + envKeys(blogId).imageKey + ' belum diset di .env');
   process.exit(1);
 }
-const outputPath = '{OUTPUT_PATH}';
+const { assertOutPath } = require('./.claude/skills/blog-autopilot/scripts/lib/outpath');
+const outputPath = assertOutPath('{OUTPUT_PATH}');
 
 const payload = JSON.stringify({
   instances: [{ prompt }],
@@ -270,7 +278,8 @@ if (!apiKey) {
   console.error('ERROR:' + envKeys(blogId).imageKey + ' belum diset di .env');
   process.exit(1);
 }
-const outputPath = '{OUTPUT_PATH}';
+const { assertOutPath } = require('./.claude/skills/blog-autopilot/scripts/lib/outpath');
+const outputPath = assertOutPath('{OUTPUT_PATH}');
 
 const payload = JSON.stringify({
   model: 'dall-e-3',
