@@ -11,3 +11,9 @@ agent-queue.json
 build/
 tmp_*.json
 .superpowers/
+
+# Keluaran per-tenant, bukan bagian dari skill.
+# Tanpa ini `git add -A` menyapu 15 berkas artikel/gambar hasil generate
+# ke dalam repo skill yang dipakai bersama.
+articles/
+images/

@@ -281,6 +281,28 @@ Skrip mengurus sendiri: hari jalan, berapa banyak, mana yang boleh naik, dan
 memperbarui cache. **Jangan menyusun langkahnya sendiri** — jangan memanggil
 REST WordPress langsung, jangan menyunting cache manual.
 
+**Aman dipanggil berulang.** `count` adalah kuota HARIAN, bukan ukuran batch:
+sebelum menerbitkan, skrip menghitung ulang berapa post bertanggal hari ini yang
+sudah tayang di situs — siapa pun yang menaikkannya — dan berhenti kalau kuota
+sudah habis (`guard: "site_quota_reached"`). Jadi memanggilnya berulang kali
+(mis. dari scheduler atau agent otomatis) tidak menggandakan apa pun. Kalau hitungan situs gagal diambil, skrip juga
+berhenti (`guard: "site_count_unavailable"`): **"tidak terukur" bukan "aman"**.
+
+Dulu tidak begitu, dan biayanya nyata: `count: 1` pernah menghasilkan 12 post
+dalam sehari karena tiap pemanggilan mengambil jatah barunya sendiri. `--force` melewati hari jalan; ia **tidak** melewati kuota.
+
+**Antrean disegarkan dari situs di awal tiap run.** Skrip menarik daftar draft
+langsung dari WordPress dan menggabungkannya ke cache sebelum memilih, jadi
+artikel yang baru ditulis bisa naik tanpa menunggu siapa pun membuka dashboard.
+Sebelumnya cache hanya diisi dashboard: `lastSync` pernah basi 13 hari dan
+7 draft terbaru tidak pernah terlihat oleh antrean. Kalau
+penyegaran gagal (`queueSync.ok:false`), skrip **tetap menerbitkan** dari cache
+lama — cache basi hanya menyembunyikan draft baru, tidak pernah mengarang draft
+lama. Arahnya sengaja berlawanan dengan penjaga kuota: di sana tidak terukur
+berarti terlalu banyak, di sini berarti terlalu sedikit. `--dry-run` tidak
+menyentuh jaringan, jadi ia melaporkan `queueSync.skipped:"dry-run"` dan umur
+cache (`cacheLastSync`) apa adanya.
+
 Baca JSON keluarannya:
 
 | Keluaran | Arti | Tindakan |

@@ -10,9 +10,18 @@
 //
 //   "publish_schedule": {
 //     "runDays": [1, 3, 5],   // 0=Minggu … 6=Sabtu
-//     "count": 1,             // draft per hari jalan
+//     "count": 1,             // KUOTA HARIAN: berapa post boleh tayang di situs hari itu,
+//                             // siapa pun yang menerbitkannya — bukan ukuran batch per
+//                             // pemanggilan. Ditegakkan dengan menghitung ulang post
+//                             // bertanggal hari ini di situs sebelum setiap penerbitan.
 //     "minDate": "2026-01-01" // draft lebih tua dari ini tidak pernah disentuh
 //   }
+//
+// AMAN DIPANGGIL BERULANG. Scheduler atau agent otomatis boleh memanggil skrip ini berkali-kali
+// sehari; panggilan ke-2 dan seterusnya pada hari yang sama tidak menerbitkan apa-apa. Dulu
+// tidak begitu — `count` dibaca sebagai batas batch, jadi pernah 12 post dalam sehari untuk
+// `count: 1`. Kalau hitungan situs tidak terukur, skrip juga menolak: "tidak tahu"
+// bukan "aman". Lihat lib/daily-quota-guard.js.
 //
 // Kode keluar: 0 = tidak ada yang salah (termasuk "bukan hari jalan" dan
 // "tidak ada draft"). 1 = gagal, agent harus melapor.
@@ -23,6 +32,8 @@ const { makePaths } = require('./lib/paths');
 const { loadDotEnv, resolveCredentials } = require('./lib/env');
 const { basicAuth, httpPost } = require('./lib/wp-client');
 const cacheLib = require('./lib/articles-cache');
+const { checkDailyQuota } = require('./lib/daily-quota-guard');
+const { refreshDraftQueue } = require('./lib/queue-sync');
 
 const SKILL_DIR = path.join(__dirname, '..');
 const paths = makePaths(SKILL_DIR);
@@ -54,8 +65,8 @@ function done(payload) {
 }
 
 // Tanggal LOKAL, bukan UTC. toISOString() menggeser tanggal untuk WIB
-// (UTC+7) setiap kali dijalankan sebelum jam 07:00 — dan justru itu jam kerja
-// heartbeat pagi, sehingga "hari ini" bisa terbaca hari kemarin.
+// (UTC+7) setiap kali dijalankan sebelum jam 07:00 — dan justru itu jam umum
+// jadwal pagi, sehingga "hari ini" bisa terbaca hari kemarin.
 function localToday(d = new Date()) {
   const p = (n) => String(n).padStart(2, '0');
   return {
@@ -98,7 +109,7 @@ async function main() {
   const count = args.count && args.count > 0 ? args.count : sched.count;
   const { iso: today, dow } = localToday();
 
-  // Bukan hari jalan bukan kegagalan: heartbeat memang menyapa tiap hari.
+  // Bukan hari jalan bukan kegagalan: pemanggil terjadwal memang datang tiap hari.
   if (!args.force && !sched.runDays.includes(dow)) {
     done({
       blog: blogId, date: today, dayOfWeek: dow,
@@ -108,13 +119,44 @@ async function main() {
   }
 
   const cachePath = paths.cachePath(blogId);
-  const cache = cacheLib.readArticlesCache(cachePath);
+  let cache = cacheLib.readArticlesCache(cachePath);
   if (!cache) {
     fail(`Cache artikel belum ada untuk "${blogId}". Buka dashboard sekali agar tersinkron dari WordPress.`);
   }
 
+  // Segarkan antrean dari situs SEBELUM memilih. Tanpa ini yang dipilih adalah isi
+  // `articles-cache.json`, dan satu-satunya yang mengisinya adalah manusia yang membuka
+  // dashboard — dependensi mati di pipeline otonom. Pernah: cache 13 hari basi dan
+  // 7 draft terbaru tidak ada di dalamnya. Lihat lib/queue-sync.js.
+  //
+  // Gagal sync bukan alasan berhenti: cache basi hanya MENGHILANGKAN draft baru, tidak
+  // pernah mengarang draft lama. Tapi tidak boleh diam — hasilnya ikut di JSON keluaran
+  // supaya "antrean penuh" dan "antrean tidak terukur" tidak terbaca sama.
+  //
+  // Dilewati saat --dry-run: kontrak dry-run adalah TANPA jaringan (penjaga kuota pun
+  // berhenti sebelum itu). Sebagai gantinya `cacheLastSync` selalu ikut dicetak, jadi
+  // basinya tetap terlihat tanpa satu pun request.
+  let queueSync = { skipped: 'dry-run', cacheLastSync: cache.lastSync || null };
+  let ghosts = [];
+  if (!args.dryRun) {
+    const r = await refreshDraftQueue(cfg, cache, {});
+    if (r.ok) {
+      cacheLib.writeArticlesCache(cachePath, r.cache);
+      cache = r.cache;
+      ghosts = r.ghosts;
+      queueSync = {
+        ok: true, added: r.added.length, addedIds: r.added,
+        ghosts: r.ghosts.length, cacheLastSync: r.cache.lastSync
+      };
+    } else {
+      queueSync = { ok: false, error: r.error, cacheLastSync: cache.lastSync || null };
+    }
+  }
+
   const all = Array.isArray(cache.articles) ? cache.articles : [];
-  const drafts = all.filter(a => a.status === 'draft');
+  // `ghosts` hanya terisi kalau sync BERHASIL; kalau tidak terukur, tidak ada yang disaring.
+  const ghostSet = new Set(ghosts);
+  const drafts = all.filter(a => a.status === 'draft' && !ghostSet.has(a.id));
   // minDate menyaring draft lawas yang ditinggalkan bertahun-tahun; menerbitkannya
   // otomatis berarti menayangkan konten yang tak pernah diperiksa siapa pun.
   const eligible = drafts
@@ -126,7 +168,7 @@ async function main() {
   if (eligible.length === 0) {
     done({
       blog: blogId, date: today, dayOfWeek: dow,
-      scheduled: true, published: [],
+      scheduled: true, published: [], queueSync,
       draftsTotal: drafts.length, draftsEligible: 0, skippedOlderThanMinDate: skippedOld,
       message: 'Tidak ada draft yang memenuhi syarat. Antrean kosong.'
     });
@@ -137,11 +179,30 @@ async function main() {
   if (args.dryRun) {
     done({
       blog: blogId, date: today, dayOfWeek: dow, dryRun: true,
-      scheduled: true,
+      scheduled: true, queueSync,
       wouldPublish: batch.map(a => ({ id: a.id, date: a.date, title: a.title, url: a.url })),
       draftsTotal: drafts.length, draftsEligible: eligible.length,
       remainingAfter: eligible.length - batch.length,
       skippedOlderThanMinDate: skippedOld
+    });
+  }
+
+  // Kuota HARIAN, dihitung di tujuan. `count` di atas cuma membatasi ukuran batch satu
+  // pemanggilan; tanpa cek ini tiap pemanggilan ulang menghabiskan kuota yang sama dari nol,
+  // dan pemanggil otomatis bisa datang berkali-kali sehari (pernah: 12 post dalam sehari
+  // untuk `count: 1`). Letaknya di sini, bukan di pembungkus, karena
+  // ini satu-satunya baris yang SEMUA jalur penerbitan antrean harus lewati — pembungkus
+  // hanya menjaga pemanggil yang ingat memakainya.
+  // `--force` melewati hari jalan, bukan kuota: kuota adalah yang melindungi situs.
+  const verdict = await checkDailyQuota(cfg, today);
+  if (verdict) {
+    done({
+      blog: blogId, date: today, dayOfWeek: dow,
+      scheduled: true, published: [], queueSync,
+      guard: verdict.guard, message: verdict.message,
+      quota: verdict.quota, siteCount: verdict.siteCount,
+      wouldPublish: batch.map(a => ({ id: a.id, date: a.date, title: a.title, url: a.url })),
+      draftsTotal: drafts.length, draftsEligible: eligible.length
     });
   }
 
@@ -182,6 +243,7 @@ async function main() {
   const payload = {
     blog: blogId, date: today, dayOfWeek: dow,
     scheduled: true,
+    queueSync,
     published,
     failed,
     draftsTotal: drafts.length,
