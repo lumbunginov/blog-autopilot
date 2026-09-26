@@ -31,6 +31,14 @@ const EXCLUDE = new Set([
   // Rahasia dan data hidup — JANGAN PERNAH masuk zip yang dibagikan.
   '.env',
   'data',
+  // Keluaran per-tenant, SAUDARA `data/` di root skill dan bukan anaknya —
+  // mengecualikan `data` tidak pernah menyentuh keduanya. Dulu 3,5 MB PNG
+  // produk (`images/`) + 98 KB artikel (`articles/`) milik satu tenant ikut ke
+  // tiap ZIP yang dibagikan. Keduanya sudah di `.gitignore`, tapi
+  // `.gitignore` dan daftar ini dua hal terpisah: sisi git tertutup, sisi
+  // distribusi tidak. Dijaga `scripts/build-manifest.test.js`.
+  'articles',
+  'images',
   '.superpowers',
   '.playwright-mcp',
   // Catatan pengembangan internal — bukan bagian dari skill yang dibagikan.
