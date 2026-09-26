@@ -5,6 +5,10 @@
  *        [--status draft|publish] [--featured-media <id>] [--category <name>]
  * Password is read from .env (variable {ID}_WP_APP_PASSWORD), never from argv.
  * Output: <data-file>.post-result.json with post_id, admin_url, preview_url
+ *
+ * KUOTA HARIAN: status apa pun selain `draft` (termasuk `future` yang dipaksa oleh
+ * --schedule-date) harus lewat checkDailyQuota lebih dulu — lihat guardDailyQuota() di bawah.
+ * Kuota habis atau tidak terukur => keluar dengan kode 1 tanpa membuat post apa pun.
  */
 
 const fs = require('fs');
@@ -15,6 +19,7 @@ const url = require('url');
 const { loadDotEnv, envKeys } = require('./lib/env');
 const { makePaths } = require('./lib/paths');
 const rankmath = require('./lib/rankmath');
+const { checkDailyQuota, localToday } = require('./lib/daily-quota-guard');
 
 loadDotEnv(path.join(__dirname, '..', '.env'));
 
@@ -123,7 +128,58 @@ async function getCategoryId(catName) {
   return null;
 }
 
+// Kuota HARIAN, dihitung di TUJUAN (situs) — bukan di catatan skrip ini.
+//
+// Skrip ini adalah jalur terbit ke-2 dan ke-3: `--status publish` (dipakai lewat
+// `workflow.auto_publish`) dan `--schedule-date` (post `future` yang ditembakkan cron
+// WordPress sendiri). Keduanya menaikkan post ke situs yang sama dengan antrean draft, tapi
+// tidak satu pun lewat publish-drafts.js — jadi penjaga di sana tidak pernah melihatnya.
+// Pernah: 4 post lahir langsung sebagai `publish` dalam 54 detik, melewati antrean,
+// `runDays`, dedup judul DAN ledger harian sekaligus.
+//
+// Letaknya di DALAM skrip ini, bukan di pembungkusnya: pembungkus hanya menjaga pemanggil yang
+// ingat memakainya. `auto_publish: false` di config juga bukan penjaga — ia cuma sebuah nilai,
+// dan checkbox dashboard yang menulisnya bisa menyalakannya kembali dengan satu klik.
+async function guardDailyQuota() {
+  // Yang disaring adalah status EFEKTIF (`status` di atas), bukan `statusArg`:
+  // --schedule-date memaksa `future` walau --status tidak pernah disebut.
+  //
+  // `draft` dikecualikan karena draft tidak menerbitkan apa pun; menahannya hanya memblokir
+  // pipeline normal, yang justru mendarat sebagai draft. Pengecualiannya ditulis
+  // `!== 'draft'` dan BUKAN `=== 'publish'`: daftar-putih status yang diketahui akan
+  // meloloskan yang pertama kali muncul (`future`, `pending`, `private`, salah ketik, status
+  // baru WordPress). Status yang tidak terbaca bukan draft, dan arah amannya menolak.
+  if (status === 'draft') return;
+
+  const verdict = await checkDailyQuota(appConfig, localToday(), {
+    // Kredensial skrip ini datang dari --username + .env, bukan dari config tenant
+    // (post-to-wp.js membaca config apa adanya, tanpa resolveCredentials). Tanpa ini
+    // hitungan yang menyertakan `status=future` dijawab 400 dan penjaga menolak karena buta.
+    auth: Buffer.from(`${username}:${password}`).toString('base64')
+  });
+  if (!verdict) return;
+
+  // "Tidak terukur" ikut ditolak (`site_count_unavailable`). Kontrak itu milik
+  // daily-quota-guard.js dan tidak dibalik di titik pemanggilan: melewatkan satu post jauh
+  // lebih murah daripada menerbitkan dua belas. Kode 1 karena pemanggil meminta artikel ini
+  // terbit dan tidak mendapatkannya — agent harus melapor, bukan menganggap beres.
+  console.error(`❌ GUARD:${verdict.guard} ${verdict.message}`);
+  console.error(`   Status yang diminta: "${status}". Draft tidak pernah tertahan penjaga ini —` +
+    ' jalankan ulang tanpa --status/--schedule-date untuk menyimpannya sebagai draft,' +
+    ' lalu biarkan antrean publish-drafts.js yang menerbitkannya pada hari jalan berikutnya.');
+  process.exit(1);
+}
+
 async function createPost() {
+  // Format tanggal diperiksa sebelum penjaga kuota, supaya salah ketik tanggal tetap terbaca
+  // sebagai salah ketik dan tidak tertukar dengan penolakan kuota.
+  if (scheduleDate && !/^\d{4}-\d{2}-\d{2}$/.test(scheduleDate)) {
+    console.error('Invalid --schedule-date format. Expected: YYYY-MM-DD (e.g., 2026-04-20)');
+    process.exit(1);
+  }
+
+  await guardDailyQuota();
+
   // Build post payload
   const payload = {
     title: articleData.title || 'Untitled',
@@ -136,10 +192,6 @@ async function createPost() {
 
   // WordPress scheduled post: status must be 'future' AND date must be set
   if (scheduleDate) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(scheduleDate)) {
-      console.error('Invalid --schedule-date format. Expected: YYYY-MM-DD (e.g., 2026-04-20)');
-      process.exit(1);
-    }
     payload.date = scheduleDate + 'T07:00:00'; // publish at 07:00 server time
   }
 

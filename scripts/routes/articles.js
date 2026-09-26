@@ -5,6 +5,7 @@ const { basicAuth, httpPost } = require('../lib/wp-client');
 const wpSync = require('../lib/wp-sync');
 const { resolveCredentials } = require('../lib/env');
 const { resolveBlog: resolveBlogTenant } = require('../lib/tenant');
+const { checkDailyQuota, localToday } = require('../lib/daily-quota-guard');
 
 module.exports = function registerArticles(app, deps) {
   const { paths } = deps;
@@ -114,6 +115,27 @@ module.exports = function registerArticles(app, deps) {
       let postUrl;
       try { postUrl = new URL(`${base}/wp-json/wp/v2/posts/${id}`).toString(); }
       catch (e) { return res.status(400).json({ error: 'Invalid WordPress URL' }); }
+
+      // Tombol dashboard adalah jalur terbit KEEMPAT ke situs yang sama — perbaikan kuota
+      // sebelumnya menghitung tiga dan berhenti di skrip CLI. Kuota harian diukur di TUJUAN, jadi ia tidak peduli
+      // siapa yang menaikkan post: satu klik di sini menghabiskan kuota yang sama dengan satu
+      // post dari antrean, dan sesudahnya publish-drafts.js akan berhenti sendiri.
+      //
+      // Di sini `=== 'publish'` memang cukup, tidak seperti di post-to-wp.js: `status` sudah
+      // divalidasi ke himpunan tertutup ['publish','draft'] beberapa baris di atas, jadi tidak
+      // ada status ketiga yang bisa lolos. Arah 'draft' (menurunkan post) tidak pernah
+      // tertahan — ia mengurangi jumlah post tayang, bukan menambah.
+      if (status === 'publish') {
+        const verdict = await checkDailyQuota(cfg, localToday());
+        if (verdict) {
+          return res.status(409).json({
+            error: verdict.message,
+            guard: verdict.guard,
+            quota: verdict.quota,
+            siteCount: verdict.siteCount
+          });
+        }
+      }
 
       let result;
       try {

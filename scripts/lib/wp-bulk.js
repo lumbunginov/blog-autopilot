@@ -6,6 +6,11 @@
 // kali dibutuhkan. Menulisnya sekali pakai berarti mengulang tiga kesalahan
 // yang sama: tidak ada cadangan, tidak ada langkah kering, dan seluruh isi
 // HTML tiap post ikut terbaca padahal yang dicari cuma satu pola.
+//
+// @publish-quota: exempt — hanya menulis field `content` ke post yang SUDAH ada, dan tidak
+// pernah mengirim `status` dalam payload mana pun, jadi tidak bisa menaikkan post ke situs
+// maupun memakai kuota harian. `['publish','draft']` di scanPosts adalah filter BACA
+// (status mana yang dipindai), bukan status yang ditulis. Lihat publish-paths.test.js.
 const fs = require('fs');
 const path = require('path');
 const { httpGet, httpPost } = require('./wp-client');
