@@ -107,8 +107,33 @@ test('readPageId mengambil id dari pages/ dan menolak berkas tanpa id', () => {
 
 test('parseFlags upload memisahkan --page-id dari slug', () => {
   assert.deepStrictEqual(upload.parseFlags(['home', '--page-id', '42']),
-    { pageId: '42', rest: ['home'] });
-  assert.deepStrictEqual(upload.parseFlags(['home']), { pageId: null, rest: ['home'] });
+    { pageId: '42', rest: ['home'], noVerify: false, verifyOnly: false });
+  assert.deepStrictEqual(upload.parseFlags(['home']),
+    { pageId: null, rest: ['home'], noVerify: false, verifyOnly: false });
+});
+
+test('parseFlags upload mengenali --no-verify dan --verify-only', () => {
+  assert.deepStrictEqual(upload.parseFlags(['home', '--verify-only']),
+    { pageId: null, rest: ['home'], noVerify: false, verifyOnly: true });
+  assert.deepStrictEqual(upload.parseFlags(['--no-verify', 'home', '--page-id=7']),
+    { pageId: '7', rest: ['home'], noVerify: true, verifyOnly: false });
+});
+
+test('readPrevious hanya memakai salinan pages/ milik halaman yang sama', () => {
+  const d = tmpDirs();
+  const data = JSON.stringify(SAMPLE);
+  fs.writeFileSync(path.join(d.pages, 'a.json'), JSON.stringify({ id: 5, meta: { _elementor_data: data } }));
+  assert.deepStrictEqual(upload.readPrevious(d.pages, 'a', 5), SAMPLE);
+  // --page-id ke halaman lain: salinan pages/ bukan "versi sebelum" halaman itu.
+  assert.strictEqual(upload.readPrevious(d.pages, 'a', 6), null);
+  assert.strictEqual(upload.readPrevious(d.pages, 'hilang', 5), null);
+  fs.writeFileSync(path.join(d.pages, 'b.json'), JSON.stringify({ id: 5, meta: {} }));
+  assert.strictEqual(upload.readPrevious(d.pages, 'b', 5), null);
+});
+
+test('liveUrl menambah penanda anti-cache tanpa merusak query yang ada', () => {
+  assert.match(upload.liveUrl('https://x.test/halaman/', 9), /^https:\/\/x\.test\/halaman\/\?render_check=9$/);
+  assert.match(upload.liveUrl('https://x.test/?page_id=4', 9), /^https:\/\/x\.test\/\?page_id=4&render_check=9$/);
 });
 
 test('clone-template menghasilkan JSON valid dengan id baru dan teks tergantikan', () => {

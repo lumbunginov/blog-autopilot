@@ -142,4 +142,4 @@ function findLeftovers(source, result, opts = {}) {
   return out;
 }
 
-module.exports = { findLeftovers, normalize, isLabel };
+module.exports = { findLeftovers, normalize, isLabel, scan };

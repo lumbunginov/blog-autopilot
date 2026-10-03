@@ -32,7 +32,8 @@ node check-blueprint.js <slug.json|all>      # cek bentuknya konsisten
 node check-clone.js <sumber.json> <hasil.json> # cek isi sumber tidak tertinggal
 node capture-blueprint.js <slug.json> <nama> # rekam kerangka jadi blueprint
 node compress-elementor.js <slug.json|all>   # elementor/ → compress/
-node upload-page.js <slug>                   # compress/ → halaman yang SUDAH ada
+node upload-page.js <slug>                   # compress/ → halaman yang SUDAH ada, lalu verifikasi tampilan
+node upload-page.js <slug> --verify-only     # cek ulang tampilan tanpa upload
 node create-page.js <file.json> "Judul"      # elementor/ → halaman BARU
 ```
 
@@ -172,6 +173,20 @@ meloloskan halaman yang bentuknya menyimpang; pemeriksa blueprint menahannya.
 tidak menjamin isinya baru — halaman produk bisa terbit dengan harga, spesifikasi,
 dan foto produk lain. Jangan menyatakan halaman selesai sebelum ini lolos.
 
+**Upload belum tentu langsung terlihat.** `upload-page.js` menulis `_elementor_data`
+lewat REST, dan itu tidak memicu hook simpan milik Elementor. Pada halaman yang sudah
+pernah tampil (termasuk yang sempat di-preview), cache elemen Elementor terus
+menyajikan render lama — id elemen lama, teks lama — walau datanya sudah baru dan
+cache server melaporkan *miss*. Karena itu setelah upload, skrip mengambil HTML publik
+dan membandingkannya dengan perubahan antara `pages/<slug>.json` (versi sebelum) dan
+data baru: isi baru harus tampil, isi yang dibuang tidak boleh masih tampil. Kalau
+belum berubah, skrip keluar **kode 3** beserta langkah membersihkan cache-nya. Jangan
+menyatakan halaman selesai sebelum `--verify-only` lolos. Halaman draft tidak bisa
+diverifikasi (tidak terlihat publik); halaman baru dari `create-page.js` belum pernah
+dirender, jadi tidak terkena masalah ini. Perubahan yang tidak berupa teks/gambar/elemen
+(mis. id kategori kueri widget posts) tidak bisa dibuktikan dengan cara ini — periksa
+hasil widget-nya di halaman.
+
 **Upload mengubah halaman live.** Konfirmasi dulu ke pemilik situs, atau
 arahkan ke halaman staging dengan `--page-id`. `pages/` menyimpan salinan
 sebelum-edit; itu jalan pulang bila hasilnya salah.
@@ -208,7 +223,7 @@ halaman Elementor: `references/seo-standards.md`.
 | `blueprint "..." tidak ada` | nama salah ketik, atau blueprint sudah dihapus | `capture-blueprint.js` ulang, atau lepas tandanya di dashboard |
 | Halaman baru tak muncul di situs | dibuat sebagai draft (default) | Publish di WP admin, atau `--status publish` |
 | Halaman kosong setelah upload | JSON rusak lolos ke compress | `pages/` → extract ulang, edit lagi, validate |
-| Tampilan lama masih muncul | cache Elementor/CDN | Elementor → Tools → Regenerate CSS, lalu purge cache |
+| `Halaman publik BELUM berubah` (keluar 3) / tampilan lama masih muncul | cache elemen Elementor — simpan lewat REST tidak membersihkannya; lalu cache plugin/CDN | Elementor → Tools → Clear Files & Data (atau buka di editor Elementor → Update), purge cache, lalu `upload-page.js <slug> --verify-only` |
 
 Detail lain: `references/elementor-widgets.md` (struktur widget & settings),
 `references/elementor-troubleshooting.md`.
