@@ -29,6 +29,7 @@ node download-page.js <slug|pageId|all>      # WordPress → pages/
 node extract-elementor.js <slug.json|all>    # pages/ → elementor/   (edit di sini)
 node validate-elementor.js <slug.json>       # cek JSON-nya sehat
 node check-blueprint.js <slug.json|all>      # cek bentuknya konsisten
+node check-clone.js <sumber.json> <hasil.json> # cek isi sumber tidak tertinggal
 node capture-blueprint.js <slug.json> <nama> # rekam kerangka jadi blueprint
 node compress-elementor.js <slug.json|all>   # elementor/ → compress/
 node upload-page.js <slug>                   # compress/ → halaman yang SUDAH ada
@@ -77,7 +78,25 @@ node clone-template.js sewa-ht-malang.json sewa-ht-denpasar.json \
 ```
 
 Keluarannya format halaman WordPress (`{content, page_settings, version, title, type}`)
-di `elementor/`. Kirim langsung jadi halaman baru:
+di `elementor/`.
+
+`--replace` hanya mengganti teks yang disebut. **Gambar, kueri kategori (widget
+posts), harga, dan kalimat lain tetap milik halaman sumber** — dan lolos
+`validate-elementor.js` maupun `check-blueprint.js`. Ganti isinya, lalu buktikan
+tidak ada yang tertinggal:
+
+```bash
+node check-clone.js produk-a.json produk-b.json --keep "Area layanan"
+```
+
+Yang dilaporkan: teks identik, paragraf yang sebagian besar katanya sama
+(ditandai `mirip NN%` — pola `--replace` yang cuma mengganti nama), gambar
+dengan url atau id media yang sama, dan daftar id kueri yang sama. Label pendek
+tanpa angka ("Harga sewa") dilewati; label berangka ("15K / unit") tidak.
+`--keep` (potongan teks, url, atau id; bisa berulang) untuk isi yang memang
+sengaja sama. Keluar kode 1 bila ada sisa.
+
+Setelah lolos, kirim jadi halaman baru:
 
 ```bash
 node create-page.js sewa-ht-denpasar.json "Sewa HT Denpasar" \
@@ -149,6 +168,10 @@ halaman rusak yang paling sering.
 **Lalu `check-blueprint.js`, kalau halamannya sudah ditandai.** Validator
 meloloskan halaman yang bentuknya menyimpang; pemeriksa blueprint menahannya.
 
+**Halaman hasil clone: `check-clone.js` terhadap sumbernya.** Bentuk yang benar
+tidak menjamin isinya baru — halaman produk bisa terbit dengan harga, spesifikasi,
+dan foto produk lain. Jangan menyatakan halaman selesai sebelum ini lolos.
+
 **Upload mengubah halaman live.** Konfirmasi dulu ke pemilik situs, atau
 arahkan ke halaman staging dengan `--page-id`. `pages/` menyimpan salinan
 sebelum-edit; itu jalan pulang bila hasilnya salah.
@@ -180,6 +203,7 @@ halaman Elementor: `references/seo-standards.md`.
 | `No _elementor_data found` | berkas `pages/` diambil bukan dengan `context=edit` | Download ulang dengan `download-page.js` |
 | HTTP 401/403 saat upload | app password tidak punya hak edit page | Pakai akun editor/admin |
 | `bukan array section Elementor maupun format halaman WordPress` | berkas sumber create-page salah bentuk | Pakai hasil `extract-elementor.js` atau `clone-template.js` |
+| `isi masih sama dengan <sumber>` | teks/gambar/kueri halaman sumber tertinggal setelah clone | Ganti isi yang disebut; `--keep` hanya untuk yang memang sengaja sama |
 | `menyimpang dari blueprint` | bentuk halaman beda dari saudaranya | Betulkan halamannya, atau rekam blueprint terpisah bila memang beda jenis |
 | `blueprint "..." tidak ada` | nama salah ketik, atau blueprint sudah dihapus | `capture-blueprint.js` ulang, atau lepas tandanya di dashboard |
 | Halaman baru tak muncul di situs | dibuat sebagai draft (default) | Publish di WP admin, atau `--status publish` |

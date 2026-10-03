@@ -468,6 +468,7 @@ cd scripts/elementor
 node capture-blueprint.js <slug.json> <nama> --note "<keterangan>"
 node check-blueprint.js <slug.json> --blueprint <nama>   # tandai sekali
 node check-blueprint.js all                              # keluar 1 bila menyimpang
+node check-clone.js <sumber.json> <hasil.json>           # setelah clone: isi sumber tertinggal?
 ```
 
 Selengkapnya, termasuk apa yang harus dilakukan saat sebuah halaman memang

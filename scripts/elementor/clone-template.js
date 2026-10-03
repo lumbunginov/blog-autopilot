@@ -240,6 +240,9 @@ function main() {
       console.log(`1. Review: ${targetPath}`);
       console.log(`2. The file is ready in WordPress page format`);
       console.log(`3. Upload to WordPress or copy to Content/Page/ folder`);
+      console.log('');
+      console.log('Gambar, kategori kueri, dan teks di luar --replace masih milik halaman sumber. Periksa:');
+      console.log(`  node check-clone.js ${sourceFile} ${targetFile}`);
 
     } catch (error) {
       console.error(`Error: Validation failed - ${error.message}`);
@@ -266,6 +269,9 @@ function main() {
       console.log(`1. Review: ${targetPath}`);
       console.log(`2. The file is ready in WordPress page format`);
       console.log(`3. Upload to WordPress or copy to Content/Page/ folder`);
+      console.log('');
+      console.log('Gambar, kategori kueri, dan teks di luar --replace masih milik halaman sumber. Periksa:');
+      console.log(`  node check-clone.js ${sourceFile} ${targetFile}`);
     } catch (error) {
       console.error(`Error writing target file: ${error.message}`);
       process.exit(1);
