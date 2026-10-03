@@ -12,6 +12,7 @@ const https = require('https');
 const http = require('http');
 const url = require('url');
 const { loadDotEnv, envKeys } = require('./lib/env');
+const { activeBlogId } = require('./lib/blog');
 
 loadDotEnv(path.join(__dirname, '..', '.env'));
 
@@ -23,9 +24,10 @@ process.argv.slice(2).forEach((arg, i, arr) => {
 
 const { image, 'wp-url': wpUrl, username, alt = '' } = args;
 
-const blogId = args.blog || 'perkapcom';
+let blogId;
 let envNames;
 try {
+  blogId = activeBlogId(args.blog);
   // envKeys menyanitasi id di dalam; id cacat (kosong, '..', '/') melempar.
   // Ditangkap di sini supaya CLI gagal dengan pesan, bukan stack trace.
   envNames = envKeys(blogId);

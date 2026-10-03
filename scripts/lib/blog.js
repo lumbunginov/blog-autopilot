@@ -28,6 +28,18 @@ function parseBlogArg(argv) {
   return { blogId, rest };
 }
 
+// Id blog untuk skrip CLI yang hanya butuh nama tenant (mis. untuk nama variabel
+// .env): --blog bila ada, kalau tidak blog aktif milik pemakai. Tidak pernah
+// menebak nama tenant tertentu — default ber-hardcode diam-diam mengarahkan
+// pemakai lain ke tenant yang bukan miliknya.
+function activeBlogId(explicitId, p = paths) {
+  const id = explicitId || p.activeBlog();
+  if (!id) {
+    throw new Error('Tidak ada blog aktif. Sebutkan --blog <id>, atau buat/pilih blog di dashboard.');
+  }
+  return id;
+}
+
 function resolveBlogId(explicitId) {
   const id = explicitId || paths.activeBlog();
   if (!id) {
@@ -82,4 +94,4 @@ function resolveBlogOffline(argv = process.argv.slice(2)) {
   return { blogId, cfg: readConfig(blogId), args: rest, paths };
 }
 
-module.exports = { resolveBlog, resolveBlogOffline, parseBlogArg, readConfig, paths, SKILL_DIR };
+module.exports = { resolveBlog, resolveBlogOffline, parseBlogArg, readConfig, activeBlogId, paths, SKILL_DIR };

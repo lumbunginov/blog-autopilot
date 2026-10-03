@@ -17,6 +17,7 @@ const https = require('https');
 const http = require('http');
 const url = require('url');
 const { loadDotEnv, envKeys } = require('./lib/env');
+const { activeBlogId } = require('./lib/blog');
 const { makePaths } = require('./lib/paths');
 const rankmath = require('./lib/rankmath');
 const { checkDailyQuota, localToday } = require('./lib/daily-quota-guard');
@@ -39,9 +40,10 @@ const {
   'schedule-date': scheduleDate = ''
 } = args;
 
-const blogId = args.blog || 'perkapcom';
+let blogId;
 let envNames;
 try {
+  blogId = activeBlogId(args.blog);
   // envKeys menyanitasi id di dalam; id cacat (kosong, '..', '/') melempar.
   // Ditangkap di sini supaya CLI gagal dengan pesan, bukan stack trace.
   envNames = envKeys(blogId);
