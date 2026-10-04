@@ -22,7 +22,7 @@ Semua perintah bekerja pada **blog aktif**. Untuk tenant lain, tambahkan
 
 ## Perintah
 
-Semua dijalankan dari `.claude/skills/blog-autopilot/scripts/elementor/`:
+Semua dijalankan dari `.claude/skills/blog-autopilot/scripts/builders/elementor/`:
 
 ```bash
 node download-page.js <slug|pageId|all>      # WordPress → pages/
@@ -202,8 +202,8 @@ dengan 200 lalu hilang, dan dibaca kembali sebagai kosong walau nilainya ada.
 Pakai `scripts/seo-meta.js`:
 
 ```bash
-node ../seo-meta.js get <id|url>
-node ../seo-meta.js set <id> --title "..." --desc "..." --keyword "..."
+node ../../seo-meta.js get <id|url>
+node ../../seo-meta.js set <id> --title "..." --desc "..." --keyword "..."
 ```
 
 Selengkapnya, termasuk schema dan kenapa skor Rank Math selalu 0/100 untuk
@@ -225,11 +225,11 @@ halaman Elementor: `references/seo-standards.md`.
 | Halaman kosong setelah upload | JSON rusak lolos ke compress | `pages/` → extract ulang, edit lagi, validate |
 | `Halaman publik BELUM berubah` (keluar 3) / tampilan lama masih muncul | cache elemen Elementor — simpan lewat REST tidak membersihkannya; lalu cache plugin/CDN | Elementor → Tools → Clear Files & Data (atau buka di editor Elementor → Update), purge cache, lalu `upload-page.js <slug> --verify-only` |
 
-Detail lain: `references/elementor-widgets.md` (struktur widget & settings),
-`references/elementor-troubleshooting.md`.
+Detail lain: `references/builders/elementor/widgets.md` (struktur widget & settings),
+`references/builders/elementor/troubleshooting.md`.
 
 ## Test
 
 ```bash
-node --test scripts/elementor/workflow.test.js
+node --test scripts/builders/elementor/workflow.test.js
 ```

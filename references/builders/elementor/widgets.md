@@ -573,7 +573,7 @@ Version Control Integration:
 
 Git setup:
 ```bash
-cd ../../blog-autopilot/data/blogs/<blog-id>/elementor/elementor
+cd ../../../data/blogs/<blog-id>/elementor/elementor
 git init
 git add *.json
 git commit -m "Initial page configurations"
@@ -743,7 +743,7 @@ https://jsonlint.com/
 Related Files:
 - SKILL.md (perintah sehari-hari)
 - TROUBLESHOOTING.md (gejala -> perbaikan)
-- scripts/workflow.test.js (cek yang bisa dijalankan)
+- scripts/builders/elementor/workflow.test.js (cek yang bisa dijalankan)
 
 Kredensial & konfigurasi:
 - blog-autopilot/data/blogs/<id>/config.json  (url, username, page_builder)

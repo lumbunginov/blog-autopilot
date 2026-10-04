@@ -1,6 +1,7 @@
 // ==================== BLUEPRINT HALAMAN ====================
 // Sub-tab "Halaman" di menu Template. Blueprint = kerangka seksi halaman
-// Elementor; dipakai menahan halaman yang bentuknya menyimpang sebelum terbit.
+// page builder aktif; dipakai menahan halaman yang bentuknya menyimpang
+// sebelum terbit. Bentuk kerangkanya ditentukan builder (scripts/builders/).
 // Berkas terpisah dari app.js karena urusannya berdiri sendiri: app.js sudah
 // panjang, dan bagian ini tidak dipakai menu lain.
 let bpData = { blueprints: [], pages: [] };
@@ -25,6 +26,11 @@ function bpRender() {
   const list = document.getElementById('bp-list');
   const pages = document.getElementById('bp-pages');
   if (!list || !pages) return;
+
+  const didukung = bpData.supported !== false;
+  document.getElementById('bp-unsupported').style.display = didukung ? 'none' : '';
+  document.getElementById('bp-toolbar').style.display = didukung ? '' : 'none';
+  if (!didukung) { list.innerHTML = ''; pages.innerHTML = ''; return; }
 
   list.innerHTML = bpData.blueprints.length === 0
     ? '<p style="color:var(--text-secondary); font-size:14px;">Belum ada blueprint. Klik &quot;+ Rekam dari Halaman&quot; dan pilih halaman yang bentuknya sudah benar.</p>'
@@ -54,7 +60,7 @@ function bpRender() {
       </div>`).join('');
 
   pages.innerHTML = bpData.pages.length === 0
-    ? '<p style="color:var(--text-secondary); font-size:14px;">Belum ada halaman di <code>elementor/</code>. Jalankan <code>download-page.js</code> lalu <code>extract-elementor.js</code>.</p>'
+    ? `<p style="color:var(--text-secondary); font-size:14px;">Belum ada halaman ${escHtml(bpData.builder?.label || '')}. Unduh halaman dulu — lihat <code>${escHtml(bpData.builder?.reference || '')}</code>.</p>`
     : bpData.pages.map(p => `
       <div data-page="${escHtml(p.file)}" style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border);">
         <div style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">

@@ -10,7 +10,7 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const SCRIPTS = __dirname;
-const AUTOPILOT = path.join(SCRIPTS, '..', '..');
+const AUTOPILOT = path.join(SCRIPTS, '..', '..', '..');
 const upload = require('./upload-page');
 const { parseBlogArg } = require('./lib/workspace');
 

@@ -22,8 +22,8 @@
 const fs = require('fs');
 const path = require('path');
 const { resolveWorkspace } = require('./lib/workspace');
-const { basicAuth, httpGet, httpPost } = require('../lib/wp-client');
-const { checkRender } = require('../lib/render-check');
+const { basicAuth, httpGet, httpPost } = require('../../lib/wp-client');
+const { checkRender } = require('./lib/render-check');
 
 const EXIT_STALE = 3;
 

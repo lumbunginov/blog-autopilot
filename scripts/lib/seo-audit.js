@@ -5,7 +5,7 @@
 //
 // Ambang mengikuti references/seo-standards.md. Yang dinilai hanya hal yang
 // benar-benar bisa dilihat dari halaman tersaji; skor Rank Math sengaja TIDAK
-// dipakai karena selalu 0/100 untuk halaman Elementor (analyzer membaca editor
+// dipakai karena selalu 0/100 untuk halaman page builder (analyzer membaca editor
 // Gutenberg yang memang kosong), jadi ia bukan sinyal mutu di situs seperti ini.
 
 const AMBANG = {

@@ -17,7 +17,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { resolveWorkspaceOffline } = require('./lib/workspace');
-const bp = require('../lib/blueprint-store');
+const bp = require('./lib/blueprint-store');
 
 const { args, dirs, blogId, paths } = resolveWorkspaceOffline();
 

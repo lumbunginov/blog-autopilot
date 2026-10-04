@@ -53,7 +53,7 @@
       "elementor",
       "none"
     ],
-    "_note": "elementor = halaman dikelola lewat skill edit-elementor."
+    "_note": "Id builder = nama folder di scripts/builders/; alurnya di references/builders/<id>/README.md. none = halaman diedit langsung di WordPress."
   },
   "knowledge_source": {
     "type": "manual",

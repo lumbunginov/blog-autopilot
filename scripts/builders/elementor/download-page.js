@@ -10,7 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 const { resolveWorkspace } = require('./lib/workspace');
-const { basicAuth, httpGet } = require('../lib/wp-client');
+const { basicAuth, httpGet } = require('../../lib/wp-client');
 
 // context=edit wajib: tanpa itu WordPress tidak mengirim meta._elementor_data
 // sama sekali, dan file yang tersimpan akan tampak valid tapi kosong isinya.

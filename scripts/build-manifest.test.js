@@ -39,27 +39,35 @@ const files = manifest();
 
 test('kapabilitas Elementor ikut dalam satu paket', () => {
   for (const f of [
-    'references/elementor.md',
-    'references/elementor-widgets.md',
-    'references/elementor-troubleshooting.md',
-    'scripts/elementor/download-page.js',
-    'scripts/elementor/extract-elementor.js',
-    'scripts/elementor/validate-elementor.js',
-    'scripts/elementor/compress-elementor.js',
-    'scripts/elementor/clone-template.js',
-    'scripts/elementor/upload-page.js',
-    'scripts/elementor/create-page.js',
-    'scripts/elementor/lib/workspace.js',
+    'scripts/builders/index.js',
+    'references/builders/elementor/README.md',
+    'references/builders/elementor/widgets.md',
+    'references/builders/elementor/troubleshooting.md',
+    'scripts/builders/elementor/index.js',
+    'scripts/builders/elementor/download-page.js',
+    'scripts/builders/elementor/extract-elementor.js',
+    'scripts/builders/elementor/validate-elementor.js',
+    'scripts/builders/elementor/compress-elementor.js',
+    'scripts/builders/elementor/clone-template.js',
+    'scripts/builders/elementor/upload-page.js',
+    'scripts/builders/elementor/create-page.js',
+    'scripts/builders/elementor/lib/workspace.js',
+    'scripts/builders/elementor/lib/blueprint-store.js',
+    'scripts/builders/elementor/lib/clone-leftovers.js',
+    'scripts/builders/elementor/lib/render-check.js',
   ]) {
     assert.ok(files.includes(f), `hilang dari paket: ${f}`);
   }
 });
 
-test('SKILL.md menyebut jalur Elementor supaya kapabilitasnya bisa ditemukan', () => {
+test('SKILL.md mengarahkan [PAGE] ke panduan builder aktif', () => {
   const skill = fs.readFileSync(path.join(SKILL_DIR, 'SKILL.md'), 'utf-8');
   assert.match(skill, /\[PAGE\]/);
-  assert.match(skill, /references\/elementor\.md/);
-  assert.match(skill, /elementor/i);
+  assert.match(skill, /references\/builders\/<type>\/README\.md/);
+  // Tiap builder terdaftar di tabel [PAGE] supaya bisa ditemukan.
+  for (const b of require('./builders').list()) {
+    assert.ok(skill.includes(b.reference), `SKILL.md tidak menyebut ${b.reference}`);
+  }
 });
 
 // Folder keluaran per-tenant. `data/` bukan satu-satunya: `articles/` dan

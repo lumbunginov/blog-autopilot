@@ -31,7 +31,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { resolveWorkspaceOffline } = require('./lib/workspace');
-const { findLeftovers } = require('../lib/clone-leftovers');
+const { findLeftovers } = require('./lib/clone-leftovers');
 
 const { args, dirs } = resolveWorkspaceOffline();
 

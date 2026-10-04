@@ -303,13 +303,7 @@
           Page builder yang dipakai situs ini. Menentukan cara skill mengedit halaman (page), bukan artikel.
         </p>
         <div class="img-options" id="pb-type-group">
-          <label class="img-option" onclick="selectPageBuilder('elementor', this)">
-            <input type="radio" name="pb-type" value="elementor">
-            <div class="img-option-icon">📐</div>
-            <div class="img-option-name">Elementor</div>
-            <div class="img-option-desc">Edit halaman lewat skill <code>edit-elementor</code> — download, edit JSON, upload</div>
-            <span class="img-option-badge badge-free">Didukung</span>
-          </label>
+          <!-- Builder yang didukung diisi dari /api/page-builders (scripts/builders/). -->
           <label class="img-option" onclick="selectPageBuilder('none', this)">
             <input type="radio" name="pb-type" value="none">
             <div class="img-option-icon">⏭️</div>
@@ -976,15 +970,18 @@
 
       <div class="card">
         <div class="card-body" style="font-size:13.5px; color:var(--text-secondary); line-height:1.7;">
-          Blueprint merekam <strong>kerangka</strong> satu halaman Elementor — urutan seksi dan
+          Blueprint merekam <strong>kerangka</strong> satu halaman page builder — urutan seksi dan
           widget di dalamnya. Isinya (teks, gambar, harga) tidak ikut direkam, jadi halaman
           sejenis boleh berbeda isi tapi wajib sebentuk.
-          Gunanya menahan halaman yang formatnya menyimpang sebelum terbit, karena
-          <code>validate-elementor.js</code> hanya memeriksa JSON-nya sehat, bukan bentuknya konsisten.
+          Gunanya menahan halaman yang formatnya menyimpang sebelum terbit: validator builder
+          hanya memeriksa datanya sehat, bukan bentuknya konsisten.
+          <div id="bp-unsupported" style="display:none; margin-top:10px; color:var(--text-primary);">
+            Page builder situs ini belum mendukung blueprint. Atur di <strong>Settings → Page Builder</strong>.
+          </div>
         </div>
       </div>
 
-      <div class="plan-toolbar">
+      <div class="plan-toolbar" id="bp-toolbar">
         <button class="btn btn-primary" onclick="bpRekamBuka()">+ Rekam dari Halaman</button>
         <button class="btn btn-secondary" onclick="bpPeriksa()">🔍 Periksa Semua</button>
       </div>

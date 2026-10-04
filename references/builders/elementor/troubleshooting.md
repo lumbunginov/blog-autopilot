@@ -5,7 +5,7 @@ Last: 2026-01-09 | Purpose: Common issues & quick fixes
 
 Run these commands to diagnose issues:
 
-Semua perintah dijalankan dari .claude/skills/blog-autopilot/scripts/elementor/
+Semua perintah dijalankan dari .claude/skills/blog-autopilot/scripts/builders/elementor/
 
 Cek kredensial & koneksi WordPress:
 node download-page.js <slug-apa-saja>
@@ -17,7 +17,7 @@ Jalankan cek otomatis skill:
 node --test workflow.test.js
 
 Lihat folder kerja blog aktif:
-node -e "const{dirs}=require('./lib/workspace');const{makePaths}=require('../../blog-autopilot/scripts/lib/paths');console.log(dirs(makePaths('../../blog-autopilot').activeBlog()))"
+node -e "const{dirs}=require('./lib/workspace');const{makePaths}=require('../../lib/paths');console.log(dirs(makePaths('../../..').activeBlog()))"
 
 === CRITICAL: JSON SYNTAX ERRORS FROM MANUAL EDITING ===
 
@@ -70,7 +70,7 @@ Corresponding CORRECT JSON:
 How to Fix:
 1. **Don't manually edit JSON** - Use clone-template.js script:
    ```bash
-   node .claude/skills/blog-autopilot/scripts/elementor/clone-template.js \
+   node .claude/skills/blog-autopilot/scripts/builders/elementor/clone-template.js \
      source.json target.json "Page Title" \
      --replace "Bandung:Yogyakarta"
    ```
@@ -78,13 +78,13 @@ How to Fix:
 2. **If file is already broken**:
    ```bash
    # Identify the error
-   node .claude/skills/blog-autopilot/scripts/elementor/validate-elementor.js broken.json
+   node .claude/skills/blog-autopilot/scripts/builders/elementor/validate-elementor.js broken.json
 
    # Revert to original template
    git checkout elementor/broken.json
 
    # Re-clone using the script
-   node .claude/skills/blog-autopilot/scripts/elementor/clone-template.js \
+   node .claude/skills/blog-autopilot/scripts/builders/elementor/clone-template.js \
      template.json target.json "Title" --replace "old:new"
    ```
 
@@ -187,7 +187,7 @@ Symptom: Node.js error when running clone-template.js
 Cause: Missing dependencies or wrong directory
 Fix:
 1. Verify Node.js installed: node --version
-2. Jalankan dari folder scripts/ skill ini
+2. Jalankan dari folder scripts/builders/elementor/ skill ini
 3. Pastikan blog aktif terdaftar (atau sebut --blog <id>)
 4. Verify source file exists
 
@@ -245,7 +245,7 @@ Solution:
 1. Delete broken file
 2. Use clone-template.js script:
    ```bash
-   node .claude/skills/blog-autopilot/scripts/elementor/clone-template.js \
+   node .claude/skills/blog-autopilot/scripts/builders/elementor/clone-template.js \
      source.json target.json "Title" --replace "old:new"
    ```
 3. Validate output before proceeding
@@ -440,10 +440,10 @@ Validate single element:
 node -e "const el = require('./elementor/home.json')[0]; console.log('ID:', el.id, 'Type:', el.elType)"
 
 Validate before compress:
-node .claude/skills/blog-autopilot/scripts/elementor/validate-elementor.js file.json
+node .claude/skills/blog-autopilot/scripts/builders/elementor/validate-elementor.js file.json
 
 Safe template cloning:
-node .claude/skills/blog-autopilot/scripts/elementor/clone-template.js \
+node .claude/skills/blog-autopilot/scripts/builders/elementor/clone-template.js \
   source.json target.json "Title" --replace "old:new"
 
 === GETTING HELP ===
@@ -488,26 +488,26 @@ Check browser console for frontend errors
 === QUICK REFERENCE ===
 
 Validate all files:
-node .claude/skills/blog-autopilot/scripts/elementor/validate-elementor.js
+node .claude/skills/blog-autopilot/scripts/builders/elementor/validate-elementor.js
 
 Validate one file:
-node .claude/skills/blog-autopilot/scripts/elementor/validate-elementor.js home.json
+node .claude/skills/blog-autopilot/scripts/builders/elementor/validate-elementor.js home.json
 
 Clone template safely:
-node .claude/skills/blog-autopilot/scripts/elementor/clone-template.js \
+node .claude/skills/blog-autopilot/scripts/builders/elementor/clone-template.js \
   source.json target.json "Page Title" --replace "old:new"
 
 Extract all pages:
-node .claude/skills/blog-autopilot/scripts/elementor/extract-elementor.js
+node .claude/skills/blog-autopilot/scripts/builders/elementor/extract-elementor.js
 
 Extract one page:
-node .claude/skills/blog-autopilot/scripts/elementor/extract-elementor.js home.json
+node .claude/skills/blog-autopilot/scripts/builders/elementor/extract-elementor.js home.json
 
 Compress all files:
-node .claude/skills/blog-autopilot/scripts/elementor/compress-elementor.js
+node .claude/skills/blog-autopilot/scripts/builders/elementor/compress-elementor.js
 
 Compress one file:
-node .claude/skills/blog-autopilot/scripts/elementor/compress-elementor.js home.json
+node .claude/skills/blog-autopilot/scripts/builders/elementor/compress-elementor.js home.json
 
 Check MCP:
 claude mcp list

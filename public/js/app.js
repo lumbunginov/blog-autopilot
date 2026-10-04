@@ -181,7 +181,9 @@ function collectForm() {
       }
     },
     page_builder: {
-      type: document.querySelector('#pb-type-group .img-option.selected input')?.value || 'none'
+      // Dari variabel, bukan radio terpilih: bila daftar builder gagal dimuat,
+      // radio-nya tidak ada dan simpan tidak boleh diam-diam menjadi 'none'.
+      type: pbAktif
     }
   };
 }
@@ -254,7 +256,36 @@ function updateStatusDot(c) {
 }
 
 // ==================== RADIO BUTTONS ====================
+let pbAktif = 'none';
+
+// Pilihan builder dibaca dari folder scripts/builders/ lewat server, supaya
+// menambah builder tidak perlu menyunting halaman ini.
+async function renderPageBuilders() {
+  const group = document.getElementById('pb-type-group');
+  if (!group) return;
+  try {
+    const list = await fetch('/api/page-builders').then(r => r.json());
+    group.querySelectorAll('.img-option[data-builder]').forEach(el => el.remove());
+    const none = group.querySelector('input[value="none"]')?.closest('.img-option');
+    for (const b of list) {
+      const label = document.createElement('label');
+      label.className = 'img-option';
+      label.dataset.builder = b.id;
+      label.onclick = function () { selectPageBuilder(b.id, this); };
+      label.innerHTML = `
+        <input type="radio" name="pb-type" value="${escHtml(b.id)}">
+        <div class="img-option-icon">${escHtml(b.icon || '🧱')}</div>
+        <div class="img-option-name">${escHtml(b.label)}</div>
+        <div class="img-option-desc">${escHtml(b.desc || '')}</div>
+        <span class="img-option-badge badge-free">Didukung</span>`;
+      group.insertBefore(label, none);
+    }
+    selectPageBuilder(pbAktif);
+  } catch (e) { toast('Gagal memuat daftar page builder: ' + e.message, 'error'); }
+}
+
 function selectPageBuilder(val, el) {
+  pbAktif = val;
   document.querySelectorAll('#pb-type-group .img-option').forEach(b => b.classList.remove('selected'));
   const target = el || document.querySelector(`#pb-type-group .img-option input[value="${val}"]`)?.closest('.img-option');
   if (target) {
@@ -1937,6 +1968,7 @@ async function loadBlogs() {
 
 // ==================== INIT ====================
 loadConfig();
+renderPageBuilders();
 initSSE();
 loadBlogs();
 

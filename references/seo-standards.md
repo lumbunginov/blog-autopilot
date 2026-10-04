@@ -184,12 +184,13 @@ kode 1 bila yang tersaji tak sama dengan yang diminta.
 | Focus keyword | Tidak pernah tampak di HTML — untuk analyzer, bukan pengunjung. Tak bisa diverifikasi dari halaman tersaji. |
 | Header auth | `blog.js` mengembalikan base64 **telanjang**; header butuh awalan `Basic `. Salah bentuk → 401 `rest_not_logged_in`, pesan yang menuduh kredensial padahal formatnya. |
 
-### Skor Rank Math 0/100 pada halaman Elementor
+### Skor Rank Math 0/100 pada halaman page builder
 
-Analyzer Rank Math membaca editor Gutenberg, yang untuk halaman Elementor
-memang kosong — isinya ada di `_elementor_data`. **Setiap** halaman Elementor
-di situs seperti ini berskor 0/100, termasuk halaman yang sudah lama berperingkat
-baik. Skor itu bukan sinyal mutu di sini; verifikasi lewat HTML tersaji.
+Analyzer Rank Math membaca editor Gutenberg, yang untuk halaman page builder
+(Elementor, dan builder lain yang menyimpan isi di meta sendiri) memang kosong —
+isinya ada di meta builder, misalnya `_elementor_data`. **Setiap** halaman
+seperti itu berskor 0/100, termasuk halaman yang sudah lama berperingkat baik.
+Skor itu bukan sinyal mutu di sini; verifikasi lewat HTML tersaji.
 
 ---
 
@@ -219,7 +220,7 @@ Dua hal yang sengaja TIDAK dilaporkan sebagai masalah:
   berarti melaporkan kerusakan buatan sendiri. Audit memakai konkurensi 2 dan
   satu kali coba ulang — pada 5 permintaan bersamaan situs nyata mulai membalas
   503, dan laporan yang berubah tiap dijalankan tidak bisa dipercaya.
-- **Skor Rank Math.** Selalu 0/100 untuk halaman Elementor; lihat bagian di atas.
+- **Skor Rank Math.** Selalu 0/100 untuk halaman page builder; lihat bagian di atas.
 
 ## Redirect saat slug berubah
 

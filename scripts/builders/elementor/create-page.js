@@ -14,7 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 const { resolveWorkspace } = require('./lib/workspace');
-const { basicAuth, httpPost } = require('../lib/wp-client');
+const { basicAuth, httpPost } = require('../../lib/wp-client');
 
 const VALID_STATUS = ['draft', 'publish', 'pending', 'private'];
 

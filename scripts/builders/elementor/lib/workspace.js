@@ -4,7 +4,7 @@
 // yang sama; berkas ini tinggal menambahkan tiga folder kerjanya.
 const fs = require('fs');
 const path = require('path');
-const blog = require('../../lib/blog');
+const blog = require('../../../lib/blog');
 
 const AUTOPILOT_DIR = blog.SKILL_DIR;
 const paths = blog.paths;

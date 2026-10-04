@@ -1,6 +1,6 @@
 ---
 name: blog-autopilot
-description: "Full-cycle WordPress blog content automation for any business — keyword to published post. Use this skill whenever someone wants to automate blog article writing, create WordPress content, run content marketing automation, generate SEO articles with AI images, set up a blog content pipeline, post articles to WordPress, open blog autopilot dashboard, or configure settings. Trigger on 'tulis artikel', 'write blog', 'buat konten', 'post ke wordpress', 'content automation', 'blog autopilot', 'setup blog', 'open dashboard', or any multi-step article creation workflow. Also trigger on natural language batch article requests like 'buatkan artikel', 'generate artikel', 'buat konten untuk produk', 'buatkan X artikel keyword Y untuk produk Z', 'jadwalkan artikel mulai tanggal', or any request to create multiple articles for a product page. Also handles WordPress *pages* built with Elementor — trigger on 'edit halaman', 'buat page', 'clone template page', 'edit elementor', 'ubah landing page', 'edit page wordpress'. Also publishes queued drafts on a schedule — trigger on 'publish draft', 'terbitkan draft', 'draft menumpuk', 'set draft ke publish'. Also does bulk find/replace across published posts — trigger on 'edit massal', 'ganti di semua artikel', 'bulk edit', 'perbaiki semua post'."
+description: "Full-cycle WordPress blog content automation for any business — keyword to published post. Use this skill whenever someone wants to automate blog article writing, create WordPress content, run content marketing automation, generate SEO articles with AI images, set up a blog content pipeline, post articles to WordPress, open blog autopilot dashboard, or configure settings. Trigger on 'tulis artikel', 'write blog', 'buat konten', 'post ke wordpress', 'content automation', 'blog autopilot', 'setup blog', 'open dashboard', or any multi-step article creation workflow. Also trigger on natural language batch article requests like 'buatkan artikel', 'generate artikel', 'buat konten untuk produk', 'buatkan X artikel keyword Y untuk produk Z', 'jadwalkan artikel mulai tanggal', or any request to create multiple articles for a product page. Also handles WordPress *pages* built with a page builder (Elementor, etc.) — trigger on 'edit halaman', 'buat page', 'clone template page', 'edit elementor', 'ubah landing page', 'edit page wordpress'. Also publishes queued drafts on a schedule — trigger on 'publish draft', 'terbitkan draft', 'draft menumpuk', 'set draft ke publish'. Also does bulk find/replace across published posts — trigger on 'edit massal', 'ganti di semua artikel', 'bulk edit', 'perbaiki semua post'."
 ---
 
 # Blog Autopilot
@@ -30,7 +30,7 @@ Read the user's input and route to the right handler:
 | `/blog-autopilot audit-seo` | → **[AUDIT-SEO]** periksa meta SEO semua post & page |
 | `/blog-autopilot templates` | → **[TEMPLATES]** kelola template artikel & blueprint halaman |
 | `/blog-autopilot generate [input]` | → **[GENERATE]** batch planner via natural language |
-| `/blog-autopilot page [...]` | → **[PAGE]** kelola halaman Elementor |
+| `/blog-autopilot page [...]` | → **[PAGE]** kelola halaman page builder |
 | `/blog-autopilot publish-drafts` | → **[PUBLISH-DRAFTS]** terbitkan draft antrean |
 | `/blog-autopilot wp-edit [...]` | → **[WP-EDIT]** cari/ganti massal di post terbit |
 | `/blog-autopilot [keyword]` | → **[FULL WORKFLOW]** |
@@ -231,8 +231,8 @@ EDIT MASSAL
 
 HALAMAN (PAGE BUILDER)
   /blog-autopilot page [download|edit|clone|upload] [slug]
-    → Kelola halaman Elementor (bukan artikel)
-    → Aktif bila Settings → Page Builder = Elementor
+    → Kelola halaman page builder (bukan artikel)
+    → Builder dipilih di Settings → Page Builder
 
 TEMPLATE
   /blog-autopilot templates
@@ -390,33 +390,31 @@ salah tebak nama variabel, lalu 401 tanpa penjelasan.
 
 ---
 
-## [PAGE] — Kelola halaman Elementor
+## [PAGE] — Kelola halaman page builder
 
-Untuk **halaman** (page), bukan artikel/post. Hanya berlaku bila situs memakai
-Elementor.
+Untuk **halaman** (page), bukan artikel/post. Tiap page builder punya alur,
+script, dan panduannya sendiri — muat **hanya** milik builder yang aktif.
 
-**Langkah 1 — pastikan aktif:**
+**Langkah 1 — cari builder aktif:**
 
 ```bash
 node .claude/skills/blog-autopilot/scripts/blog-config.js page_builder
 ```
 
-Kalau `type` bukan `"elementor"`, hentikan dan beri tahu pengguna: buka
-dashboard → **Settings → Page Builder** dan pilih Elementor. Jangan jalankan
-script Elementor pada situs yang page builder-nya `none`.
+Kalau `type` = `"none"` (atau kosong), hentikan dan beri tahu pengguna: buka
+dashboard → **Settings → Page Builder** dan pilih builder situsnya. Jangan
+jalankan script builder mana pun pada situs yang page builder-nya `none`.
 
-**Langkah 2 — baca `references/elementor.md`** dan ikuti alurnya. Berkas itu
-memuat seluruh perintah, lokasi berkas per blog, dan aturan keselamatan
-(upload mengubah halaman live; halaman baru selalu draft).
+**Langkah 2 — baca `references/builders/<type>/README.md`** dan ikuti alurnya.
+Berkas itu memuat seluruh perintah (script ada di `scripts/builders/<type>/`),
+lokasi berkas per blog, aturan keselamatan, dan daftar referensi lanjutan
+builder itu. Jangan membuka folder builder lain.
 
-Referensi lain, dibuka hanya saat dibutuhkan:
-
-| Berkas | Kapan dibuka |
+| Builder | Panduan |
 |---|---|
-| `references/elementor.md` | selalu — alur & perintah |
-| `references/elementor-widgets.md` | menyusun/menyunting widget & settings |
-| `references/elementor-troubleshooting.md` | ada error atau halaman rusak |
-| `references/seo-standards.md` | menulis meta Rank Math (post & page) |
+| `elementor` | `references/builders/elementor/README.md` |
+
+Meta Rank Math untuk page (berlaku semua builder): `references/seo-standards.md`.
 
 ---
 
@@ -428,7 +426,7 @@ dicetak dengan cara yang berbeda:
 | Sub-tab | Isi | Berlaku untuk |
 |---|---|---|
 | **Artikel** | prompt artikel, prompt gambar, pola meta | post/artikel |
-| **Halaman** | blueprint: kerangka seksi halaman Elementor | page |
+| **Halaman** | blueprint: kerangka seksi halaman page builder | page |
 
 Buka dashboard (`npm start` di folder skill), lalu menu **Template**.
 
@@ -452,27 +450,17 @@ itu. Template tanpa `{riset}` jalan tanpa kunci sama sekali.
 
 ### Sub-tab Halaman — blueprint
 
-Blueprint merekam **kerangka** satu halaman Elementor: urutan seksi dan widget
-di dalamnya, tanpa isinya. Gunanya menahan halaman yang bentuknya menyimpang
-dari saudaranya sebelum terbit — `validate-elementor.js` hanya memeriksa
-JSON-nya sehat, bukan bentuknya konsisten.
+Blueprint merekam **kerangka** satu halaman: urutan seksi dan widget di
+dalamnya, tanpa isinya. Gunanya menahan halaman yang bentuknya menyimpang dari
+saudaranya sebelum terbit — validator builder hanya memeriksa datanya sehat,
+bukan bentuknya konsisten. Hanya aktif bila builder aktif mendukungnya.
 
 Alurnya: **Rekam dari Halaman** (pilih halaman yang bentuknya sudah benar) →
-petakan halaman sejenis lewat dropdown di daftar **Halaman Elementor** →
-**Periksa Semua**. Halaman tanpa blueprint dilewati, bukan digagalkan.
+petakan halaman sejenis lewat dropdown di daftar halaman → **Periksa Semua**.
+Halaman tanpa blueprint dilewati, bukan digagalkan.
 
-Dari baris perintah, alurnya sama:
-
-```bash
-cd scripts/elementor
-node capture-blueprint.js <slug.json> <nama> --note "<keterangan>"
-node check-blueprint.js <slug.json> --blueprint <nama>   # tandai sekali
-node check-blueprint.js all                              # keluar 1 bila menyimpang
-node check-clone.js <sumber.json> <hasil.json>           # setelah clone: isi sumber tertinggal?
-```
-
-Selengkapnya, termasuk apa yang harus dilakukan saat sebuah halaman memang
-harus beda: `references/elementor.md`.
+Perintah baris-perintahnya, termasuk apa yang harus dilakukan saat sebuah
+halaman memang harus beda: `references/builders/<type>/README.md`.
 
 ---
 
@@ -956,4 +944,5 @@ Struktur lengkap: lihat `config.template.json`
 - `scripts/` — Node.js scripts untuk WordPress API
 - `references/` — SEO standards dan formatting rules
 - `data/blogs/{id}/templates.json` — Template artikel per blog (tab Template → Artikel)
-- `data/blogs/{id}/page-blueprints/` — Blueprint halaman Elementor (tab Template → Halaman)
+- `data/blogs/{id}/page-blueprints/` — Blueprint halaman page builder (tab Template → Halaman)
+- `scripts/builders/<id>/` + `references/builders/<id>/` — kode & panduan per page builder; tambah builder = tambah dua folder itu

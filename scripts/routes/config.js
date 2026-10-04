@@ -6,6 +6,7 @@ const { resolveCredentials, envKeys } = require('../lib/env');
 const { deepMerge, stripCredentials, stripKnowledgeBase } = require('../lib/config-merge');
 const { resolveBlog, requireBlog } = require('../lib/tenant');
 const { resolveKnowledgeBase, sourceType } = require('../lib/knowledge');
+const builders = require('../builders');
 
 // Dijalankan SETELAH knowledge base diresolusi: suffix judul SEO memakai nama
 // bisnis yang berlaku sekarang, bukan nama dari cadangan manual yang sudah tidak
@@ -27,8 +28,8 @@ function withSeoDefaults(cfg) {
 }
 
 // Page builder ikut default 'none': situs tanpa builder adalah kasus umum, dan
-// menebak 'elementor' akan membuat skill edit-elementor tampak berlaku di situs
-// yang halamannya sebenarnya HTML biasa.
+// menebak satu builder akan membuat alur [PAGE] tampak berlaku di situs yang
+// halamannya sebenarnya HTML biasa.
 function withPageBuilderDefaults(cfg) {
   if (!cfg.page_builder) cfg.page_builder = { type: 'none' };
   return cfg;
@@ -43,6 +44,11 @@ function withResolvedKnowledge(cfg) {
 
 module.exports = function registerConfig(app, deps) {
   const { paths } = deps;
+
+  // Pilihan di Settings → Page Builder, dari folder scripts/builders/.
+  app.get('/api/page-builders', (req, res) => {
+    res.json(builders.list().map(builders.describe));
+  });
 
   app.get('/api/config', (req, res) => {
     try {
