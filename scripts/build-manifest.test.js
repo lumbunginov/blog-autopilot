@@ -60,6 +60,25 @@ test('kapabilitas Elementor ikut dalam satu paket', () => {
   }
 });
 
+test('kapabilitas Breakdance ikut dalam satu paket', () => {
+  for (const f of [
+    'scripts/lib/abilities.js',
+    'references/builders/breakdance/README.md',
+    'scripts/builders/breakdance/index.js',
+    'scripts/builders/breakdance/lib/workspace.js',
+    'scripts/builders/breakdance/lib/tree.js',
+    'scripts/builders/breakdance/ability.js',
+    'scripts/builders/breakdance/docs.js',
+    'scripts/builders/breakdance/download-page.js',
+    'scripts/builders/breakdance/create-page.js',
+    'scripts/builders/breakdance/add-html.js',
+    'scripts/builders/breakdance/edit-page.js',
+    'scripts/builders/breakdance/preview-page.js',
+  ]) {
+    assert.ok(files.includes(f), `hilang dari paket: ${f}`);
+  }
+});
+
 test('SKILL.md mengarahkan [PAGE] ke panduan builder aktif', () => {
   const skill = fs.readFileSync(path.join(SKILL_DIR, 'SKILL.md'), 'utf-8');
   assert.match(skill, /\[PAGE\]/);

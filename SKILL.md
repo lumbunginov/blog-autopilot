@@ -1,6 +1,6 @@
 ---
 name: blog-autopilot
-description: "Full-cycle WordPress blog content automation for any business — keyword to published post. Use this skill whenever someone wants to automate blog article writing, create WordPress content, run content marketing automation, generate SEO articles with AI images, set up a blog content pipeline, post articles to WordPress, open blog autopilot dashboard, or configure settings. Trigger on 'tulis artikel', 'write blog', 'buat konten', 'post ke wordpress', 'content automation', 'blog autopilot', 'setup blog', 'open dashboard', or any multi-step article creation workflow. Also trigger on natural language batch article requests like 'buatkan artikel', 'generate artikel', 'buat konten untuk produk', 'buatkan X artikel keyword Y untuk produk Z', 'jadwalkan artikel mulai tanggal', or any request to create multiple articles for a product page. Also handles WordPress *pages* built with a page builder (Elementor, etc.) — trigger on 'edit halaman', 'buat page', 'clone template page', 'edit elementor', 'ubah landing page', 'edit page wordpress'. Also publishes queued drafts on a schedule — trigger on 'publish draft', 'terbitkan draft', 'draft menumpuk', 'set draft ke publish'. Also does bulk find/replace across published posts — trigger on 'edit massal', 'ganti di semua artikel', 'bulk edit', 'perbaiki semua post'."
+description: "Full-cycle WordPress blog content automation for any business — keyword to published post. Use this skill whenever someone wants to automate blog article writing, create WordPress content, run content marketing automation, generate SEO articles with AI images, set up a blog content pipeline, post articles to WordPress, open blog autopilot dashboard, or configure settings. Trigger on 'tulis artikel', 'write blog', 'buat konten', 'post ke wordpress', 'content automation', 'blog autopilot', 'setup blog', 'open dashboard', or any multi-step article creation workflow. Also trigger on natural language batch article requests like 'buatkan artikel', 'generate artikel', 'buat konten untuk produk', 'buatkan X artikel keyword Y untuk produk Z', 'jadwalkan artikel mulai tanggal', or any request to create multiple articles for a product page. Also handles WordPress *pages* built with a page builder (Elementor, Breakdance) — trigger on 'edit halaman', 'buat page', 'clone template page', 'edit elementor', 'edit breakdance', 'ubah landing page', 'edit page wordpress'. Also publishes queued drafts on a schedule — trigger on 'publish draft', 'terbitkan draft', 'draft menumpuk', 'set draft ke publish'. Also does bulk find/replace across published posts — trigger on 'edit massal', 'ganti di semua artikel', 'bulk edit', 'perbaiki semua post'."
 ---
 
 # Blog Autopilot
@@ -413,6 +413,7 @@ builder itu. Jangan membuka folder builder lain.
 | Builder | Panduan |
 |---|---|
 | `elementor` | `references/builders/elementor/README.md` |
+| `breakdance` | `references/builders/breakdance/README.md` |
 
 Meta Rank Math untuk page (berlaku semua builder): `references/seo-standards.md`.
 

@@ -51,6 +51,7 @@
     "type": "none",
     "_type_options": [
       "elementor",
+      "breakdance",
       "none"
     ],
     "_note": "Id builder = nama folder di scripts/builders/; alurnya di references/builders/<id>/README.md. none = halaman diedit langsung di WordPress."
