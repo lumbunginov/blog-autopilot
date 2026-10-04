@@ -91,6 +91,8 @@ Sama untuk semua builder: `node ../../seo-meta.js get|set ...` — lihat
 |---|---|---|
 | `rest_no_route` saat `ability.js list` | Abilities API / Breakdance tidak aktif atau terlalu lama | Perbarui WordPress & Breakdance |
 | `Read-only abilities require GET` / `input is not of type object` | memanggil ability tanpa `lib/abilities.js` | Pakai `ability.js` |
+| `Abilities that perform destructive actions require DELETE` | ability destruktif+idempoten (mis. `set-template-conditions`) dipanggil POST | Pakai `ability.js` (klien memilih DELETE sendiri) |
+| Banner admin "This page uses pro-only features" | situs memakai Breakdance gratis; elemen Pro (mis. Post Loop Builder dari `bd-loop`, Search Form dari `bd-woo="search"`) **tidak dirender untuk pengunjung** | Klik "See details" di banner untuk daftar elemennya, ganti dengan elemen gratis (kartu statis, tautan biasa) atau aktifkan lisensi Pro |
 | `tidak dibangun dengan Breakdance` | halaman milik builder lain (mis. Elementor) | Sunting dengan builder aslinya |
 | `operasi ditolak sebelum dikirim` | id salah / sudah dihapus / elemen baru dari batch yang sama | `download-page.js`, perbaiki id |
 | `edit-post gagal, tidak ada yang diubah` | properti tidak sesuai skema elemen | `ability.js run get-element-schemas` untuk elemen itu, perbaiki properti |

@@ -6,7 +6,9 @@
 //
 // Tiga perilaku server yang tidak terlihat dari dokumentasi ability-nya:
 //   - Ability baca-saja WAJIB GET ("Read-only abilities require GET method"),
-//     ability tulis WAJIB POST {"input": {...}}.
+//     ability destruktif + idempoten WAJIB DELETE ("Abilities that perform
+//     destructive actions require DELETE method", mis. set-template-conditions),
+//     sisanya POST {"input": {...}}. GET dan DELETE membawa input di query string.
 //   - Input GET dikirim berupa notasi kurung siku (input[post_id]=5). JSON
 //     string di ?input= ditolak "input is not of type object"; input kosong
 //     tetap harus ada sebagai `input=`.
@@ -75,8 +77,9 @@ function makeClient({ site, auth, fetchImpl = globalThis.fetch }) {
 
   async function run(name, input = {}) {
     const a = await describe(name);
-    const readonly = !!(a.meta && a.meta.annotations && a.meta.annotations.readonly);
-    if (readonly) return request(name, `${base}/${name}/run?${queryString(input)}&_nc=${Date.now()}${Math.random().toString(36).slice(2, 8)}`);
+    const ann = (a.meta && a.meta.annotations) || {};
+    if (ann.readonly) return request(name, `${base}/${name}/run?${queryString(input)}&_nc=${Date.now()}${Math.random().toString(36).slice(2, 8)}`);
+    if (ann.destructive && ann.idempotent) return request(name, `${base}/${name}/run?${queryString(input)}`, { method: 'DELETE' });
     return request(name, `${base}/${name}/run`, { method: 'POST', body: JSON.stringify({ input }) });
   }
 

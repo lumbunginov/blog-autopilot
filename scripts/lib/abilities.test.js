@@ -49,6 +49,25 @@ test('ability baca-saja dijalankan dengan GET, ability tulis dengan POST {input}
   assert.strictEqual(runs[1].headers.Authorization, 'Basic abc');
 });
 
+test('ability destruktif + idempoten dijalankan dengan DELETE, input di query string', async () => {
+  const DEL = { name: 'b/hapus', meta: { annotations: { readonly: null, destructive: true, idempotent: true } } };
+  const DESTRUCTIVE_ONLY = { name: 'b/buat', meta: { annotations: { destructive: true } } };
+  const f = fakeFetch({
+    [`${BASE}/b/hapus/run`]: { body: { ok: 'hapus' } },
+    [`${BASE}/b/hapus`]: { body: DEL },
+    [`${BASE}/b/buat/run`]: { body: { ok: 'buat' } },
+    [`${BASE}/b/buat`]: { body: DESTRUCTIVE_ONLY }
+  });
+  const c = makeClient({ site: SITE, auth: 'abc', fetchImpl: f });
+  assert.deepStrictEqual(await c.run('b/hapus', { post_id: 7, rules: [] }), { ok: 'hapus' });
+  assert.deepStrictEqual(await c.run('b/buat', { post_id: 7 }), { ok: 'buat' });
+  const runs = f.calls.filter(x => x.url.includes('/run'));
+  assert.strictEqual(runs[0].method, 'DELETE');
+  assert.match(runs[0].url, /input%5Bpost_id%5D=7/);
+  assert.strictEqual(runs[0].body, undefined);
+  assert.strictEqual(runs[1].method, 'POST');
+});
+
 test('GET membawa pemecah cache yang berbeda tiap panggilan', async () => {
   const f = fakeFetch({ [`${BASE}/b/baca/run`]: { body: {} }, [`${BASE}/b/baca`]: { body: RO } });
   const c = makeClient({ site: SITE, auth: 'abc', fetchImpl: f });
