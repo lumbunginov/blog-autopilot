@@ -16,7 +16,7 @@ test('entity WordPress ter-decode jadi karakter asli', () => {
 });
 
 test('tag HTML di judul dibuang', () => {
-  assert.strictEqual(decodeWpEntities('Sewa <em>HT</em> Malang'), 'Sewa HT Malang');
+  assert.strictEqual(decodeWpEntities('Sewa <em>HT</em> Bandung'), 'Sewa HT Bandung');
 });
 
 test('mapPost menghasilkan tepat 8 field', () => {
@@ -27,8 +27,8 @@ test('mapPost menghasilkan tepat 8 field', () => {
     date: '2026-04-13T06:00:00',
     modified: '2026-04-14T08:30:00',
     categories: [846],
-    slug: 'sewa-stand-partitur-terdekat-malang',
-    link: 'https://perkap.com/2026/04/13/sewa-stand-partitur-terdekat-malang/'
+    slug: 'sewa-stand-partitur-terdekat-bandung',
+    link: 'https://example.com/2026/04/13/sewa-stand-partitur-terdekat-bandung/'
   };
   const r = mapPost(post, { 846: 'Sewa Stand Partitur' });
   assert.deepStrictEqual(Object.keys(r).sort(),
@@ -70,7 +70,7 @@ test('cache rusak mengembalikan null, bukan melempar', () => {
 
 test('direktori induk dibuat otomatis saat menulis', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ab-'));
-  const p = path.join(dir, 'blogs', 'perkapcom', 'articles-cache.json');
+  const p = path.join(dir, 'blogs', 'examplecom', 'articles-cache.json');
   writeArticlesCache(p, { articles: [] });
   assert.ok(fs.existsSync(p));
 });

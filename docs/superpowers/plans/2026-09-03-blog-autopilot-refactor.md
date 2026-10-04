@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Pecah skill `blog-autopilot` yang monolitik jadi modular ala `business-asset`, lalu jadikan multi-tenant dengan perkap.com sebagai tenant pertama.
+**Goal:** Pecah skill `blog-autopilot` yang monolitik jadi modular ala `business-asset`, lalu jadikan multi-tenant dengan example.com sebagai tenant pertama.
 
-**Architecture:** Strangler — tiap task menghasilkan server yang masih jalan. Urutan: git baseline → tarik logika murni ke `scripts/lib/` dengan test → pindah ke express + `scripts/routes/` per domain → pindah UI ke `public/` → multi-tenant lewat `lib/paths.js` → import data perkap → kredensial ke `.env` → schedule-date + anti-duplikat slug.
+**Architecture:** Strangler — tiap task menghasilkan server yang masih jalan. Urutan: git baseline → tarik logika murni ke `scripts/lib/` dengan test → pindah ke express + `scripts/routes/` per domain → pindah UI ke `public/` → multi-tenant lewat `lib/paths.js` → import data example → kredensial ke `.env` → schedule-date + anti-duplikat slug.
 
 **Tech Stack:** Node.js v24 (`node --test` bawaan, tanpa framework test pihak ketiga), Express 4, HTML/JS vanilla di `public/`.
 
@@ -12,16 +12,16 @@
 
 ## Global Constraints
 
-- Direktori kerja semua perintah: `G:\Project\Sikil Project\autoblog\.claude\skills\blog-autopilot`
+- Direktori kerja semua perintah: `<root-skill>`
 - Node.js v24.20.0 — test pakai `node:test` + `node:assert`, jangan tambah jest/vitest/mocha
 - Express 4 (`npm install express`); jangan tambah dependensi lain kecuali disebut eksplisit di task
 - Port dashboard tetap `3847`
 - Bahasa pesan error dan komentar kode: campur ID/EN mengikuti berkas yang sedang disunting; jangan menerjemahkan teks yang sudah ada
 - File kredensial (`.env`) dan `data/blogs/*/` TIDAK PERNAH masuk git
-- Password WordPress dan API key Seedream perkap ada di `blog-autopilot-config.json` (`wordpress.app_password` dan `image_api.api_key`). Berkas itu TIDAK di-track git. Keduanya harus lenyap dari berkas yang di-track setelah Task 9. Jangan pernah menyalin nilainya ke dokumen, pesan commit, atau berkas apa pun yang di-track — termasuk rencana ini. Saat perlu memeriksa kebocoran, baca nilainya saat itu juga dari config, jangan ditulis harfiah.
+- Password WordPress dan API key Seedream example ada di `blog-autopilot-config.json` (`wordpress.app_password` dan `image_api.api_key`). Berkas itu TIDAK di-track git. Keduanya harus lenyap dari berkas yang di-track setelah Task 9. Jangan pernah menyalin nilainya ke dokumen, pesan commit, atau berkas apa pun yang di-track — termasuk rencana ini. Saat perlu memeriksa kebocoran, baca nilainya saat itu juga dari config, jangan ditulis harfiah.
 - Tiap task diakhiri commit. Jangan `git push` — belum ada remote.
 - Server dijalankan dengan `node scripts/server.js` setelah Task 5; sebelum itu `node dashboard/server.js`
-- Untuk menghentikan server: cari PID-nya, JANGAN `Get-Process node | Stop-Process` — itu ikut membunuh server Paperclip di port 3100
+- Untuk menghentikan server: cari PID-nya, JANGAN `Get-Process node | Stop-Process` — itu ikut membunuh server node lain di mesin yang sama
 
 ---
 
@@ -56,10 +56,10 @@ build/
 ```bash
 # Blog Autopilot — kredensial per tenant.
 # Salin ke .env lalu isi. Nama variabel = ID tenant huruf besar + underscore.
-# ID tenant "perkapcom" → prefix PERKAPCOM_
+# ID tenant "examplecom" → prefix EXAMPLECOM_
 
-PERKAPCOM_WP_APP_PASSWORD=
-PERKAPCOM_IMAGE_API_KEY=
+EXAMPLECOM_WP_APP_PASSWORD=
+EXAMPLECOM_IMAGE_API_KEY=
 ```
 
 - [ ] **Step 3: Init repo dan pastikan file rahasia tidak ikut**
@@ -113,46 +113,46 @@ const { extractFromHtml } = require('./html-extract');
 
 test('og:site_name dipakai sebagai nama bisnis', () => {
   const html = `<html><head>
-    <meta property="og:site_name" content="Perkap Sewa Alat">
-    <title>Halaman Depan - Perkap</title>
+    <meta property="og:site_name" content="Example Sewa Alat">
+    <title>Halaman Depan - Example</title>
   </head><body></body></html>`;
-  const r = extractFromHtml(html, 'https://perkap.com');
-  assert.strictEqual(r.businessName, 'Perkap Sewa Alat');
+  const r = extractFromHtml(html, 'https://example.com');
+  assert.strictEqual(r.businessName, 'Example Sewa Alat');
 });
 
 test('tanpa og:site_name, judul dipakai dan ekor setelah dash dibuang', () => {
-  const html = `<html><head><title>Perkap - Sewa Alat Event</title></head><body></body></html>`;
-  const r = extractFromHtml(html, 'https://perkap.com');
-  assert.strictEqual(r.businessName, 'Perkap');
+  const html = `<html><head><title>Example - Sewa Alat Event</title></head><body></body></html>`;
+  const r = extractFromHtml(html, 'https://example.com');
+  assert.strictEqual(r.businessName, 'Example');
 });
 
 test('tanpa judul apa pun, hostname jadi cadangan terakhir', () => {
-  const r = extractFromHtml('<html><body></body></html>', 'https://perkap.com/blog');
-  assert.strictEqual(r.businessName, 'perkap.com');
+  const r = extractFromHtml('<html><body></body></html>', 'https://example.com/blog');
+  assert.strictEqual(r.businessName, 'example.com');
 });
 
 test('meta description menang atas paragraf pertama', () => {
   const html = `<html><head>
-    <meta name="description" content="Sewa HT, proyektor, dan sound system untuk event di Malang.">
+    <meta name="description" content="Sewa HT, proyektor, dan sound system untuk event di Bandung.">
   </head><body><p>${'x'.repeat(120)}</p></body></html>`;
-  const r = extractFromHtml(html, 'https://perkap.com');
+  const r = extractFromHtml(html, 'https://example.com');
   assert.match(r.description, /^Sewa HT/);
 });
 
 test('paragraf boilerplate cookie/privacy dilewati', () => {
   const html = `<html><body>
     <p>Cookie policy kami menjelaskan bagaimana situs ini menyimpan data Anda selama sesi berlangsung.</p>
-    <p>Perkap menyewakan alat event di Malang dengan harga terjangkau dan pengantaran cepat ke lokasi.</p>
+    <p>Example menyewakan alat event di Bandung dengan harga terjangkau dan pengantaran cepat ke lokasi.</p>
   </body></html>`;
-  const r = extractFromHtml(html, 'https://perkap.com');
-  assert.match(r.description, /^Perkap menyewakan/);
+  const r = extractFromHtml(html, 'https://example.com');
+  assert.match(r.description, /^Example menyewakan/);
 });
 
 test('heading navigasi umum tidak dianggap produk', () => {
   const html = `<html><body>
     <h2>Beranda</h2><h2>Tentang Kami</h2><h2>Sewa HT</h2><h3>Sewa Proyektor</h3>
   </body></html>`;
-  const r = extractFromHtml(html, 'https://perkap.com');
+  const r = extractFromHtml(html, 'https://example.com');
   assert.deepStrictEqual(r.products, ['Sewa HT', 'Sewa Proyektor']);
 });
 
@@ -160,16 +160,16 @@ test('produk dibatasi maksimal 8 entri', () => {
   const html = '<html><body>' +
     Array.from({ length: 12 }, (_, i) => `<h2>Sewa Alat ${i}</h2>`).join('') +
     '</body></html>';
-  const r = extractFromHtml(html, 'https://perkap.com');
+  const r = extractFromHtml(html, 'https://example.com');
   assert.strictEqual(r.products.length, 8);
 });
 
 test('tagline kosong kalau og:title sama dengan nama bisnis', () => {
   const html = `<html><head>
-    <meta property="og:site_name" content="Perkap">
-    <meta property="og:title" content="Perkap">
+    <meta property="og:site_name" content="Example">
+    <meta property="og:title" content="Example">
   </head><body></body></html>`;
-  const r = extractFromHtml(html, 'https://perkap.com');
+  const r = extractFromHtml(html, 'https://example.com');
   assert.strictEqual(r.tagline, '');
 });
 ```
@@ -211,7 +211,7 @@ const { extractFromHtml } = require('../scripts/lib/html-extract');
 ```bash
 node dashboard/server.js &
 sleep 2
-curl -s "http://localhost:3847/api/scrape?url=https://perkap.com" | head -c 300
+curl -s "http://localhost:3847/api/scrape?url=https://example.com" | head -c 300
 ```
 
 Expected: JSON berisi `businessName`. Hentikan server setelah cek (cari PID-nya, jangan bunuh semua node).
@@ -265,7 +265,7 @@ test('entity WordPress ter-decode jadi karakter asli', () => {
 });
 
 test('tag HTML di judul dibuang', () => {
-  assert.strictEqual(decodeWpEntities('Sewa <em>HT</em> Malang'), 'Sewa HT Malang');
+  assert.strictEqual(decodeWpEntities('Sewa <em>HT</em> Bandung'), 'Sewa HT Bandung');
 });
 
 test('mapPost menghasilkan tepat 8 field', () => {
@@ -276,8 +276,8 @@ test('mapPost menghasilkan tepat 8 field', () => {
     date: '2026-04-13T06:00:00',
     modified: '2026-04-14T08:30:00',
     categories: [846],
-    slug: 'sewa-stand-partitur-terdekat-malang',
-    link: 'https://perkap.com/2026/04/13/sewa-stand-partitur-terdekat-malang/'
+    slug: 'sewa-stand-partitur-terdekat-bandung',
+    link: 'https://example.com/2026/04/13/sewa-stand-partitur-terdekat-bandung/'
   };
   const r = mapPost(post, { 846: 'Sewa Stand Partitur' });
   assert.deepStrictEqual(Object.keys(r).sort(),
@@ -319,7 +319,7 @@ test('cache rusak mengembalikan null, bukan melempar', () => {
 
 test('direktori induk dibuat otomatis saat menulis', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ab-'));
-  const p = path.join(dir, 'blogs', 'perkapcom', 'articles-cache.json');
+  const p = path.join(dir, 'blogs', 'examplecom', 'articles-cache.json');
   writeArticlesCache(p, { articles: [] });
   assert.ok(fs.existsSync(p));
 });
@@ -1040,7 +1040,7 @@ const { sanitizeId, makePaths } = require('./paths');
 function tmpRoot() { return fs.mkdtempSync(path.join(os.tmpdir(), 'ab-paths-')); }
 
 test('id dibersihkan jadi aman untuk nama folder', () => {
-  assert.strictEqual(sanitizeId('Perkap.com'), 'perkapcom');
+  assert.strictEqual(sanitizeId('Example.com'), 'examplecom');
   assert.strictEqual(sanitizeId('Blog Saya!'), 'blog-saya');
   assert.strictEqual(sanitizeId('  spasi  '), 'spasi');
 });
@@ -1053,8 +1053,8 @@ test('id yang mencoba keluar folder ditolak', () => {
 
 test('path tenant tersusun di bawah data/blogs', () => {
   const p = makePaths(tmpRoot());
-  assert.ok(p.configPath('perkapcom').endsWith(path.join('data', 'blogs', 'perkapcom', 'config.json')));
-  assert.ok(p.cachePath('perkapcom').endsWith('articles-cache.json'));
+  assert.ok(p.configPath('examplecom').endsWith(path.join('data', 'blogs', 'examplecom', 'config.json')));
+  assert.ok(p.cachePath('examplecom').endsWith('articles-cache.json'));
 });
 
 test('listBlogs kosong kalau folder belum ada', () => {
@@ -1065,17 +1065,17 @@ test('listBlogs kosong kalau folder belum ada', () => {
 test('listBlogs hanya memuat direktori, mengabaikan berkas _active', () => {
   const root = tmpRoot();
   const p = makePaths(root);
-  fs.mkdirSync(path.join(root, 'data', 'blogs', 'perkapcom'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'data', 'blogs', '_active'), 'perkapcom');
-  assert.deepStrictEqual(p.listBlogs(), ['perkapcom']);
+  fs.mkdirSync(path.join(root, 'data', 'blogs', 'examplecom'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'data', 'blogs', '_active'), 'examplecom');
+  assert.deepStrictEqual(p.listBlogs(), ['examplecom']);
 });
 
 test('activeBlog memilih tenant pertama kalau _active belum ada', () => {
   const root = tmpRoot();
   const p = makePaths(root);
-  fs.mkdirSync(path.join(root, 'data', 'blogs', 'perkapcom'), { recursive: true });
-  assert.strictEqual(p.activeBlog(), 'perkapcom');
-  assert.strictEqual(fs.readFileSync(path.join(root, 'data', 'blogs', '_active'), 'utf-8').trim(), 'perkapcom');
+  fs.mkdirSync(path.join(root, 'data', 'blogs', 'examplecom'), { recursive: true });
+  assert.strictEqual(p.activeBlog(), 'examplecom');
+  assert.strictEqual(fs.readFileSync(path.join(root, 'data', 'blogs', '_active'), 'utf-8').trim(), 'examplecom');
 });
 
 test('activeBlog null kalau belum ada tenant sama sekali', () => {
@@ -1318,16 +1318,16 @@ git commit -m "feat: multi-tenant lewat data/blogs + lib/paths"
 
 ---
 
-### Task 8: Import tenant perkap
+### Task 8: Import tenant example
 
-Sumbernya `G:\Project\Perkap Article\` — perhatikan berkasnya ada di **root project**, bukan di dalam `.claude/skills/blog-autopilot/`. Instalasi itu versi lama.
+Sumbernya `<folder-skill-lama>\` — perhatikan berkasnya ada di **root project**, bukan di dalam `.claude/skills/blog-autopilot/`. Instalasi itu versi lama.
 
 **Files:**
 - Create: `scripts/import-blog.js`
 
 **Interfaces:**
 - Consumes: `makePaths`, `sanitizeId` dari Task 7
-- Produces: `data/blogs/perkapcom/` berisi config + cache + plans + queue
+- Produces: `data/blogs/examplecom/` berisi config + cache + plans + queue
 
 - [ ] **Step 1: Tulis `scripts/import-blog.js`**
 
@@ -1416,7 +1416,7 @@ console.log(`\nSelesai. Tenant aktif: ${paths.activeBlog()}`);
 - [ ] **Step 2: Jalankan impor**
 
 ```bash
-node scripts/import-blog.js "G:/Project/Perkap Article" perkapcom
+node scripts/import-blog.js "<folder-skill-lama>" examplecom
 ```
 
 Expected: config + 3 berkas tersalin, `articles-cache.json (583 entri)`, lalu dua baris env tercetak.
@@ -1428,7 +1428,7 @@ Salin dua baris yang tercetak ke berkas `.env` di root skill. Jangan commit berk
 - [ ] **Step 4: Pastikan tidak ada rahasia yang tersimpan di data tenant**
 
 ```bash
-node -e "const c=require('G:/Project/Perkap Article/blog-autopilot-config.json');require('fs').writeFileSync('.rahasia-cek.txt',[c.wordpress&&c.wordpress.app_password,c.image_api&&c.image_api.api_key].filter(Boolean).join('\n'))"
+node -e "const c=require('<folder-skill-lama>/blog-autopilot-config.json');require('fs').writeFileSync('.rahasia-cek.txt',[c.wordpress&&c.wordpress.app_password,c.image_api&&c.image_api.api_key].filter(Boolean).join('\n'))"
 grep -r -F -f .rahasia-cek.txt data/ ; echo "exit=$?"
 rm .rahasia-cek.txt
 ```
@@ -1438,7 +1438,7 @@ Expected: `exit=1` (grep tidak menemukan apa pun di `data/`). Kredensial harus h
 - [ ] **Step 5: Verifikasi dari dashboard**
 
 Jalankan `node scripts/server.js`, buka `http://localhost:3847`.
-Expected: pemilih blog menampilkan tenant perkap; tab Articles memuat 583 artikel; tab Settings menampilkan 20+ kategori tersimpan (Sewa HT 76, Sewa Proyektor 59, dst).
+Expected: pemilih blog menampilkan tenant example; tab Articles memuat 583 artikel; tab Settings menampilkan 20+ kategori tersimpan (Sewa HT 76, Sewa Proyektor 59, dst).
 
 - [ ] **Step 6: Commit**
 
@@ -1478,47 +1478,47 @@ const path = require('path');
 const { loadDotEnv, envKeys, resolveCredentials } = require('./env');
 
 const cfg = () => ({
-  wordpress: { url: 'https://perkap.com', username: 'faizallazuar' },
+  wordpress: { url: 'https://example.com', username: 'admin' },
   image_api: { type: 'seedream' }
 });
 
 test('nama variabel diturunkan dari id tenant', () => {
-  assert.deepStrictEqual(envKeys('perkapcom'), {
-    wpPassword: 'PERKAPCOM_WP_APP_PASSWORD',
-    imageKey: 'PERKAPCOM_IMAGE_API_KEY'
+  assert.deepStrictEqual(envKeys('examplecom'), {
+    wpPassword: 'EXAMPLECOM_WP_APP_PASSWORD',
+    imageKey: 'EXAMPLECOM_IMAGE_API_KEY'
   });
   assert.strictEqual(envKeys('blog-saya').wpPassword, 'BLOG_SAYA_WP_APP_PASSWORD');
 });
 
 test('kredensial lengkap tergabung ke config', () => {
-  const r = resolveCredentials('perkapcom', cfg(), {
-    PERKAPCOM_WP_APP_PASSWORD: 'rahasia',
-    PERKAPCOM_IMAGE_API_KEY: 'kunci'
+  const r = resolveCredentials('examplecom', cfg(), {
+    EXAMPLECOM_WP_APP_PASSWORD: 'rahasia',
+    EXAMPLECOM_IMAGE_API_KEY: 'kunci'
   });
   assert.strictEqual(r.wordpress.app_password, 'rahasia');
   assert.strictEqual(r.image_api.api_key, 'kunci');
-  assert.strictEqual(r.wordpress.username, 'faizallazuar');
+  assert.strictEqual(r.wordpress.username, 'admin');
 });
 
 test('password hilang melempar error yang MENYEBUT nama variabelnya', () => {
-  assert.throws(() => resolveCredentials('perkapcom', cfg(), {}),
-    /PERKAPCOM_WP_APP_PASSWORD/);
+  assert.throws(() => resolveCredentials('examplecom', cfg(), {}),
+    /EXAMPLECOM_WP_APP_PASSWORD/);
 });
 
 test('image key hilang tidak melempar kalau tipe none', () => {
   const c = cfg(); c.image_api.type = 'none';
-  const r = resolveCredentials('perkapcom', c, { PERKAPCOM_WP_APP_PASSWORD: 'x' });
+  const r = resolveCredentials('examplecom', c, { EXAMPLECOM_WP_APP_PASSWORD: 'x' });
   assert.strictEqual(r.image_api.api_key, '');
 });
 
 test('image key hilang melempar kalau tipe butuh kunci', () => {
-  assert.throws(() => resolveCredentials('perkapcom', cfg(), { PERKAPCOM_WP_APP_PASSWORD: 'x' }),
-    /PERKAPCOM_IMAGE_API_KEY/);
+  assert.throws(() => resolveCredentials('examplecom', cfg(), { EXAMPLECOM_WP_APP_PASSWORD: 'x' }),
+    /EXAMPLECOM_IMAGE_API_KEY/);
 });
 
 test('config asli tidak ikut berubah', () => {
   const c = cfg();
-  resolveCredentials('perkapcom', c, { PERKAPCOM_WP_APP_PASSWORD: 'x', PERKAPCOM_IMAGE_API_KEY: 'y' });
+  resolveCredentials('examplecom', c, { EXAMPLECOM_WP_APP_PASSWORD: 'x', EXAMPLECOM_IMAGE_API_KEY: 'y' });
   assert.strictEqual(c.wordpress.app_password, undefined);
 });
 
@@ -1658,7 +1658,7 @@ Di `scripts/post-to-wp.js` dan `scripts/upload-image.js`: hapus `--password` dar
 ```js
 const { loadDotEnv, envKeys } = require('./lib/env');
 loadDotEnv(require('path').join(__dirname, '..', '.env'));
-const blogId = args.blog || 'perkapcom';
+const blogId = args.blog || 'examplecom';
 const password = process.env[envKeys(blogId).wpPassword];
 if (!password) {
   console.error(`❌ ${envKeys(blogId).wpPassword} belum diset di .env`);
@@ -1666,7 +1666,7 @@ if (!password) {
 }
 ```
 
-Alasan: `argv` terlihat di `ps` dan masuk ke log intersepsi perintah. Perkap sudah memperbaiki ini (PER-2297).
+Alasan: `argv` terlihat di `ps` dan masuk ke log intersepsi perintah. Ini sudah pernah diperbaiki di versi sebelumnya.
 
 - [ ] **Step 8: Verifikasi error menyebut nama variabel, bukan 401**
 
@@ -1678,7 +1678,7 @@ curl -s "http://localhost:3847/api/categories"
 mv .env.simpan .env
 ```
 
-Expected: pesan memuat `PERKAPCOM_WP_APP_PASSWORD`, bukan `401` atau `Unauthorized`.
+Expected: pesan memuat `EXAMPLECOM_WP_APP_PASSWORD`, bukan `401` atau `Unauthorized`.
 
 - [ ] **Step 9: Verifikasi dengan .env terpasang**
 
@@ -1701,10 +1701,10 @@ git commit -m "feat: kredensial pindah ke .env per tenant, keluar dari argv"
 
 ### Task 10: Schedule-date otomatis
 
-Disalin dari `Perkap_com/project/article/.claude/skills/post-article/scripts/find-schedule-date.js`, dengan dua perubahan wajib:
+Disalin dari `example_com/project/article/.claude/skills/post-article/scripts/find-schedule-date.js`, dengan dua perubahan wajib:
 
 1. Sumber tanggal terpakai: `articles-cache.json` (field `date`), bukan `Index_Published.csv`
-2. Offset zona waktu jadi **per tenant** — berkas asli mengunci `SITE_GMT_OFFSET_HOURS = 7` untuk perkap.com. Blog lain bisa di zona lain, dan salah offset berarti artikel terbit di jam yang salah tanpa error apa pun.
+2. Offset zona waktu jadi **per tenant** — berkas asli mengunci `SITE_GMT_OFFSET_HOURS = 7` untuk example.com. Blog lain bisa di zona lain, dan salah offset berarti artikel terbit di jam yang salah tanpa error apa pun.
 
 **Files:**
 - Create: `scripts/lib/schedule-date.js`, `scripts/lib/schedule-date.test.js`
@@ -1856,8 +1856,8 @@ Expected: FAIL — modul tidak ditemukan
 // `date` tanpa offset dalam zona waktu SITUS-nya sendiri. Jadi satu-satunya
 // zona yang membuat string itu berarti sesuai maksud kita adalah zona situs.
 //
-// Di skill lama (Perkap Article), nilai ini dikunci ke WIB (UTC+7) karena
-// perkap.com melaporkan gmt_offset "7". Di sini nilainya PER TENANT, dibaca
+// Di skill lama (skill artikel versi awal), nilai ini dikunci ke WIB (UTC+7) karena
+// example.com melaporkan gmt_offset "7". Di sini nilainya PER TENANT, dibaca
 // dari config.workflow.site_gmt_offset + site_timezone, karena blog lain bisa
 // berada di zona lain — dan salah offset berarti artikel terbit di jam yang
 // salah tanpa satu pun error muncul.
@@ -1975,9 +1975,9 @@ Di `config.template.json`, di dalam `workflow`, tambahkan:
     "schedule_hour": 6,
 ```
 
-Tambahkan juga ketiga nilai itu ke `data/blogs/perkapcom/config.json` (perkap.com = `Asia/Jakarta`, `7`, `6`).
+Tambahkan juga ketiga nilai itu ke `data/blogs/examplecom/config.json` (example.com = `Asia/Jakarta`, `7`, `6`).
 
-- [ ] **Step 6: Verifikasi terhadap data perkap sungguhan**
+- [ ] **Step 6: Verifikasi terhadap data example sungguhan**
 
 ```bash
 node -e "
@@ -1985,7 +1985,7 @@ const { makePaths } = require('./scripts/lib/paths');
 const { readArticlesCache } = require('./scripts/lib/articles-cache');
 const { takenDatesFromCache, findAvailableDate } = require('./scripts/lib/schedule-date');
 const p = makePaths(process.cwd());
-const cache = readArticlesCache(p.cachePath('perkapcom'));
+const cache = readArticlesCache(p.cachePath('examplecom'));
 const taken = takenDatesFromCache(cache);
 const slot = findAvailableDate({ takenDates: taken, timeZone: 'Asia/Jakarta', gmtOffset: 7, hour: 6 });
 console.log('tanggal terpakai:', taken.size, '| usulan:', slot);
@@ -2026,27 +2026,27 @@ const assert = require('node:assert');
 const { slugify, checkSlug } = require('./slug-guard');
 
 const cache = { articles: [
-  { id: 11282, title: 'Sewa Stand Partitur Malang', slug: 'sewa-stand-partitur-terdekat-malang',
-    url: 'https://perkap.com/x/', status: 'publish' },
-  { id: 11283, title: 'Sewa HT Surabaya', slug: 'sewa-ht-surabaya',
-    url: 'https://perkap.com/y/', status: 'draft' }
+  { id: 11282, title: 'Sewa Stand Partitur Bandung', slug: 'sewa-stand-partitur-terdekat-bandung',
+    url: 'https://example.com/x/', status: 'publish' },
+  { id: 11283, title: 'Sewa HT Semarang', slug: 'sewa-ht-semarang',
+    url: 'https://example.com/y/', status: 'draft' }
 ]};
 
 test('slug yang sudah ada terdeteksi dan artikelnya dikembalikan', () => {
-  const r = checkSlug('sewa-ht-surabaya', cache);
+  const r = checkSlug('sewa-ht-semarang', cache);
   assert.strictEqual(r.duplicate, true);
   assert.strictEqual(r.existing.id, 11283);
   assert.strictEqual(r.existing.status, 'draft');
 });
 
 test('slug baru lolos', () => {
-  const r = checkSlug('sewa-ht-malang', cache);
+  const r = checkSlug('sewa-ht-bandung', cache);
   assert.strictEqual(r.duplicate, false);
   assert.strictEqual(r.existing, null);
 });
 
 test('perbandingan mengabaikan beda huruf besar-kecil dan garis miring', () => {
-  assert.strictEqual(checkSlug('/Sewa-HT-Surabaya/', cache).duplicate, true);
+  assert.strictEqual(checkSlug('/Sewa-HT-Semarang/', cache).duplicate, true);
 });
 
 test('cache kosong atau null selalu lolos', () => {
@@ -2059,7 +2059,7 @@ test('slug kosong dianggap tidak duplikat, bukan melempar', () => {
 });
 
 test('slugify membuat slug dari judul Indonesia', () => {
-  assert.strictEqual(slugify('Sewa HT Malang: Aman, Jernih, & Stabil'), 'sewa-ht-malang-aman-jernih-stabil');
+  assert.strictEqual(slugify('Sewa HT Bandung: Aman, Jernih, & Stabil'), 'sewa-ht-bandung-aman-jernih-stabil');
   assert.strictEqual(slugify('  Spasi   Berlebih  '), 'spasi-berlebih');
 });
 ```
@@ -2125,7 +2125,7 @@ plan.slug = slug;
 
 `allow_duplicate: true` adalah jalan keluar sengaja untuk kasus artikel memang ingin ditulis ulang.
 
-- [ ] **Step 6: Verifikasi terhadap 583 slug perkap**
+- [ ] **Step 6: Verifikasi terhadap 583 slug example**
 
 ```bash
 node scripts/server.js &
@@ -2133,7 +2133,7 @@ sleep 2
 # slug yang sudah ada → 409
 curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3847/api/plans \
   -H "Content-Type: application/json" \
-  -d '{"keyword":"uji","slug":"sewa-stand-partitur-terdekat-malang"}'
+  -d '{"keyword":"uji","slug":"sewa-stand-partitur-terdekat-bandung"}'
 # slug baru → 200
 curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3847/api/plans \
   -H "Content-Type: application/json" \
@@ -2214,7 +2214,7 @@ node scripts/blog-config.js knowledge_base | head -c 200
 node scripts/blog-config.js | grep -c "app_password"
 ```
 
-Expected: `perkapcom`; potongan knowledge base; hitungan `app_password` = `0`.
+Expected: `examplecom`; potongan knowledge base; hitungan `app_password` = `0`.
 
 - [ ] **Step 3: Perbarui SKILL.md**
 
@@ -2246,7 +2246,7 @@ Skill ini menyimpan tiap blog terpisah di `data/blogs/{id}/`.
 - Impor instalasi lama: `node scripts/import-blog.js "<folder>" <id>`
 
 Kredensial tiap blog ada di `.env` dengan awalan id blog huruf besar,
-misalnya `PERKAPCOM_WP_APP_PASSWORD`. Lihat `.env.example`.
+misalnya `EXAMPLECOM_WP_APP_PASSWORD`. Lihat `.env.example`.
 ```
 
 - [ ] **Step 4: Perbarui agents**
@@ -2294,7 +2294,7 @@ Expected: semua test hijau; `exit=1` pada grep (tidak ada rahasia di berkas yang
 
 Jalankan `node scripts/server.js`, buka `http://localhost:3847` dengan Playwright (pakai sesi browser yang sudah terbuka, jangan buka sesi baru):
 
-1. Dropdown blog menampilkan tenant perkap
+1. Dropdown blog menampilkan tenant example
 2. Tab Articles memuat 583 artikel
 3. Tab Settings menampilkan 20+ kategori tersimpan
 4. Tab Perencanaan bisa dibuka

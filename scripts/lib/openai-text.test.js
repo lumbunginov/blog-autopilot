@@ -5,7 +5,7 @@ const { askOpenAI } = require('./openai-text');
 const { envKeys } = require('./env');
 
 test('envKeys menyediakan nama kunci teks per tenant', () => {
-  assert.equal(envKeys('perkapcom').textKey, 'PERKAPCOM_TEXT_API_KEY');
+  assert.equal(envKeys('examplecom').textKey, 'EXAMPLECOM_TEXT_API_KEY');
   assert.equal(envKeys('blog-baru').textKey, 'BLOG_BARU_TEXT_API_KEY');
 });
 

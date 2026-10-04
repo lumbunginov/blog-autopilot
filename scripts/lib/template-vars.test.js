@@ -4,31 +4,31 @@ const assert = require('node:assert');
 const { buildVars, resolveVars } = require('./template-vars');
 
 const KB = {
-  business_name: 'Perkap.com', business_description: 'Sewa alat acara',
+  business_name: 'Example.com', business_description: 'Sewa alat acara',
   tagline: 'Sewa Alat Panitia', business_type: '', target_audience: 'Panitia acara',
-  tone: 'casual', usp: '', city: 'Malang', address: 'Jl. Kembang kertas no 24',
-  whatsapp: '0895412262949', email: '', website: 'perkap.com', hours: '24 Jam',
+  tone: 'casual', usp: '', city: 'Bandung', address: 'Jl. Kembang kertas no 24',
+  whatsapp: '081200000000', email: '', website: 'example.com', hours: '24 Jam',
   cta: ['Hubungi kami'], signature_words: ['gaskeun'], avoid_words: ['murahan'],
   dos: ['sebut harga'], donts: ['janji berlebihan'], prohibited_topics: ['politik']
 };
 
 const RENCANA = {
-  keyword: 'sewa ht malang', title: 'Sewa HT Malang 2026',
-  lsi_keywords: 'rental ht, sewa radio', city: 'Surabaya',
+  keyword: 'sewa ht bandung', title: 'Sewa HT Bandung 2026',
+  lsi_keywords: 'rental ht, sewa radio', city: 'Semarang',
   category_name: 'Sewa HT', content_type: 'transactional', target_words: 800,
-  slug: 'sewa-ht-malang', notes: 'catatan internal',
-  anchor_url: 'https://perkap.com/sewa-ht/', anchor_text: 'sewa HT'
+  slug: 'sewa-ht-bandung', notes: 'catatan internal',
+  anchor_url: 'https://example.com/sewa-ht/', anchor_text: 'sewa HT'
 };
 
 const PRODUK = {
-  nama: 'Sewa HT', harga: '25K/hari', url: 'https://perkap.com/sewa-ht/',
+  nama: 'Sewa HT', harga: '25K/hari', url: 'https://example.com/sewa-ht/',
   konteks: 'HT analog untuk panitia', faq: 'Q: berapa hari minimal?',
   targetMarket: 'panitia event'
 };
 
 test('variabel knowledge base terisi', () => {
   const v = buildVars(KB, RENCANA, null);
-  assert.equal(v.namaBisnis, 'Perkap.com');
+  assert.equal(v.namaBisnis, 'Example.com');
   assert.equal(v.tagline, 'Sewa Alat Panitia');
   assert.equal(v.nada, 'casual');
   assert.equal(v.jamOperasional, '24 Jam');
@@ -44,8 +44,8 @@ test('array knowledge base digabung jadi teks', () => {
 
 test('kota bisnis dan kota target artikel adalah dua variabel berbeda', () => {
   const v = buildVars(KB, RENCANA, null);
-  assert.equal(v.kota, 'Malang');
-  assert.equal(v.kotaTarget, 'Surabaya');
+  assert.equal(v.kota, 'Bandung');
+  assert.equal(v.kotaTarget, 'Semarang');
 });
 
 test('rencana tanpa kota → kotaTarget kosong, bukan undefined', () => {
@@ -66,7 +66,7 @@ test('variabel produk terisi saat produk ada', () => {
   const v = buildVars(KB, RENCANA, PRODUK);
   assert.equal(v.produkNama, 'Sewa HT');
   assert.equal(v.produkHarga, '25K/hari');
-  assert.equal(v.produkUrl, 'https://perkap.com/sewa-ht/');
+  assert.equal(v.produkUrl, 'https://example.com/sewa-ht/');
   assert.equal(v.produkFaq, 'Q: berapa hari minimal?');
   assert.equal(v.produkTargetMarket, 'panitia event');
 });
@@ -83,13 +83,13 @@ test('jumlahKata jadi string, bukan angka', () => {
 });
 
 test('resolveVars mengganti variabel yang dikenal', () => {
-  assert.equal(resolveVars('Halo {namaBisnis} di {kota}', { namaBisnis: 'Perkap.com', kota: 'Malang' }),
-    'Halo Perkap.com di Malang');
+  assert.equal(resolveVars('Halo {namaBisnis} di {kota}', { namaBisnis: 'Example.com', kota: 'Bandung' }),
+    'Halo Example.com di Bandung');
 });
 
 test('variabel TAK DIKENAL dibiarkan utuh, tidak dikosongkan', () => {
-  assert.equal(resolveVars('{namaBisnis} {namaBisnsi}', { namaBisnis: 'Perkap.com' }),
-    'Perkap.com {namaBisnsi}');
+  assert.equal(resolveVars('{namaBisnis} {namaBisnsi}', { namaBisnis: 'Example.com' }),
+    'Example.com {namaBisnsi}');
 });
 
 test('variabel dikenal bernilai kosong tetap diganti jadi kosong', () => {

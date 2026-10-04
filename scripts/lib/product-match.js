@@ -35,7 +35,7 @@ function matchProduct(products, opsi) {
   const title = normal(o.title);
   const keyword = normal(o.keyword);
 
-  // 1. Nama produk eksplisit. Ini jalur normal: alur artikel perkap sudah
+  // 1. Nama produk eksplisit. Ini jalur normal: alur artikel biasanya sudah
   //    membawa nama produk, jadi tidak perlu menebak apa pun.
   if (productName) {
     const persis = list.find(p => normal(p.id) === productName || normal(p.name) === productName);

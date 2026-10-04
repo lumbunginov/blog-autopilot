@@ -48,9 +48,9 @@ function buildVars(kb, plan, produk) {
     keyword:      teks(p.keyword),
     judul:        teks(p.title),
     lsi:          lsiTeks(p.lsi_keywords),
-    // kotaTarget SENGAJA terpisah dari kota: bisnis berkantor di Malang tapi
-    // menulis artikel untuk Surabaya. Menggabungkannya menghasilkan artikel
-    // Surabaya yang menyebut alamat Malang sebagai lokasi layanan.
+    // kotaTarget SENGAJA terpisah dari kota: bisnis berkantor di Bandung tapi
+    // menulis artikel untuk Semarang. Menggabungkannya menghasilkan artikel
+    // Semarang yang menyebut alamat Bandung sebagai lokasi layanan.
     kotaTarget:   teks(p.city),
     kategori:     teks(p.category_name),
     tipeKonten:   teks(p.content_type),

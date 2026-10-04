@@ -29,11 +29,11 @@
  *
  * Usage:
  *   node clone-template.js source.json target.json "Page Title"
- *   node clone-template.js source.json target.json "Page Title" --replace "Malang:Denpasar"
+ *   node clone-template.js source.json target.json "Page Title" --replace "Bandung:Yogyakarta"
  *
  * Examples:
- *   node clone-template.js page-malang.json page-denpasar.json "Sewa HT Denpasar"
- *   node clone-template.js template.json new-page.json "New Page Title" --replace "Malang:Denpasar" --replace "sewa HT:rental HT"
+ *   node clone-template.js page-bandung.json page-yogyakarta.json "Sewa HT Yogyakarta"
+ *   node clone-template.js template.json new-page.json "New Page Title" --replace "Bandung:Yogyakarta" --replace "sewa HT:rental HT"
  */
 
 const fs = require('fs');
@@ -51,8 +51,8 @@ if (args.length < 3) {
   console.error('Usage: node clone-template.js <source.json> <target.json> "<Page Title>" [--replace "old:new"]');
   console.error('');
   console.error('Examples:');
-  console.error('  node clone-template.js page-malang.json page-denpasar.json "Sewa HT Denpasar"');
-  console.error('  node clone-template.js template.json new.json "Title" --replace "Malang:Denpasar"');
+  console.error('  node clone-template.js page-bandung.json page-yogyakarta.json "Sewa HT Yogyakarta"');
+  console.error('  node clone-template.js template.json new.json "Title" --replace "Bandung:Yogyakarta"');
   process.exit(1);
 }
 

@@ -1,12 +1,12 @@
 'use strict';
-// Pemetaan data skill `business-asset` (agent sosmed content) ke bentuk
+// Pemetaan data skill `business-asset` ke bentuk
 // knowledge_base autoblog. Modul ini HANYA MEMBACA — tidak pernah menulis
 // apa pun ke folder business asset.
 const fs = require('fs');
 const path = require('path');
 // sanitizeId dari paths.js SENGAJA tidak dipakai di sini: ia untuk id blog yang
 // kita cetak sendiri, sehingga huruf besar, titik, dan underscore dibuang. Nama
-// folder business asset datang dari disk milik skill lain — "karva.id" dan
+// folder business asset datang dari disk milik skill lain — "contoh.id" dan
 // "Sosmed_Test" itu sah, dan me-mangling-nya membuat folder yang jelas-jelas ada
 // jadi tak pernah ketemu. Yang dibutuhkan di sini cuma penolakan traversal.
 function assertBusinessId(raw) {
@@ -49,7 +49,7 @@ function toneFrom(toneOfVoice) {
 }
 
 // Host tanpa "www." dan tanpa beda huruf besar-kecil, supaya
-// https://www.Perkap.com dan https://perkap.com dianggap sama.
+// https://www.Example.com dan https://example.com dianggap sama.
 function normHost(u) {
   try {
     return new URL(u).hostname.toLowerCase().replace(/^www\./, '');
@@ -101,7 +101,7 @@ function mapProfile(profile) {
     founded_year: teks(p.tahunBerdiri),
 
     // Kontak & lokasi — city dan address dipakai penulis artikel untuk SEO lokal
-    // ("Sewa HT Malang"), jadi jangan sampai ia menebaknya dari judul.
+    // ("Sewa HT Bandung"), jadi jangan sampai ia menebaknya dari judul.
     address: teks(p.alamat),
     city: teks(p.kota),
     whatsapp: teks(p.whatsapp),

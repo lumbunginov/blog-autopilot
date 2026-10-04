@@ -6,16 +6,16 @@ const path = require('path');
 const { loadDotEnv, envKeys, resolveCredentials } = require('./env');
 
 const cfg = () => ({
-  wordpress: { url: 'https://perkap.com', username: 'faizallazuar' },
+  wordpress: { url: 'https://example.com', username: 'admin' },
   image_api: { type: 'seedream' }
 });
 
 test('nama variabel disanitasi dulu — varian bentuk id memberi variabel yang sama', () => {
-  // Regresi: configPath() menyanitasi di dalam, jadi "Perkap.com" membaca folder
-  // "perkapcom". Kalau envKeys memakai id mentah, ia mencari PERKAP.COM_... yang
+  // Regresi: configPath() menyanitasi di dalam, jadi "Example.com" membaca folder
+  // "examplecom". Kalau envKeys memakai id mentah, ia mencari EXAMPLE.COM_... yang
   // tak pernah ada dan wpPasswordSet melapor false untuk tenant yang sudah diset.
-  const benar = 'PERKAPCOM_WP_APP_PASSWORD';
-  for (const id of ['perkapcom', 'Perkap.com', 'PERKAPCOM', '  perkapcom  ']) {
+  const benar = 'EXAMPLECOM_WP_APP_PASSWORD';
+  for (const id of ['examplecom', 'Example.com', 'EXAMPLECOM', '  examplecom  ']) {
     assert.strictEqual(envKeys(id).wpPassword, benar, `id ${JSON.stringify(id)}`);
   }
   assert.strictEqual(envKeys('Blog Saya!').wpPassword, 'BLOG_SAYA_WP_APP_PASSWORD');
@@ -23,48 +23,48 @@ test('nama variabel disanitasi dulu — varian bentuk id memberi variabel yang s
 
 test('resolveCredentials ikut memakai nama tersanitasi', () => {
   const cfg = { wordpress: { url: 'https://x.com', username: 'u' }, image_api: { type: 'none' } };
-  const r = resolveCredentials('Perkap.com', cfg, { PERKAPCOM_WP_APP_PASSWORD: 'rahasia' });
+  const r = resolveCredentials('Example.com', cfg, { EXAMPLECOM_WP_APP_PASSWORD: 'rahasia' });
   assert.strictEqual(r.wordpress.app_password, 'rahasia');
 });
 
 test('nama variabel diturunkan dari id tenant', () => {
-  assert.deepStrictEqual(envKeys('perkapcom'), {
-    wpPassword: 'PERKAPCOM_WP_APP_PASSWORD',
-    imageKey: 'PERKAPCOM_IMAGE_API_KEY',
-    textKey: 'PERKAPCOM_TEXT_API_KEY'
+  assert.deepStrictEqual(envKeys('examplecom'), {
+    wpPassword: 'EXAMPLECOM_WP_APP_PASSWORD',
+    imageKey: 'EXAMPLECOM_IMAGE_API_KEY',
+    textKey: 'EXAMPLECOM_TEXT_API_KEY'
   });
   assert.strictEqual(envKeys('blog-saya').wpPassword, 'BLOG_SAYA_WP_APP_PASSWORD');
 });
 
 test('kredensial lengkap tergabung ke config', () => {
-  const r = resolveCredentials('perkapcom', cfg(), {
-    PERKAPCOM_WP_APP_PASSWORD: 'rahasia',
-    PERKAPCOM_IMAGE_API_KEY: 'kunci'
+  const r = resolveCredentials('examplecom', cfg(), {
+    EXAMPLECOM_WP_APP_PASSWORD: 'rahasia',
+    EXAMPLECOM_IMAGE_API_KEY: 'kunci'
   });
   assert.strictEqual(r.wordpress.app_password, 'rahasia');
   assert.strictEqual(r.image_api.api_key, 'kunci');
-  assert.strictEqual(r.wordpress.username, 'faizallazuar');
+  assert.strictEqual(r.wordpress.username, 'admin');
 });
 
 test('password hilang melempar error yang MENYEBUT nama variabelnya', () => {
-  assert.throws(() => resolveCredentials('perkapcom', cfg(), {}),
-    /PERKAPCOM_WP_APP_PASSWORD/);
+  assert.throws(() => resolveCredentials('examplecom', cfg(), {}),
+    /EXAMPLECOM_WP_APP_PASSWORD/);
 });
 
 test('image key hilang tidak melempar kalau tipe none', () => {
   const c = cfg(); c.image_api.type = 'none';
-  const r = resolveCredentials('perkapcom', c, { PERKAPCOM_WP_APP_PASSWORD: 'x' });
+  const r = resolveCredentials('examplecom', c, { EXAMPLECOM_WP_APP_PASSWORD: 'x' });
   assert.strictEqual(r.image_api.api_key, '');
 });
 
 test('image key hilang melempar kalau tipe butuh kunci', () => {
-  assert.throws(() => resolveCredentials('perkapcom', cfg(), { PERKAPCOM_WP_APP_PASSWORD: 'x' }),
-    /PERKAPCOM_IMAGE_API_KEY/);
+  assert.throws(() => resolveCredentials('examplecom', cfg(), { EXAMPLECOM_WP_APP_PASSWORD: 'x' }),
+    /EXAMPLECOM_IMAGE_API_KEY/);
 });
 
 test('config asli tidak ikut berubah', () => {
   const c = cfg();
-  resolveCredentials('perkapcom', c, { PERKAPCOM_WP_APP_PASSWORD: 'x', PERKAPCOM_IMAGE_API_KEY: 'y' });
+  resolveCredentials('examplecom', c, { EXAMPLECOM_WP_APP_PASSWORD: 'x', EXAMPLECOM_IMAGE_API_KEY: 'y' });
   assert.strictEqual(c.wordpress.app_password, undefined);
 });
 
@@ -122,5 +122,5 @@ test('loadDotEnv tidak mengubah kutip yang ada di tengah nilai', () => {
 });
 
 test('envKeys memuat kunci teks', () => {
-  assert.equal(envKeys('perkapcom').textKey, 'PERKAPCOM_TEXT_API_KEY');
+  assert.equal(envKeys('examplecom').textKey, 'EXAMPLECOM_TEXT_API_KEY');
 });

@@ -141,7 +141,7 @@ Show result as a checklist:
 ```
 📋 STATUS KONFIGURASI
 ─────────────────────
-✅ Blog Aktif         : perkapcom
+✅ Blog Aktif         : examplecom
 ✅ WordPress URL      : https://yourblog.com
 ✅ WordPress Username : your-username
 ✅ WordPress Password : •••••••• (dari .env)
@@ -175,7 +175,7 @@ Skill ini menyimpan tiap blog terpisah di `data/blogs/{id}/`.
 - Impor instalasi lama: `node scripts/import-blog.js "<folder>" <id>`
 
 Kredensial tiap blog ada di `.env` dengan awalan id blog huruf besar,
-misalnya `PERKAPCOM_WP_APP_PASSWORD`. Lihat `.env.example`.
+misalnya `EXAMPLECOM_WP_APP_PASSWORD`. Lihat `.env.example`.
 
 ---
 
@@ -205,8 +205,8 @@ GENERATE ARTIKEL (tanpa dashboard)
   /blog-autopilot generate [input]
     → Buat batch artikel langsung dari perintah, tanpa buka dashboard
     → Input bisa natural language atau structured
-    → Contoh: /blog-autopilot generate tips sewa HT --product "Sewa HT" --location Surabaya --count 3 --start 2026-04-20 --spacing 7
-    → Atau: "buatkan 3 artikel keyword tips sewa HT untuk Sewa HT di Surabaya mulai 20 April jeda 7 hari"
+    → Contoh: /blog-autopilot generate tips sewa HT --product "Sewa HT" --location Semarang --count 3 --start 2026-04-20 --spacing 7
+    → Atau: "buatkan 3 artikel keyword tips sewa HT untuk Sewa HT di Semarang mulai 20 April jeda 7 hari"
     → Agent akan minta konfirmasi sebelum eksekusi
 
 REPAIR / FIX
@@ -479,9 +479,9 @@ harus beda: `references/elementor.md`.
 ## [GENERATE] — Batch article planner via natural language
 
 Use when user gives a natural language request like:
-- "buatkan 3 artikel keyword tips sewa HT untuk produk Sewa HT di Surabaya, mulai 20 April, jeda 7 hari"
-- "generate articles keyword sewa proyektor for product Sewa Proyektor location Malang count 5"
-- `/blog-autopilot generate tips sewa HT --product "Sewa HT" --location Surabaya --count 3 --start 2026-04-20 --spacing 7`
+- "buatkan 3 artikel keyword tips sewa HT untuk produk Sewa HT di Semarang, mulai 20 April, jeda 7 hari"
+- "generate articles keyword sewa proyektor for product Sewa Proyektor location Bandung count 5"
+- `/blog-autopilot generate tips sewa HT --product "Sewa HT" --location Semarang --count 3 --start 2026-04-20 --spacing 7`
 
 ### Step 1: Read Config
 
@@ -498,9 +498,9 @@ From the user's input (natural language or structured), extract these 6 fields:
 | Field | Contoh | Wajib? | Default |
 |-------|--------|--------|---------|
 | `seed_keyword` | "tips sewa HT" | ✅ | — |
-| `target_location` | "Surabaya" | ✅ | — |
+| `target_location` | "Semarang" | ✅ | — |
 | `product` | "Sewa HT" | ✅ | — |
-| `product_url` | "https://perkap.com/sewa-ht/" | ❌ | cari di `knowledge_base.products` |
+| `product_url` | "https://example.com/sewa-ht/" | ❌ | cari di `knowledge_base.products` |
 | `count` | 3 | ✅ | — |
 | `start_date` | "2026-04-20" | ✅ | besok |
 | `spacing_days` | 7 | ✅ | 7 |
@@ -525,7 +525,7 @@ From the user's input (natural language or structured), extract these 6 fields:
 3. Produk         : [kosong — nama produk yang ingin di-support?]
 4. Jumlah Artikel : [kosong — berapa artikel yang ingin dibuat?]
 
-Contoh jawaban: "tips sewa HT | Surabaya | Sewa HT | 3"
+Contoh jawaban: "tips sewa HT | Semarang | Sewa HT | 3"
 ```
 
 Tunggu jawaban user sebelum lanjut. Setelah user menjawab, kembali ke Step 2 dengan informasi lengkap.
@@ -692,7 +692,7 @@ Aturan lengkap, ambang panjang, dan jebakan REST-nya: `references/seo-standards.
 
 Use when: image was not generated, failed to upload, or was not inserted into the article content.
 
-Input: `post_id` (WordPress post ID, e.g. `11282`) or `slug` (e.g. `sewa-stand-partitur-terdekat-malang`)
+Input: `post_id` (WordPress post ID, e.g. `11282`) or `slug` (e.g. `sewa-stand-partitur-terdekat-bandung`)
 
 ### Step 1: Read Config
 

@@ -2,7 +2,7 @@
 'use strict';
 // Aturan yang dijaga: kunci salah ketik ditolak SEBELUM dikirim, dan
 // perbandingan hasil verifikasi tidak melaporkan beda palsu karena escaping
-// HTML. Keduanya berasal dari kegagalan nyata di perkap.com:
+// HTML. Keduanya berasal dari kegagalan nyata di example.com:
 //
 //  - rank_math_* dikirim ke wp/v2 untuk page → 200, tidak tersimpan, tidak
 //    terbaca kembali. Kunci yang salah ketik berperilaku sama persis, jadi
@@ -36,8 +36,8 @@ assert.strictEqual(rm.normal('&quot;kutip&quot;'), '"kutip"');
 assert.strictEqual(rm.normal(null), null);
 // Yang penting: judul yang sama dianggap sama walau satu ter-escape.
 assert.strictEqual(
-  rm.normal('Sewa Webcam Malang 2026: Harga &amp; Cara Pesan | Perkap.com'),
-  rm.normal('Sewa Webcam Malang 2026: Harga & Cara Pesan | Perkap.com')
+  rm.normal('Sewa Webcam Bandung 2026: Harga &amp; Cara Pesan | Example.com'),
+  rm.normal('Sewa Webcam Bandung 2026: Harga & Cara Pesan | Example.com')
 );
 
 // --- tulisMeta menolak sebelum menyentuh jaringan ---

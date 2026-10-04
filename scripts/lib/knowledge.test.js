@@ -19,25 +19,25 @@ const MANUAL_KB = {
 
 function fixtureRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-test-'));
-  const dir = path.join(root, 'perkapcom');
+  const dir = path.join(root, 'examplecom');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify({
-    nama: 'Perkap.com', tagline: 'Sewa Alat Panitia', jenisUsaha: 'Jasa Rental',
-    kota: 'Malang', deskripsi: '', targetMarket: 'Panitia acara',
+    nama: 'Example.com', tagline: 'Sewa Alat Panitia', jenisUsaha: 'Jasa Rental',
+    kota: 'Bandung', deskripsi: '', targetMarket: 'Panitia acara',
     toneOfVoice: 'santai', kataHindari: ['Termurah']
   }));
   fs.writeFileSync(path.join(dir, 'products.json'), JSON.stringify([
     { id: 'ht', nama: 'Sewa HT', harga: 'Rp 35.000', targetMarket: 'Panitia',
-      konteks: 'Detail di https://perkap.com/sewa-ht/', faq: '### Berapa lama?\nSehari.' }
+      konteks: 'Detail di https://example.com/sewa-ht/', faq: '### Berapa lama?\nSehari.' }
   ]));
   return root;
 }
 
 function baConfig(root) {
   return {
-    wordpress: { url: 'https://perkap.com', username: 'u' },
+    wordpress: { url: 'https://example.com', username: 'u' },
     knowledge_base: MANUAL_KB,
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   };
 }
 
@@ -75,9 +75,9 @@ test('mode business_asset membaca live dari folder', () => {
   const r = resolveKnowledgeBase(baConfig(fixtureRoot()));
   assert.strictEqual(r.source, 'business_asset');
   assert.strictEqual(r.error, null);
-  assert.strictEqual(r.knowledge_base.business_name, 'Perkap.com');
+  assert.strictEqual(r.knowledge_base.business_name, 'Example.com');
   assert.strictEqual(r.knowledge_base.products.length, 1);
-  assert.strictEqual(r.knowledge_base.products[0].url, 'https://perkap.com/sewa-ht/');
+  assert.strictEqual(r.knowledge_base.products[0].url, 'https://example.com/sewa-ht/');
   assert.deepStrictEqual(r.knowledge_base.avoid_words, ['Termurah']);
 });
 
@@ -115,7 +115,7 @@ test('business_id berbahaya: error, bukan lemparan', () => {
 
 test('business_asset tanpa root: error menyebut root', () => {
   const r = resolveKnowledgeBase({
-    knowledge_source: { type: 'business_asset', business_asset: { business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { business_id: 'examplecom' } }
   });
   assert.ok(r.error);
   assert.match(r.error, /root/i);
@@ -136,9 +136,9 @@ test('tenant manual lama tanpa field baru tetap mendapat bentuk lengkap', () => 
 
 test('field manual yang terisi tidak tertimpa nilai kosong EMPTY_KB', () => {
   const kb = resolveKnowledgeBase({ knowledge_base: {
-    business_name: 'Toko', city: 'Surabaya', whatsapp: '0812', cta: ['Pesan sekarang']
+    business_name: 'Toko', city: 'Semarang', whatsapp: '0812', cta: ['Pesan sekarang']
   } }).knowledge_base;
-  assert.strictEqual(kb.city, 'Surabaya');
+  assert.strictEqual(kb.city, 'Semarang');
   assert.strictEqual(kb.whatsapp, '0812');
   assert.deepStrictEqual(kb.cta, ['Pesan sekarang']);
 });
@@ -156,6 +156,6 @@ test('mode business_asset mengisi identitas dan kontak dari profil', () => {
   const r = resolveKnowledgeBase(baConfig(fixtureRoot()));
   const kb = r.knowledge_base;
   assert.strictEqual(kb.tagline, 'Sewa Alat Panitia');
-  assert.strictEqual(kb.city, 'Malang');
+  assert.strictEqual(kb.city, 'Bandung');
   assert.strictEqual(kb.business_type, 'Jasa Rental');
 });

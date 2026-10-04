@@ -9,11 +9,11 @@ Melanjutkan: `2026-09-03-knowledge-source-business-asset-design.md`
 
 **Fitur 6.** Gambar artikel dihasilkan murni dari prompt teks. Untuk artikel tentang
 "Bel Cerdas Cermat", Seedream menggambar alat kuis khayalan — bukan alat yang benar-benar
-disewakan perkap. Padahal foto aslinya sudah ada dan terawat.
+disewakan example. Padahal foto aslinya sudah ada dan terawat.
 
 **Fitur 7.** 662 artikel terbit tanpa pernah diperiksa apakah tautan internalnya masih
 hidup. `validate-seo.js` lama tidak pernah me-resolve URL, jadi tautan mati ikut terbit
-(PER-2653).
+(catatan internal).
 
 **Ketimpangan bentuk produk.** Di autoblog, produk hanya `{id, name, url, price,
 target_market}` — daftar baris datar. Di business asset, produk punya foto utama, galeri
@@ -51,14 +51,14 @@ business asset jadi sumber utama. **Ditinggalkan**, tidak diport.
 | Sumber gambar referensi | **business asset saja** | 88 file terawat, nol hilang; legacy tidak menambah apa pun yang layak dirawat |
 | Tampilan produk di KB | expandable read-only, **hanya mode business_asset** | mode manual tidak punya penyimpanan gambar — tidak ada yang bisa ditampilkan |
 | Cakupan fitur 7 | **audit saja**, perbaikan menyusul | audit baca-saja aman kapan pun; menulis balik ke 662 artikel produksi butuh keputusan terpisah |
-| Repo business asset | edit di **dev (3001)** lalu push, lalu pull di **production (3101)** | `data/` hidup di production; edit langsung di sana hilang saat pull |
+| Repo business asset | edit di **dev (3001)** lalu push, lalu pull di **production** | `data/` hidup di production; edit langsung di sana hilang saat pull |
 
 ---
 
 # Bagian A — Field `url` di business asset
 
-Repo `lumbunginov/business-asset`. Folder kerja:
-`G:\Project\Sikil Project\business_asset\.claude\skills\business-asset` (port 3001).
+Repo `skill business-asset`. Folder kerja:
+`<root-business-asset>` (port 3001).
 
 ## Bentuk data
 
@@ -66,7 +66,7 @@ Repo `lumbunginov/business-asset`. Folder kerja:
 {
   "id": "mixer-ashley-smr6",
   "nama": "Mixer Audio Ashley SMR 6",
-  "url": "https://perkap.com/sewa-mixer-audio/",
+  "url": "https://example.com/sewa-mixer-audio/",
   "harga": "...",
   "foto": "1782347725956.png"
 }
@@ -124,10 +124,10 @@ Kosong adalah nilai sah — 10 produk memang belum punya halaman.
 ## Penyebaran
 
 1. Commit dan push dari folder dev
-2. `git pull` di `G:\Project\Paperclip\Perkap_com\project\sosmed_content`
-3. Restart server 3101 dengan **PID-filter**:
-   `netstat -ano | grep :3101` lalu `taskkill //PID <pid> //F`
-   **JANGAN** `Get-Process node | Stop-Process` — itu membunuh server Paperclip di 3100
+2. `git pull` di `<root-business-asset>`
+3. Restart server production dengan **PID-filter**:
+   `netstat -ano | grep :<port-production>` lalu `taskkill //PID <pid> //F`
+   **JANGAN** `Get-Process node | Stop-Process` — itu membunuh server node lain di mesin yang sama
    dan seluruh node lain (kejadian 2026-08-08)
 4. Verifikasi kedua clone di commit yang sama: `git log --oneline -1`
 
@@ -176,7 +176,7 @@ FAQ kosong, satu heading, banyak heading, dan teks tanpa heading sama sekali.
 Rute baru di `scripts/routes/knowledge-source.js`:
 
 ```
-GET /api/business-asset-photo?business_id=perkapcom&file=1782347725956.png
+GET /api/business-asset-photo?business_id=examplecom&file=1782347725956.png
 ```
 
 Ini menyajikan berkas dari disk ke browser, jadi ia adalah permukaan serangan path
@@ -205,7 +205,7 @@ Tab Knowledge Base, mode business_asset. Baris datar diganti kartu:
 ```
 +----------------------------------------------+
 | [img] Bel Cerdas Cermat Custom            v  |
-|       Rp 60.000-210.000/hari   perkap.com    |
+|       Rp 60.000-210.000/hari   example.com    |
 +----------------------------------------------+
 |  Konteks   > 4.2 KB                          |
 |  FAQ       > 8 pertanyaan                    |
@@ -240,7 +240,7 @@ matchProduct(products, { title, keyword, productName }) -> { product, score, rea
 Urutan, berhenti di kecocokan pertama:
 
 1. `productName` diberikan dan cocok persis dengan `id` atau `name` — inilah jalur normal,
-   karena alur artikel perkap sudah membawa nama produk
+   karena alur artikel example sudah membawa nama produk
 2. Judul artikel memuat nama produk (bandingkan setelah huruf kecil dan spasi dirapikan)
 3. Kata kunci fokus memuat nama produk
 4. Kecocokan kata: minimal **dua** kata bermakna (panjang minimal 4, bukan kata umum) yang sama
@@ -296,14 +296,14 @@ Diport dari `post-article/scripts/audit-internal-links.js` dengan tiga perubahan
 
 | Aspek | Lama | Baru |
 |---|---|---|
-| Situs | konstanta `perkap.com` di kode | dari `config.wordpress.url` tenant aktif |
+| Situs | konstanta `example.com` di kode | dari `config.wordpress.url` tenant aktif |
 | Keluaran | path relatif ke folder skill | `data/blogs/{id}/audit/link-YYYY-MM-DD.md` dan `.json` |
 | Kredensial | tidak ada (konten publik) | tetap tidak ada — hanya membaca REST publik |
 
 **Yang wajib diport apa adanya**, karena tiap potong adalah pelajaran dari kegagalan nyata:
 
 - **Retry berlapis** dengan jeda 0, 3, 8, 15 detik untuk 503 dan badan JSON terpotong.
-  Origin perkap membalas 200 dengan badan terpotong di 128 KB; tanpa ini crawl mati di tengah
+  Origin example membalas 200 dengan badan terpotong di 128 KB; tanpa ini crawl mati di tengah
 - **Abaikan path `/wp-json/`** — Elementor membangun paginasi dari URL permintaan saat itu,
   jadi lewat REST muncul sebagai `/wp-json/wp/v2/pages/page/2/`. Audit pertama melaporkan
   55 "tautan mati" yang tidak bisa dijangkau pengunjung mana pun
@@ -330,7 +330,7 @@ Laporan mendapat satu bagian tambahan:
 | Produk | URL | Artikel menautkan |
 |---|---|---|
 | Stand Parled | (belum ada URL) | — |
-| Mixer Yamaha DX06 | https://perkap.com/... | 0 |
+| Mixer Yamaha DX06 | https://example.com/... | 0 |
 ```
 
 Ini menjawab pertanyaan yang benar-benar dipedulikan pemilik: halaman produk mana yang
@@ -341,7 +341,7 @@ tidak pernah mendapat tautan internal dari 662 artikel yang sudah ada.
 ```bash
 node scripts/audit-links.js
 node scripts/audit-links.js --limit 50
-node scripts/audit-links.js --blog perkapcom
+node scripts/audit-links.js --blog examplecom
 ```
 
 Tidak dipasang di dashboard maupun dijadwalkan. Crawl 662 artikel memakan waktu dan
@@ -356,7 +356,7 @@ membebani origin; ia dijalankan saat diminta, bukan otomatis.
 | Field `url` tersimpan | isi URL di form dev 3001, `products.json` memuat `url`, muat ulang form terisi |
 | PUT tidak menghapus URL | simpan produk tanpa mengirim `url`, nilai lama utuh |
 | URL tidak sah ditolak | skema `javascript:` ditolak 400, `products.json` tidak berubah |
-| Produksi ikut | pull di 3101, `git log -1` sama dengan dev, form memuat kolom URL |
+| Produksi ikut | pull di production, `git log -1` sama dengan dev, form memuat kolom URL |
 | Prioritas `url` | produk punya `url` dan URL di konteks, yang menang `p.url` |
 | Fallback utuh | 35 produk tanpa `url` tetap terekstrak dari konteks |
 | Ringkas tetap ramping | `GET /api/config` tidak memuat `context`/`faq`/`gallery`; ukuran di bawah 60 KB |

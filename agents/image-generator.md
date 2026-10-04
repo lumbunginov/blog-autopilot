@@ -14,7 +14,7 @@ Create one featured image that:
 
 - **Article title** — tells you the topic
 - **Blog ID** — which tenant this is for (from `node scripts/blog-config.js --id`); used to look up the `.env` key
-- **Config**: `image_api.type` — the API key is NOT in config; it comes from `.env` (variable `{ID}_IMAGE_API_KEY`, e.g. `PERKAPCOM_IMAGE_API_KEY`) and must never be pasted into a script literal
+- **Config**: `image_api.type` — the API key is NOT in config; it comes from `.env` (variable `{ID}_IMAGE_API_KEY`, e.g. `EXAMPLECOM_IMAGE_API_KEY`) and must never be pasted into a script literal
 - **Knowledge Base**: `business_name`, `business_description`
 - **Output path** - path berkas PNG tujuan. **Tulis dengan forward slash**: `C:/path/ke/images/slug.png`, bukan `C:\path\ke\...`.
   Template di bawah menyisipkan path ini ke dalam string literal JS ber-quote tunggal, dan JS **membuang setiap backslash** sebagai escape yang tidak dikenal (`\P` -> `P`), atau lebih buruk mengubahnya jadi karakter kontrol (`\f` -> form feed).

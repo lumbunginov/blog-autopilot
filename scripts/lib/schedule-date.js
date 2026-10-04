@@ -6,8 +6,8 @@
 // `date` tanpa offset dalam zona waktu SITUS-nya sendiri. Jadi satu-satunya
 // zona yang membuat string itu berarti sesuai maksud kita adalah zona situs.
 //
-// Di skill lama (Perkap Article), nilai ini dikunci ke WIB (UTC+7) karena
-// perkap.com melaporkan gmt_offset "7". Di sini nilainya PER TENANT, dibaca
+// Di versi awal skill ini, nilai ini dikunci ke WIB (UTC+7) karena situs
+// pertamanya melaporkan gmt_offset "7". Di sini nilainya PER TENANT, dibaca
 // dari config.workflow.site_gmt_offset + site_timezone, karena blog lain bisa
 // berada di zona lain — dan salah offset berarti artikel terbit di jam yang
 // salah tanpa satu pun error muncul.
@@ -25,7 +25,7 @@
 // akan GAGAL (menolak menjadwalkan) selama setengah tahun itu sampai
 // site_gmt_offset diperbarui mengikuti musim. Ini disengaja: kegagalan keras dan
 // berisik jauh lebih aman daripada menjadwalkan diam-diam di jam yang salah.
-// perkap.com sendiri aman dari ini (Asia/Jakarta tidak ber-DST), tapi tenant lain
+// Tenant di Asia/Jakarta aman dari ini (tidak ber-DST), tapi tenant lain
 // yang ber-DST butuh site_gmt_offset diperbarui musiman atau penjadwalan akan
 // terkunci.
 // ---------------------------------------------------------------------------

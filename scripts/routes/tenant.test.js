@@ -109,17 +109,17 @@ test('GET /api/plans dan /api/agent-queue tetap toleran (blog aktif, tanpa file 
 
 test('GET /api/blogs/:id/config dengan id ber-huruf-besar tetap membaca marker kredensial folder yang tersanitasi', async () => {
   await withServer(async (base, skillDir) => {
-    const blogDir = path.join(skillDir, 'data', 'blogs', 'perkapcom');
+    const blogDir = path.join(skillDir, 'data', 'blogs', 'examplecom');
     fs.mkdirSync(blogDir, { recursive: true });
     fs.writeFileSync(path.join(blogDir, 'config.json'), '{}');
-    process.env.PERKAPCOM_WP_APP_PASSWORD = 'dummy-not-a-real-secret';
+    process.env.EXAMPLECOM_WP_APP_PASSWORD = 'dummy-not-a-real-secret';
     try {
-      const res = await fetch(`${base}/api/blogs/Perkap.com/config`);
+      const res = await fetch(`${base}/api/blogs/Example.com/config`);
       assert.strictEqual(res.status, 200);
       const body = await res.json();
       assert.strictEqual(body._credentials.wpPasswordSet, true);
     } finally {
-      delete process.env.PERKAPCOM_WP_APP_PASSWORD;
+      delete process.env.EXAMPLECOM_WP_APP_PASSWORD;
     }
   });
 });

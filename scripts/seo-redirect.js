@@ -11,8 +11,8 @@
  *   node seo-redirect.js remove <redirectionID> --object-id <id>
  *
  * Contoh:
- *   node seo-redirect.js add /sewa-webcam-lama/ https://perkap.com/sewa-webcam-logitech-c920-malang/ --object-id 11955
- *   node seo-redirect.js check https://perkap.com/sewa-webcam-lama/
+ *   node seo-redirect.js add /sewa-webcam-lama/ https://example.com/sewa-webcam-logitech-c920-bandung/ --object-id 11955
+ *   node seo-redirect.js check https://example.com/sewa-webcam-lama/
  *
  * --object-id adalah post/page penanda asal. Endpoint Rank Math mewajibkannya
  * walau redirect-nya sendiri tidak terikat pada konten itu; pakai id halaman

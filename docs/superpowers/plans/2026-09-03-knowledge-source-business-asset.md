@@ -18,7 +18,7 @@
 - **Autoblog hanya MEMBACA business asset.** Tidak ada satu pun `fs.write*` yang menyentuh path di bawah `knowledge_source.business_asset.root`.
 - Kredensial tetap hanya di `.env`. Jangan ada nilai rahasia di file yang dilacak git, di argv, atau di pesan commit.
 - `business_id` selalu lewat `sanitizeId` dari `lib/paths.js` sebelum dipakai menyusun path.
-- Path business asset untuk pengujian manual (bukan untuk ditulis ke test): `G:\Project\Paperclip\Perkap_com\project\sosmed_content\data\businesses`, berisi dua bisnis: `perkapcom` (45 produk) dan `karvaid` (7 produk). **Test otomatis tidak boleh bergantung pada folder ini** — test membuat fixture sendiri di `os.tmpdir()`.
+- Path business asset untuk pengujian manual (bukan untuk ditulis ke test): `<root-business-asset>\data\businesses`, berisi dua bisnis: `examplecom` (45 produk) dan `contohid` (7 produk). **Test otomatis tidak boleh bergantung pada folder ini** — test membuat fixture sendiri di `os.tmpdir()`.
 - Tiap task berakhir dengan commit. Jalankan `npm test` sebelum commit; semua hijau.
 
 ---
@@ -55,12 +55,12 @@ const {
 } = require('./business-asset');
 
 const PROFILE = {
-  id: 'perkapcom',
-  nama: 'Perkap.com',
+  id: 'examplecom',
+  nama: 'Example.com',
   tagline: 'Sewa Alat Panitia',
   deskripsi: '',
   jenisUsaha: 'Jasa Rental',
-  kota: 'Malang',
+  kota: 'Bandung',
   targetMarket: 'Panitia acara, Mahasiswa',
   toneOfVoice: 'santai',
   kataHindari: ['Termurah']
@@ -69,11 +69,11 @@ const PROFILE = {
 const PRODUCTS = [
   { id: 'bel-cerdas-cermat-custom', nama: 'Bel Cerdas Cermat Custom', harga: 'Rp 60.000 per hari',
     targetMarket: 'Panitia lomba',
-    konteks: 'Lihat [di sini](https://perkap.com/bel-cerdas-cermat/) dan juga https://perkap.com/bel-cerdas-cermat/ lagi.',
+    konteks: 'Lihat [di sini](https://example.com/bel-cerdas-cermat/) dan juga https://example.com/bel-cerdas-cermat/ lagi.',
     faq: '### Untuk berapa tim?\nSatu sampai enam tim.' },
   { id: 'proyektor', nama: 'Proyektor InFocus IN226', harga: 'Rp 150.000 per hari',
     targetMarket: 'Panitia acara',
-    konteks: 'Rujukan luar https://tokopedia.com/x lalu https://www.perkap.com/sewa-proyektor/ .',
+    konteks: 'Rujukan luar https://tokopedia.com/x lalu https://www.example.com/sewa-proyektor/ .',
     faq: '' },
   { id: 'tanpa-url', nama: 'Kabel Roll', harga: '', targetMarket: '',
     konteks: 'Tidak ada tautan apa pun di sini.', faq: '' }
@@ -94,34 +94,34 @@ test('toneFrom jatuh ke professional untuk nilai tak dikenal atau kosong', () =>
 
 test('extractProductUrl hanya mengambil URL dari host situs sendiri', () => {
   assert.strictEqual(
-    extractProductUrl(PRODUCTS[1].konteks, 'https://perkap.com'),
-    'https://www.perkap.com/sewa-proyektor/'
+    extractProductUrl(PRODUCTS[1].konteks, 'https://example.com'),
+    'https://www.example.com/sewa-proyektor/'
   );
 });
 
 test('extractProductUrl mengambil kemunculan pertama', () => {
   assert.strictEqual(
-    extractProductUrl(PRODUCTS[0].konteks, 'https://perkap.com'),
-    'https://perkap.com/bel-cerdas-cermat/'
+    extractProductUrl(PRODUCTS[0].konteks, 'https://example.com'),
+    'https://example.com/bel-cerdas-cermat/'
   );
 });
 
 test('extractProductUrl mengabaikan www dan beda huruf saat membandingkan host', () => {
   assert.strictEqual(
-    extractProductUrl('lihat https://PERKAP.com/a/', 'https://www.perkap.com'),
-    'https://PERKAP.com/a/'
+    extractProductUrl('lihat https://EXAMPLE.com/a/', 'https://www.example.com'),
+    'https://EXAMPLE.com/a/'
   );
 });
 
 test('extractProductUrl kosong kalau tidak ada yang cocok atau siteUrl kosong', () => {
-  assert.strictEqual(extractProductUrl(PRODUCTS[2].konteks, 'https://perkap.com'), '');
+  assert.strictEqual(extractProductUrl(PRODUCTS[2].konteks, 'https://example.com'), '');
   assert.strictEqual(extractProductUrl(PRODUCTS[0].konteks, ''), '');
-  assert.strictEqual(extractProductUrl('', 'https://perkap.com'), '');
+  assert.strictEqual(extractProductUrl('', 'https://example.com'), '');
 });
 
 test('mapProfile memetakan field profil', () => {
   const kb = mapProfile(PROFILE);
-  assert.strictEqual(kb.business_name, 'Perkap.com');
+  assert.strictEqual(kb.business_name, 'Example.com');
   assert.strictEqual(kb.target_audience, 'Panitia acara, Mahasiswa');
   assert.strictEqual(kb.tone, 'casual');
   assert.deepStrictEqual(kb.avoid_words, ['Termurah']);
@@ -131,7 +131,7 @@ test('deskripsi kosong dirakit dari tagline, jenis usaha, dan kota', () => {
   const kb = mapProfile(PROFILE);
   assert.match(kb.business_description, /Sewa Alat Panitia/);
   assert.match(kb.business_description, /Jasa Rental/);
-  assert.match(kb.business_description, /Malang/);
+  assert.match(kb.business_description, /Bandung/);
 });
 
 test('deskripsi yang sudah terisi dipakai apa adanya', () => {
@@ -147,7 +147,7 @@ test('mapProfile tidak pernah melempar untuk profil kosong', () => {
 });
 
 test('mapProducts membuat bentuk ringkas tanpa konteks dan faq', () => {
-  const { products } = mapProducts(PRODUCTS, 'https://perkap.com');
+  const { products } = mapProducts(PRODUCTS, 'https://example.com');
   assert.strictEqual(products.length, 3);
   assert.deepStrictEqual(Object.keys(products[0]).sort(),
     ['id', 'name', 'price', 'target_market', 'url']);
@@ -156,22 +156,22 @@ test('mapProducts membuat bentuk ringkas tanpa konteks dan faq', () => {
 });
 
 test('produk tanpa URL tetap masuk daftar dengan url kosong', () => {
-  const { products } = mapProducts(PRODUCTS, 'https://perkap.com');
+  const { products } = mapProducts(PRODUCTS, 'https://example.com');
   assert.strictEqual(products[2].name, 'Kabel Roll');
   assert.strictEqual(products[2].url, '');
 });
 
 test('internal_links berisi url unik dengan anchor nama produk', () => {
-  const { internal_links } = mapProducts(PRODUCTS, 'https://perkap.com');
+  const { internal_links } = mapProducts(PRODUCTS, 'https://example.com');
   assert.strictEqual(internal_links.length, 2);
   assert.deepStrictEqual(internal_links[0],
-    { url: 'https://perkap.com/bel-cerdas-cermat/', anchor: 'Bel Cerdas Cermat Custom' });
+    { url: 'https://example.com/bel-cerdas-cermat/', anchor: 'Bel Cerdas Cermat Custom' });
   assert.ok(!internal_links.some(l => l.url === ''));
 });
 
 test('internal_links membuang url kembar', () => {
   const dua = [PRODUCTS[0], { ...PRODUCTS[0], id: 'lain', nama: 'Nama Lain' }];
-  const { internal_links } = mapProducts(dua, 'https://perkap.com');
+  const { internal_links } = mapProducts(dua, 'https://example.com');
   assert.strictEqual(internal_links.length, 1);
 });
 
@@ -183,7 +183,7 @@ test('siteUrl kosong membuat semua url kosong, produk tetap lengkap', () => {
 });
 
 test('mapProducts aman untuk masukan bukan array', () => {
-  assert.deepStrictEqual(mapProducts(null, 'https://perkap.com'),
+  assert.deepStrictEqual(mapProducts(null, 'https://example.com'),
     { products: [], internal_links: [] });
 });
 
@@ -212,7 +212,7 @@ test('findProduct mengembalikan produk penuh berisi konteks dan faq', () => {
 // --- readBusinessAsset: I/O, pakai fixture di tmpdir ---
 function fixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ba-test-'));
-  const dir = path.join(root, 'perkapcom');
+  const dir = path.join(root, 'examplecom');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify(PROFILE));
   fs.writeFileSync(path.join(dir, 'products.json'), JSON.stringify(PRODUCTS));
@@ -221,8 +221,8 @@ function fixture() {
 
 test('readBusinessAsset membaca profile dan products', () => {
   const root = fixture();
-  const { profile, products } = readBusinessAsset(root, 'perkapcom');
-  assert.strictEqual(profile.nama, 'Perkap.com');
+  const { profile, products } = readBusinessAsset(root, 'examplecom');
+  assert.strictEqual(profile.nama, 'Example.com');
   assert.strictEqual(products.length, 3);
 });
 
@@ -237,14 +237,14 @@ test('folder bisnis tidak ada: error menyebut path yang dicari', () => {
 
 test('products.json rusak: error menyebut nama berkasnya, bukan stack JSON mentah', () => {
   const root = fixture();
-  fs.writeFileSync(path.join(root, 'perkapcom', 'products.json'), '{bukan json');
-  assert.throws(() => readBusinessAsset(root, 'perkapcom'), /products\.json/);
+  fs.writeFileSync(path.join(root, 'examplecom', 'products.json'), '{bukan json');
+  assert.throws(() => readBusinessAsset(root, 'examplecom'), /products\.json/);
 });
 
 test('products.json boleh tidak ada: produk jadi daftar kosong', () => {
   const root = fixture();
-  fs.rmSync(path.join(root, 'perkapcom', 'products.json'));
-  const { products } = readBusinessAsset(root, 'perkapcom');
+  fs.rmSync(path.join(root, 'examplecom', 'products.json'));
+  const { products } = readBusinessAsset(root, 'examplecom');
   assert.deepStrictEqual(products, []);
 });
 
@@ -256,7 +256,7 @@ test('business_id dengan ../ ditolak sebelum menyentuh disk', () => {
 });
 
 test('root kosong ditolak dengan pesan jelas', () => {
-  assert.throws(() => readBusinessAsset('', 'perkapcom'), /root/i);
+  assert.throws(() => readBusinessAsset('', 'examplecom'), /root/i);
 });
 ```
 
@@ -271,7 +271,7 @@ Buat `scripts/lib/business-asset.js`:
 
 ```js
 'use strict';
-// Pemetaan data skill `business-asset` (agent sosmed content) ke bentuk
+// Pemetaan data skill `business-asset` ke bentuk
 // knowledge_base autoblog. Modul ini HANYA MEMBACA — tidak pernah menulis
 // apa pun ke folder business asset.
 const fs = require('fs');
@@ -298,7 +298,7 @@ function toneFrom(toneOfVoice) {
 }
 
 // Host tanpa "www." dan tanpa beda huruf besar-kecil, supaya
-// https://www.Perkap.com dan https://perkap.com dianggap sama.
+// https://www.Example.com dan https://example.com dianggap sama.
 function normHost(u) {
   try {
     return new URL(u).hostname.toLowerCase().replace(/^www\./, '');
@@ -458,25 +458,25 @@ const MANUAL_KB = {
 
 function fixtureRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-test-'));
-  const dir = path.join(root, 'perkapcom');
+  const dir = path.join(root, 'examplecom');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify({
-    nama: 'Perkap.com', tagline: 'Sewa Alat Panitia', jenisUsaha: 'Jasa Rental',
-    kota: 'Malang', deskripsi: '', targetMarket: 'Panitia acara',
+    nama: 'Example.com', tagline: 'Sewa Alat Panitia', jenisUsaha: 'Jasa Rental',
+    kota: 'Bandung', deskripsi: '', targetMarket: 'Panitia acara',
     toneOfVoice: 'santai', kataHindari: ['Termurah']
   }));
   fs.writeFileSync(path.join(dir, 'products.json'), JSON.stringify([
     { id: 'ht', nama: 'Sewa HT', harga: 'Rp 35.000', targetMarket: 'Panitia',
-      konteks: 'Detail di https://perkap.com/sewa-ht/', faq: '### Berapa lama?\nSehari.' }
+      konteks: 'Detail di https://example.com/sewa-ht/', faq: '### Berapa lama?\nSehari.' }
   ]));
   return root;
 }
 
 function baConfig(root) {
   return {
-    wordpress: { url: 'https://perkap.com', username: 'u' },
+    wordpress: { url: 'https://example.com', username: 'u' },
     knowledge_base: MANUAL_KB,
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   };
 }
 
@@ -514,9 +514,9 @@ test('mode business_asset membaca live dari folder', () => {
   const r = resolveKnowledgeBase(baConfig(fixtureRoot()));
   assert.strictEqual(r.source, 'business_asset');
   assert.strictEqual(r.error, null);
-  assert.strictEqual(r.knowledge_base.business_name, 'Perkap.com');
+  assert.strictEqual(r.knowledge_base.business_name, 'Example.com');
   assert.strictEqual(r.knowledge_base.products.length, 1);
-  assert.strictEqual(r.knowledge_base.products[0].url, 'https://perkap.com/sewa-ht/');
+  assert.strictEqual(r.knowledge_base.products[0].url, 'https://example.com/sewa-ht/');
   assert.deepStrictEqual(r.knowledge_base.avoid_words, ['Termurah']);
 });
 
@@ -554,7 +554,7 @@ test('business_id berbahaya: error, bukan lemparan', () => {
 
 test('business_asset tanpa root: error menyebut root', () => {
   const r = resolveKnowledgeBase({
-    knowledge_source: { type: 'business_asset', business_asset: { business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { business_id: 'examplecom' } }
   });
   assert.ok(r.error);
   assert.match(r.error, /root/i);
@@ -769,15 +769,15 @@ const { makePaths } = require('../lib/paths');
 
 function baRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cfgroute-ba-'));
-  const dir = path.join(root, 'perkapcom');
+  const dir = path.join(root, 'examplecom');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify({
-    nama: 'Perkap.com', deskripsi: 'Sewa alat panitia.', targetMarket: 'Panitia',
+    nama: 'Example.com', deskripsi: 'Sewa alat panitia.', targetMarket: 'Panitia',
     toneOfVoice: 'santai', kataHindari: ['Termurah']
   }));
   fs.writeFileSync(path.join(dir, 'products.json'), JSON.stringify([
     { id: 'ht', nama: 'Sewa HT', harga: 'Rp 35.000',
-      konteks: 'Detail https://perkap.com/sewa-ht/', faq: 'tanya jawab' }
+      konteks: 'Detail https://example.com/sewa-ht/', faq: 'tanya jawab' }
   ]));
   return root;
 }
@@ -809,9 +809,9 @@ const MANUAL = {
 
 function baConfig(root) {
   return {
-    wordpress: { url: 'https://perkap.com', username: 'u' },
+    wordpress: { url: 'https://example.com', username: 'u' },
     knowledge_base: { business_name: 'Manual Inc', products: [{ name: 'A', url: '' }] },
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   };
 }
 
@@ -827,9 +827,9 @@ test('GET /api/config mode manual tidak berubah perilakunya', async () => {
 test('GET /api/config mode business_asset mengembalikan data live', async () => {
   await withServer(baConfig(baRoot()), async (base) => {
     const r = await (await fetch(`${base}/api/config`)).json();
-    assert.strictEqual(r.knowledge_base.business_name, 'Perkap.com');
+    assert.strictEqual(r.knowledge_base.business_name, 'Example.com');
     assert.strictEqual(r.knowledge_base.products.length, 1);
-    assert.strictEqual(r.knowledge_base.products[0].url, 'https://perkap.com/sewa-ht/');
+    assert.strictEqual(r.knowledge_base.products[0].url, 'https://example.com/sewa-ht/');
     assert.strictEqual(r._knowledge.source, 'business_asset');
   });
 });
@@ -874,13 +874,13 @@ test('POST /api/config bisa mengganti knowledge_source ke business_asset', async
     await fetch(`${base}/api/config`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+        knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
       })
     });
     const saved = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
     assert.strictEqual(saved.knowledge_source.type, 'business_asset');
     const r = await (await fetch(`${base}/api/config`)).json();
-    assert.strictEqual(r.knowledge_base.business_name, 'Perkap.com');
+    assert.strictEqual(r.knowledge_base.business_name, 'Example.com');
   });
 });
 
@@ -898,7 +898,7 @@ test('mode business_asset dengan folder salah: GET tetap 200 dan menyebut errorn
 test('GET /api/blogs/:id/config ikut memakai resolver', async () => {
   await withServer(baConfig(baRoot()), async (base) => {
     const r = await (await fetch(`${base}/api/blogs/testblog/config`)).json();
-    assert.strictEqual(r.knowledge_base.business_name, 'Perkap.com');
+    assert.strictEqual(r.knowledge_base.business_name, 'Example.com');
     assert.strictEqual(r._knowledge.source, 'business_asset');
   });
 });
@@ -1091,7 +1091,7 @@ const { makePaths } = require('../lib/paths');
 
 function baRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ks-ba-'));
-  for (const [id, nama, n] of [['perkapcom', 'Perkap.com', 2], ['karvaid', 'Karva.id', 1]]) {
+  for (const [id, nama, n] of [['examplecom', 'Example.com', 2], ['contohid', 'Contoh.id', 1]]) {
     const dir = path.join(root, id);
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify({ nama, toneOfVoice: 'santai' }));
@@ -1127,7 +1127,7 @@ test('daftar bisnis hanya folder yang punya profile.json', async () => {
   await withServer({}, async (base) => {
     const r = await (await fetch(`${base}/api/business-assets?root=${encodeURIComponent(root)}`)).json();
     const ids = r.businesses.map(b => b.id).sort();
-    assert.deepStrictEqual(ids, ['karvaid', 'perkapcom']);
+    assert.deepStrictEqual(ids, ['contohid', 'examplecom']);
     assert.ok(!ids.includes('bukan-bisnis'));
   });
 });
@@ -1136,8 +1136,8 @@ test('daftar bisnis menyertakan nama dan jumlah produk', async () => {
   const root = baRoot();
   await withServer({}, async (base) => {
     const r = await (await fetch(`${base}/api/business-assets?root=${encodeURIComponent(root)}`)).json();
-    const p = r.businesses.find(b => b.id === 'perkapcom');
-    assert.strictEqual(p.name, 'Perkap.com');
+    const p = r.businesses.find(b => b.id === 'examplecom');
+    assert.strictEqual(p.name, 'Example.com');
     assert.strictEqual(p.productCount, 2);
   });
 });
@@ -1170,8 +1170,8 @@ test('daftar bisnis tidak pernah membocorkan isi berkas lain', async () => {
 test('preview melaporkan ringkasan tenant aktif', async () => {
   const root = baRoot();
   await withServer({
-    wordpress: { url: 'https://perkap.com' },
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    wordpress: { url: 'https://example.com' },
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   }, async (base) => {
     const r = await (await fetch(`${base}/api/knowledge-preview`)).json();
     assert.strictEqual(r.source, 'business_asset');
@@ -1371,7 +1371,7 @@ if (resolved.error) {
 cfg.knowledge_base = resolved.knowledge_base;
 ```
 
-- [ ] **Step 2: Verifikasi manual mode manual (tenant perkap masih manual pada titik ini)**
+- [ ] **Step 2: Verifikasi manual mode manual (tenant example masih manual pada titik ini)**
 
 ```bash
 node scripts/blog-config.js knowledge_base
@@ -1434,7 +1434,7 @@ Cari komentar `<!-- Scrape from Website -->` di dalam `<div id="page-knowledge" 
             <label>Folder root data bisnis</label>
             <div style="display:flex; gap:8px;">
               <input type="text" id="ks-root" style="flex:1;"
-                     placeholder="G:\Project\...\sosmed_content\data\businesses">
+                     placeholder="C:\path\ke\business-asset\data\businesses">
               <button class="btn btn-secondary" onclick="ksLoadBusinesses()" style="white-space:nowrap;">Muat</button>
             </div>
           </div>
@@ -1587,8 +1587,8 @@ Buka `http://localhost:3847` → tab Knowledge Base. Yang harus terjadi:
 1. Kartu "Sumber Knowledge Base" muncul di paling atas, "Input manual" terpilih.
 2. Field knowledge base masih bisa diketik; tombol Save aktif.
 3. Pilih "Business Asset" → field root + dropdown muncul, seluruh field di bawahnya redup, kartu Auto-fill hilang, tombol Save TETAP HIDUP dengan label "💾 Simpan Sumber" (ia satu-satunya jalan menyimpan pilihan mode).
-4. Isi root dengan `G:\Project\Paperclip\Perkap_com\project\sosmed_content\data\businesses`, tekan Muat → dropdown berisi **Perkap.com (45 produk)** dan **Karva.id (7 produk)**.
-5. Pilih Perkap.com, tekan **💾 Simpan Sumber** di save-bar. Tombol ini harus hidup —
+4. Isi root dengan `<root-business-asset>\data\businesses`, tekan Muat → dropdown berisi **Example.com (45 produk)** dan **Contoh.id (7 produk)**.
+5. Pilih Example.com, tekan **💾 Simpan Sumber** di save-bar. Tombol ini harus hidup —
    kalau mati, mode business_asset tidak bisa disimpan sama sekali dan itu cacat yang
    dilaporkan sebagai BLOCKED, bukan didiamkan.
 6. Muat ulang halaman → daftar produk berisi 45 baris, status hijau menyebut jumlah produk
@@ -1712,21 +1712,21 @@ git commit -m "docs(kb): agent memakai detail produk dan avoid_words"
 
 ---
 
-### Task 9: Verifikasi ujung-ke-ujung dengan data perkap sungguhan
+### Task 9: Verifikasi ujung-ke-ujung dengan data example sungguhan
 
 **Files:**
-- Modify: `data/blogs/perkapcom/config.json` (lewat dashboard, bukan editor)
+- Modify: `data/blogs/examplecom/config.json` (lewat dashboard, bukan editor)
 
 **Interfaces:**
 - Consumes: seluruh task sebelumnya
 - Produces: laporan hasil verifikasi
 
-**Catatan:** task ini mengubah data tenant hidup. Sebelum mulai, salin `data/blogs/perkapcom/config.json` ke `config.json.bak-<tanggal>` **di luar repo** (folder ini tidak dilacak git, jadi tidak ada jaring pengaman lain).
+**Catatan:** task ini mengubah data tenant hidup. Sebelum mulai, salin `data/blogs/examplecom/config.json` ke `config.json.bak-<tanggal>` **di luar repo** (folder ini tidak dilacak git, jadi tidak ada jaring pengaman lain).
 
 - [ ] **Step 1: Cadangkan config tenant**
 
 ```bash
-cp data/blogs/perkapcom/config.json "$TEMP/perkapcom-config-backup.json"
+cp data/blogs/examplecom/config.json "$TEMP/examplecom-config-backup.json"
 ```
 
 - [ ] **Step 2: Jalankan server dan ganti sumber lewat dashboard**
@@ -1736,7 +1736,7 @@ npm start
 ```
 
 Di tab Knowledge Base: pilih Business Asset, root
-`G:\Project\Paperclip\Perkap_com\project\sosmed_content\data\businesses`, bisnis Perkap.com, simpan.
+`<root-business-asset>\data\businesses`, bisnis Example.com, simpan.
 
 - [ ] **Step 3: Kumpulkan bukti**
 
@@ -1747,13 +1747,13 @@ grep -c "yourblog.com" /tmp/kb-check.json || echo "yourblog.com: 0 (benar)"
 grep -c "konteks" /tmp/kb-check.json || echo "konteks: 0 (benar)"
 ```
 
-Expected: 45 produk, 27 internal link (sudah dedup — beberapa produk berbagi satu halaman), nama `Perkap.com`, tone `casual`, `avoid_words` berisi `Termurah`, sumber `business_asset` tanpa error, tidak ada `yourblog.com`, tidak ada `konteks`.
+Expected: 45 produk, 27 internal link (sudah dedup — beberapa produk berbagi satu halaman), nama `Example.com`, tone `casual`, `avoid_words` berisi `Termurah`, sumber `business_asset` tanpa error, tidak ada `yourblog.com`, tidak ada `konteks`.
 
 - [ ] **Step 4: Uji live read**
 
 Ubah `tagline` di
-`G:\Project\Paperclip\Perkap_com\project\sosmed_content\data\businesses\perkapcom\profile.json`
-(mis. tambahkan ` TES`), lalu muat ulang dashboard. Nama/deskripsi harus ikut berubah **tanpa** import apa pun. **Kembalikan nilainya seperti semula setelah diuji** — ini data hidup milik agent sosmed content.
+`<root-business-asset>\data\businesses\examplecom\profile.json`
+(mis. tambahkan ` TES`), lalu muat ulang dashboard. Nama/deskripsi harus ikut berubah **tanpa** import apa pun. **Kembalikan nilainya seperti semula setelah diuji** — ini data hidup milik skill business-asset.
 
 - [ ] **Step 5: Uji detail produk**
 
@@ -1765,14 +1765,14 @@ Expected: JSON memuat `context` panjang dan `faq`; `price` terisi.
 - [ ] **Step 6: Uji bahwa business asset tidak pernah ditulis**
 
 ```bash
-cd "G:/Project/Paperclip/Perkap_com/project/sosmed_content/data/businesses/perkapcom"
+cd "<root-business-asset>/data/businesses/examplecom"
 ls -la --time-style=full-iso profile.json products.json
 ```
 Expected: waktu ubah tidak berubah oleh langkah-langkah di atas (selain perubahan sengaja di Step 4 yang sudah dikembalikan).
 
 - [ ] **Step 7: Uji Playwright dari UI**
 
-Pakai **sesi browser Playwright yang sudah terbuka** — jangan membuka sesi baru. Ambil tangkapan layar tab Knowledge Base yang memperlihatkan: pemilih sumber di mode Business Asset, dropdown berisi Perkap.com, status hijau, dan daftar 45 produk dalam keadaan terkunci.
+Pakai **sesi browser Playwright yang sudah terbuka** — jangan membuka sesi baru. Ambil tangkapan layar tab Knowledge Base yang memperlihatkan: pemilih sumber di mode Business Asset, dropdown berisi Example.com, status hijau, dan daftar 45 produk dalam keadaan terkunci.
 
 - [ ] **Step 8: Jalankan seluruh test sekali lagi**
 
@@ -1783,7 +1783,7 @@ Expected: PASS
 
 ```bash
 git add -A
-git commit -m "chore(kb): tenant perkapcom memakai sumber business asset"
+git commit -m "chore(kb): tenant examplecom memakai sumber business asset"
 ```
 
 Kalau `git status` tidak menunjukkan apa pun untuk dicommit (config tenant tidak dilacak git), lewati commit dan catat itu di laporan.

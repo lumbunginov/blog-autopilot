@@ -16,7 +16,7 @@ sebagai reference image ke Seedream — lihat `agents/image-generator.md` Step 0
 baru di autoblog: sumber foto satu-satunya adalah Business Asset.
 
 Yang SENGAJA tidak dikerjakan: folder legacy `Content/Article/image/reference/` (20+
-folder Perkap) ditinggalkan begitu saja — Business Asset sudah jadi satu-satunya sumber
+folder Example) ditinggalkan begitu saja — Business Asset sudah jadi satu-satunya sumber
 foto, memindahkan folder itu cuma menduplikasi data yang sudah ada di tempat lain.
 
 ## 7. Audit internal link — SELESAI (2026-09-03)
@@ -28,7 +28,7 @@ terbit, cek tiap URL internal (mati/redirect/ok), dan cocokkan dengan produk yan
 pernah ditautkan. Laporan mendarat di `data/blogs/{id}/audit/link-YYYY-MM-DD.md` + `.json`.
 Audit ini baca-saja — tidak menulis apa pun ke WordPress.
 
-Hasil audit penuh pertama (perkap.com, 2026-09-03): 663 dokumen (587 post + 76 page)
+Hasil audit penuh pertama (example.com, 2026-09-03): 663 dokumen (587 post + 76 page)
 di-crawl, 365 URL internal unik, **0 tautan mati**, 0 tak pasti, 37 redirect, 48 artikel
 tanpa gambar utama, 10 produk tak pernah ditautkan (kesepuluhnya memang belum punya URL).
 
@@ -49,7 +49,7 @@ Produk lengkap (spesifikasi, harga, FAQ) diambil per produk lewat
 
 Yang SENGAJA tidak dikerjakan dari rencana awal: "UI baru di dashboard (tab tersendiri)"
 untuk mengelola product knowledge. Datanya dikelola di dashboard skill `business-asset`
-(agent sosmed content) dan autoblog hanya membacanya — menambah tab kedua untuk mengedit
+dan autoblog hanya membacanya — menambah tab kedua untuk mengedit
 data yang sama berarti dua tempat mengedit satu sumber, dan itu justru yang dihindari.
 Dashboard autoblog menampilkannya sebagai daftar read-only di tab Knowledge Base.
 
@@ -84,12 +84,12 @@ Paling mahal, manfaat jangka panjang.
 - Sumber: skill `serp-tracker` + `update-status` (Bright Data API)
 - Butuh: API key (masuk `.env` per tenant), penyimpanan posisi per keyword per kota,
   tabel + grafik tren di dashboard
-- Data historis perkap ada di `Perkap_com/project/article/serp/`
+- Data historis example ada di `example_com/project/article/serp/`
 
 ## 10. Edit Elementor
 
 - Sumber: skill `edit-elementor`
-- Perkap-specific (butuh Elementor Pro); pertimbangkan **tidak** diport, atau jadikan
+- Example-specific (butuh Elementor Pro); pertimbangkan **tidak** diport, atau jadikan
   fitur opsional yang mati kalau tenant tidak memakai Elementor
 - Prioritas terendah; boleh di-skip
 
@@ -97,7 +97,7 @@ Paling mahal, manfaat jangka panjang.
 
 - `build.js` / distribusi `.skill` zip: sudah tidak jadi jalur utama setelah pindah ke
   git clone + `npm install`. File-nya dibiarkan, belum diurus.
-- Article Writer lama (`Perkap_com/project/article/`) tetap utuh sebagai cadangan.
-  Putuskan kapan dipensiunkan setelah autoblog terbukti jalan untuk perkap.
-- Instalasi lama `G:\Project\Perkap Article\` menyimpan config di root project, bukan di
+- Article Writer lama (`example_com/project/article/`) tetap utuh sebagai cadangan.
+  Putuskan kapan dipensiunkan setelah autoblog terbukti jalan untuk example.
+- Instalasi lama `<folder-skill-lama>\` menyimpan config di root project, bukan di
   folder skill. Jangan bingung dengan layout source sekarang.

@@ -54,8 +54,8 @@ pages/{slug}.json — respons WordPress apa adanya:
 ```json
 {
   "id": 123,
-  "slug": "sewa-ht-malang",
-  "title": {"rendered": "Sewa HT Malang"},
+  "slug": "sewa-ht-bandung",
+  "title": {"rendered": "Sewa HT Bandung"},
   "status": "publish",
   "meta": {
     "_elementor_data": "[{\"id\":\"sec1\",...}]",
@@ -75,7 +75,7 @@ elementor/{slug}.json — array section, ini yang diedit:
     "elements": [
       {"id": "col1", "elType": "column", "settings": {}, "elements": [
         {"id": "h1", "elType": "widget", "widgetType": "heading",
-         "settings": {"title": "Sewa HT Malang"}}
+         "settings": {"title": "Sewa HT Bandung"}}
       ]}
     ]
   }
@@ -92,7 +92,7 @@ Keluaran clone-template.js — format halaman WordPress:
   "content": [...],
   "page_settings": {...},
   "version": "0.4",
-  "title": "Sewa HT Denpasar",
+  "title": "Sewa HT Yogyakarta",
   "type": "page"
 }
 ```
@@ -101,27 +101,27 @@ Keluaran clone-template.js — format halaman WordPress:
 
 ALUR 1 — Edit halaman yang sudah ada
 
-1. `node download-page.js sewa-ht-malang`
-   Mencari slug, menyimpan respons penuh ke `pages/sewa-ht-malang.json`.
+1. `node download-page.js sewa-ht-bandung`
+   Mencari slug, menyimpan respons penuh ke `pages/sewa-ht-bandung.json`.
    Peringatan `[tanpa data Elementor]` berarti halaman itu bukan buatan
    Elementor — berhenti, edit lewat WP admin.
 
-2. `node extract-elementor.js sewa-ht-malang.json`
+2. `node extract-elementor.js sewa-ht-bandung.json`
    Membaca `meta._elementor_data`, mem-parse, menulis terindentasi ke
-   `elementor/sewa-ht-malang.json`.
+   `elementor/sewa-ht-bandung.json`.
 
-3. Edit `elementor/sewa-ht-malang.json`.
+3. Edit `elementor/sewa-ht-bandung.json`.
    Ubah `settings.title`, `settings.editor`, URL gambar, dan sejenisnya.
    Jangan menyentuh `id` kecuali sedang meregenerasi seluruhnya.
 
-4. `node validate-elementor.js sewa-ht-malang.json`
+4. `node validate-elementor.js sewa-ht-bandung.json`
    Cek sintaks, field wajib (`id`, `elType`), `widgetType` pada widget, dan
    id duplikat. Jangan lanjut sebelum ini lolos.
 
-5. `node compress-elementor.js sewa-ht-malang.json`
+5. `node compress-elementor.js sewa-ht-bandung.json`
    Menulis versi satu baris ke `compress/`.
 
-6. `node upload-page.js sewa-ht-malang`
+6. `node upload-page.js sewa-ht-bandung`
    Membaca id dari `pages/`, POST ke WordPress, dan membandingkan data yang
    dikembalikan dengan yang dikirim.
 
@@ -132,14 +132,14 @@ ALUR 2 — Halaman baru dari template
 
 1. Pastikan sumbernya ada di `elementor/` (download + extract bila perlu).
 2. ```bash
-   node clone-template.js sewa-ht-malang.json sewa-ht-denpasar.json \
-     "Sewa HT Denpasar" --replace "Malang:Denpasar"
+   node clone-template.js sewa-ht-bandung.json sewa-ht-yogyakarta.json \
+     "Sewa HT Yogyakarta" --replace "Bandung:Yogyakarta"
    ```
    Script meregenerasi seluruh id, mengganti teks secara rekursif, menulis ke
    berkas sementara, memvalidasi, baru menaruhnya di tujuan.
 3. ```bash
-   node create-page.js sewa-ht-denpasar.json "Sewa HT Denpasar" \
-     --slug sewa-ht-denpasar --status draft
+   node create-page.js sewa-ht-yogyakarta.json "Sewa HT Yogyakarta" \
+     --slug sewa-ht-yogyakarta --status draft
    ```
    `create-page.js` menerima keluaran clone-template (objek dengan `content`)
    maupun array section apa adanya; `page_settings` sumber ikut terbawa.

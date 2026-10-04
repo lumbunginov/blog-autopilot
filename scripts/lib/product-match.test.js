@@ -27,7 +27,7 @@ test('judul artikel memuat nama produk', () => {
 });
 
 test('kata kunci fokus memuat nama produk', () => {
-  assert.equal(matchProduct(PRODUK, { keyword: 'sewa bel cerdas cermat custom malang' }).product.id, 'bel-cerdas-cermat-custom');
+  assert.equal(matchProduct(PRODUK, { keyword: 'sewa bel cerdas cermat custom bandung' }).product.id, 'bel-cerdas-cermat-custom');
 });
 
 test('DUA produk berbagi kata umum: TIDAK MENEBAK, kembalikan null', () => {

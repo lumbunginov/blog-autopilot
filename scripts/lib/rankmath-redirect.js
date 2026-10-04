@@ -4,7 +4,7 @@
 //
 // Endpointnya /rankmath/v1/updateRedirection, dan bentuk parameternya tidak
 // terdokumentasi di mana pun — dipetakan dari perilaku editor Rank Math dan
-// diverifikasi di perkap.com 2026-09-08:
+// diverifikasi di situs WordPress sungguhan:
 //
 //   buat  : {objectID, objectType:'post', hasRedirect:true,
 //            redirectionSources, redirectionUrl, redirectionType}  → {id, action:'new'}

@@ -9,18 +9,18 @@ const {
 } = require('./business-asset');
 
 const PROFILE = {
-  id: 'perkapcom',
-  nama: 'Perkap.com',
+  id: 'examplecom',
+  nama: 'Example.com',
   tagline: 'Sewa Alat Panitia',
   deskripsi: '',
   jenisUsaha: 'Jasa Rental',
   tahunBerdiri: 2016,
   alamat: 'Jl. Kembang kertas no 24 Lowokwaru ',
-  kota: 'Malang',
-  whatsapp: '0895412262949 ',
+  kota: 'Bandung',
+  whatsapp: '081200000000 ',
   email: '',
   jamOperasional: '24 Jam',
-  website: 'perkap.com',
+  website: 'example.com',
   targetMarket: 'Panitia acara, Mahasiswa',
   usp: '',
   toneOfVoice: 'santai',
@@ -37,18 +37,18 @@ const PROFILE = {
   hashtag: ['#sewaht'],
   formatKonten: ['reels'],
   frekuensiPosting: '3x sehari',
-  instagram: '@perkap_com',
+  instagram: '@example_com',
   detectedLocale: 'EN'
 };
 
 const PRODUCTS = [
   { id: 'bel-cerdas-cermat-custom', nama: 'Bel Cerdas Cermat Custom', harga: 'Rp 60.000 per hari',
     targetMarket: 'Panitia lomba',
-    konteks: 'Lihat [di sini](https://perkap.com/bel-cerdas-cermat/) dan juga https://perkap.com/bel-cerdas-cermat/ lagi.',
+    konteks: 'Lihat [di sini](https://example.com/bel-cerdas-cermat/) dan juga https://example.com/bel-cerdas-cermat/ lagi.',
     faq: '### Untuk berapa tim?\nSatu sampai enam tim.' },
   { id: 'proyektor', nama: 'Proyektor InFocus IN226', harga: 'Rp 150.000 per hari',
     targetMarket: 'Panitia acara',
-    konteks: 'Rujukan luar https://tokopedia.com/x lalu https://www.perkap.com/sewa-proyektor/ .',
+    konteks: 'Rujukan luar https://tokopedia.com/x lalu https://www.example.com/sewa-proyektor/ .',
     faq: '' },
   { id: 'tanpa-url', nama: 'Kabel Roll', harga: '', targetMarket: '',
     konteks: 'Tidak ada tautan apa pun di sini.', faq: '' }
@@ -69,34 +69,34 @@ test('toneFrom jatuh ke professional untuk nilai tak dikenal atau kosong', () =>
 
 test('extractProductUrl hanya mengambil URL dari host situs sendiri', () => {
   assert.strictEqual(
-    extractProductUrl(PRODUCTS[1].konteks, 'https://perkap.com'),
-    'https://www.perkap.com/sewa-proyektor/'
+    extractProductUrl(PRODUCTS[1].konteks, 'https://example.com'),
+    'https://www.example.com/sewa-proyektor/'
   );
 });
 
 test('extractProductUrl mengambil kemunculan pertama', () => {
   assert.strictEqual(
-    extractProductUrl(PRODUCTS[0].konteks, 'https://perkap.com'),
-    'https://perkap.com/bel-cerdas-cermat/'
+    extractProductUrl(PRODUCTS[0].konteks, 'https://example.com'),
+    'https://example.com/bel-cerdas-cermat/'
   );
 });
 
 test('extractProductUrl mengabaikan www dan beda huruf saat membandingkan host', () => {
   assert.strictEqual(
-    extractProductUrl('lihat https://PERKAP.com/a/', 'https://www.perkap.com'),
-    'https://PERKAP.com/a/'
+    extractProductUrl('lihat https://EXAMPLE.com/a/', 'https://www.example.com'),
+    'https://EXAMPLE.com/a/'
   );
 });
 
 test('extractProductUrl kosong kalau tidak ada yang cocok atau siteUrl kosong', () => {
-  assert.strictEqual(extractProductUrl(PRODUCTS[2].konteks, 'https://perkap.com'), '');
+  assert.strictEqual(extractProductUrl(PRODUCTS[2].konteks, 'https://example.com'), '');
   assert.strictEqual(extractProductUrl(PRODUCTS[0].konteks, ''), '');
-  assert.strictEqual(extractProductUrl('', 'https://perkap.com'), '');
+  assert.strictEqual(extractProductUrl('', 'https://example.com'), '');
 });
 
 test('mapProfile memetakan field profil', () => {
   const kb = mapProfile(PROFILE);
-  assert.strictEqual(kb.business_name, 'Perkap.com');
+  assert.strictEqual(kb.business_name, 'Example.com');
   assert.strictEqual(kb.target_audience, 'Panitia acara, Mahasiswa');
   assert.strictEqual(kb.tone, 'casual');
   assert.deepStrictEqual(kb.avoid_words, ['Termurah']);
@@ -106,7 +106,7 @@ test('deskripsi kosong dirakit dari tagline, jenis usaha, dan kota', () => {
   const kb = mapProfile(PROFILE);
   assert.match(kb.business_description, /Sewa Alat Panitia/);
   assert.match(kb.business_description, /Jasa Rental/);
-  assert.match(kb.business_description, /Malang/);
+  assert.match(kb.business_description, /Bandung/);
 });
 
 test('deskripsi yang sudah terisi dipakai apa adanya', () => {
@@ -122,7 +122,7 @@ test('mapProfile tidak pernah melempar untuk profil kosong', () => {
 });
 
 test('mapProducts membuat bentuk ringkas tanpa konteks dan faq', () => {
-  const { products } = mapProducts(PRODUCTS, 'https://perkap.com');
+  const { products } = mapProducts(PRODUCTS, 'https://example.com');
   assert.strictEqual(products.length, 3);
   assert.deepStrictEqual(Object.keys(products[0]).sort(),
     ['faq_count', 'gallery_count', 'has_context', 'id', 'image', 'name', 'price', 'target_market', 'url']);
@@ -131,22 +131,22 @@ test('mapProducts membuat bentuk ringkas tanpa konteks dan faq', () => {
 });
 
 test('produk tanpa URL tetap masuk daftar dengan url kosong', () => {
-  const { products } = mapProducts(PRODUCTS, 'https://perkap.com');
+  const { products } = mapProducts(PRODUCTS, 'https://example.com');
   assert.strictEqual(products[2].name, 'Kabel Roll');
   assert.strictEqual(products[2].url, '');
 });
 
 test('internal_links berisi url unik dengan anchor nama produk', () => {
-  const { internal_links } = mapProducts(PRODUCTS, 'https://perkap.com');
+  const { internal_links } = mapProducts(PRODUCTS, 'https://example.com');
   assert.strictEqual(internal_links.length, 2);
   assert.deepStrictEqual(internal_links[0],
-    { url: 'https://perkap.com/bel-cerdas-cermat/', anchor: 'Bel Cerdas Cermat Custom' });
+    { url: 'https://example.com/bel-cerdas-cermat/', anchor: 'Bel Cerdas Cermat Custom' });
   assert.ok(!internal_links.some(l => l.url === ''));
 });
 
 test('internal_links membuang url kembar', () => {
   const dua = [PRODUCTS[0], { ...PRODUCTS[0], id: 'lain', nama: 'Nama Lain' }];
-  const { internal_links } = mapProducts(dua, 'https://perkap.com');
+  const { internal_links } = mapProducts(dua, 'https://example.com');
   assert.strictEqual(internal_links.length, 1);
 });
 
@@ -158,7 +158,7 @@ test('siteUrl kosong membuat semua url kosong, produk tetap lengkap', () => {
 });
 
 test('mapProducts aman untuk masukan bukan array', () => {
-  assert.deepStrictEqual(mapProducts(null, 'https://perkap.com'),
+  assert.deepStrictEqual(mapProducts(null, 'https://example.com'),
     { products: [], internal_links: [] });
 });
 
@@ -255,7 +255,7 @@ test('findProduct mengembalikan produk penuh berisi konteks dan faq', () => {
 // --- readBusinessAsset: I/O, pakai fixture di tmpdir ---
 function fixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ba-test-'));
-  const dir = path.join(root, 'perkapcom');
+  const dir = path.join(root, 'examplecom');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify(PROFILE));
   fs.writeFileSync(path.join(dir, 'products.json'), JSON.stringify(PRODUCTS));
@@ -264,8 +264,8 @@ function fixture() {
 
 test('readBusinessAsset membaca profile dan products', () => {
   const root = fixture();
-  const { profile, products } = readBusinessAsset(root, 'perkapcom');
-  assert.strictEqual(profile.nama, 'Perkap.com');
+  const { profile, products } = readBusinessAsset(root, 'examplecom');
+  assert.strictEqual(profile.nama, 'Example.com');
   assert.strictEqual(products.length, 3);
 });
 
@@ -280,14 +280,14 @@ test('folder bisnis tidak ada: error menyebut path yang dicari', () => {
 
 test('products.json rusak: error menyebut nama berkasnya, bukan stack JSON mentah', () => {
   const root = fixture();
-  fs.writeFileSync(path.join(root, 'perkapcom', 'products.json'), '{bukan json');
-  assert.throws(() => readBusinessAsset(root, 'perkapcom'), /products\.json/);
+  fs.writeFileSync(path.join(root, 'examplecom', 'products.json'), '{bukan json');
+  assert.throws(() => readBusinessAsset(root, 'examplecom'), /products\.json/);
 });
 
 test('products.json boleh tidak ada: produk jadi daftar kosong', () => {
   const root = fixture();
-  fs.rmSync(path.join(root, 'perkapcom', 'products.json'));
-  const { products } = readBusinessAsset(root, 'perkapcom');
+  fs.rmSync(path.join(root, 'examplecom', 'products.json'));
+  const { products } = readBusinessAsset(root, 'examplecom');
   assert.deepStrictEqual(products, []);
 });
 
@@ -299,28 +299,28 @@ test('business_id dengan ../ ditolak sebelum menyentuh disk', () => {
 });
 
 test('root kosong ditolak dengan pesan jelas', () => {
-  assert.throws(() => readBusinessAsset('', 'perkapcom'), /root/i);
+  assert.throws(() => readBusinessAsset('', 'examplecom'), /root/i);
 });
 
 test('profile.json sah sebagai JSON tapi bukan objek ditolak, bukan lolos senyap', () => {
   const root = fixture();
   for (const isi of ['"cuma teks"', '[]', 'null', '42']) {
-    fs.writeFileSync(path.join(root, 'perkapcom', 'profile.json'), isi);
-    assert.throws(() => readBusinessAsset(root, 'perkapcom'), /profile\.json bukan objek/,
+    fs.writeFileSync(path.join(root, 'examplecom', 'profile.json'), isi);
+    assert.throws(() => readBusinessAsset(root, 'examplecom'), /profile\.json bukan objek/,
       `isi ${isi} seharusnya ditolak`);
   }
 });
 
 test('products.json berupa objek ditolak, bukan diam-diam jadi daftar kosong', () => {
   const root = fixture();
-  fs.writeFileSync(path.join(root, 'perkapcom', 'products.json'), '{"nama":"x"}');
-  assert.throws(() => readBusinessAsset(root, 'perkapcom'), /products\.json bukan daftar/);
+  fs.writeFileSync(path.join(root, 'examplecom', 'products.json'), '{"nama":"x"}');
+  assert.throws(() => readBusinessAsset(root, 'examplecom'), /products\.json bukan daftar/);
 });
 
 test('nama folder bisnis yang sah dipakai apa adanya, tidak di-mangling', () => {
   // Nama ini datang dari disk milik skill lain. Kalau titik/underscore/huruf besar
   // dibuang, folder yang jelas-jelas ada jadi tak pernah ketemu.
-  for (const n of ['karva.id', 'Sosmed_Test', 'Toko_Baru', 'perkapcom']) {
+  for (const n of ['contoh.id', 'Sosmed_Test', 'Toko_Baru', 'examplecom']) {
     assert.strictEqual(assertBusinessId(n), n);
   }
 });
@@ -347,12 +347,12 @@ test('bisnis yang belum dipilih memberi petunjuk, bukan istilah internal', () =>
 });
 
 test('nama sah yang mengandung titik tetap lolos — hanya "." dan ".." yang ditolak', () => {
-  for (const n of ['karva.id', 'toko.', '.hidden-ish']) assert.strictEqual(assertBusinessId(n), n);
+  for (const n of ['contoh.id', 'toko.', '.hidden-ish']) assert.strictEqual(assertBusinessId(n), n);
 });
 
 test('folder bisnis bernama titik/underscore benar-benar terbaca dari disk', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ba-nama-'));
-  for (const nama of ['karva.id', 'Sosmed_Test']) {
+  for (const nama of ['contoh.id', 'Sosmed_Test']) {
     const dir = path.join(root, nama);
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify({ nama }));
@@ -368,16 +368,16 @@ test('mapProfile memetakan identitas, kontak, dan gaya dari business asset', () 
   assert.strictEqual(kb.tagline, 'Sewa Alat Panitia');
   assert.strictEqual(kb.business_type, 'Jasa Rental');
   assert.strictEqual(kb.founded_year, '2016', 'angka dijadikan teks agar sama dengan isian manual');
-  assert.strictEqual(kb.city, 'Malang');
+  assert.strictEqual(kb.city, 'Bandung');
   assert.strictEqual(kb.hours, '24 Jam');
-  assert.strictEqual(kb.website, 'perkap.com');
+  assert.strictEqual(kb.website, 'example.com');
   assert.deepStrictEqual(kb.cta, ['Klik link di BIO']);
 });
 
 test('spasi berlebih di alamat dan whatsapp dipangkas', () => {
   const kb = mapProfile(PROFILE);
   assert.strictEqual(kb.address, 'Jl. Kembang kertas no 24 Lowokwaru');
-  assert.strictEqual(kb.whatsapp, '0895412262949');
+  assert.strictEqual(kb.whatsapp, '081200000000');
 });
 
 test('field khusus sosmed TIDAK ikut ke knowledge base', () => {

@@ -467,7 +467,7 @@
             <label>Folder root data bisnis</label>
             <div style="display:flex; gap:8px;">
               <input type="text" id="ks-root" style="flex:1;"
-                     placeholder="G:\Project\...\sosmed_content\data\businesses">
+                     placeholder="C:\path\ke\business-asset\data\businesses">
               <button class="btn btn-secondary" onclick="ksLoadBusinesses()" style="white-space:nowrap;">Muat</button>
             </div>
           </div>
@@ -572,7 +572,7 @@
           </div>
           <div class="form-group">
             <label>Kota</label>
-            <input type="text" id="kb-city" placeholder="e.g. Malang">
+            <input type="text" id="kb-city" placeholder="e.g. Bandung">
           </div>
         </div>
         <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:14px;">
@@ -791,7 +791,7 @@
 <span class="cmd">/blog-autopilot monitor</span>
 
 <span class="comment"># Batch planner — natural language or structured input</span>
-<span class="cmd">/blog-autopilot generate</span> tips sewa HT --product "Sewa HT" --location Surabaya --count 3 --start 2026-04-20 --spacing 7
+<span class="cmd">/blog-autopilot generate</span> tips sewa HT --product "Sewa HT" --location Semarang --count 3 --start 2026-04-20 --spacing 7
 
 <span class="comment"># Full pipeline: research → write → image → post (interactive)</span>
 <span class="cmd">/blog-autopilot</span> tips memilih sound system terbaik
@@ -846,10 +846,10 @@
         </p>
         <div class="code-block" style="margin-bottom: 12px;">
 <span class="comment"># Natural language</span>
-<span class="cmd">/blog-autopilot generate</span> buatkan 3 artikel keyword tips sewa HT untuk produk Sewa HT di Surabaya mulai 20 April jeda 7 hari
+<span class="cmd">/blog-autopilot generate</span> buatkan 3 artikel keyword tips sewa HT untuk produk Sewa HT di Semarang mulai 20 April jeda 7 hari
 
 <span class="comment"># Structured flags</span>
-<span class="cmd">/blog-autopilot generate</span> tips sewa proyektor --product "Sewa Proyektor" --location Malang --count 5 --start 2026-05-01 --spacing 5
+<span class="cmd">/blog-autopilot generate</span> tips sewa proyektor --product "Sewa Proyektor" --location Bandung --count 5 --start 2026-05-01 --spacing 5
         </div>
         <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.7;">
           Claude will show a confirmation summary before processing. Type <strong>ya</strong> to confirm, <strong>tidak</strong> to cancel, or <strong>edit [field] [value]</strong> to adjust.
@@ -1283,7 +1283,7 @@
         </div>
         <div class="autogen-field">
           <label>Target Location *</label>
-          <input type="text" id="ag-location" placeholder="e.g. Surabaya, Jakarta, Malang" oninput="autoGenPreviewUpdate()">
+          <input type="text" id="ag-location" placeholder="e.g. Semarang, Jakarta, Bandung" oninput="autoGenPreviewUpdate()">
         </div>
         <div class="autogen-field">
           <label>Product / Topic *</label>
@@ -1298,7 +1298,7 @@
               <div class="anchor-label">🔗 Product Page URL <span style="font-weight:400; text-transform:none; color:#64748b; font-size:10px; letter-spacing:0;">— AI akan insert link ke halaman ini</span></div>
               <div class="anchor-fields">
                 <input type="url" id="ag-anchor-url" placeholder="https://yourdomain.com/product-page/">
-                <input type="text" id="ag-anchor-text" placeholder="anchor text (e.g. sewa HT Surabaya)">
+                <input type="text" id="ag-anchor-text" placeholder="anchor text (e.g. sewa HT Semarang)">
               </div>
             </div>
           </div>

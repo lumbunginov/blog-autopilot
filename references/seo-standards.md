@@ -15,7 +15,7 @@ General SEO rules for all blog articles, regardless of business type or language
 - Be specific and clickable — generic titles don't get clicks
 
 **Good examples**:
-- `Harga Sewa Sound System 2025: Panduan Lengkap | Perkap` (54 chars)
+- `Harga Sewa Sound System 2025: Panduan Lengkap | Example` (54 chars)
 - `Tips Memilih Catering Pernikahan: 5 Hal Wajib Cek` (51 chars)
 - `How to Choose AV Rental: Complete 2025 Guide` (46 chars)
 
@@ -217,7 +217,7 @@ Dua hal yang sengaja TIDAK dilaporkan sebagai masalah:
 
 - **Halaman yang gagal dibaca.** Halaman error tidak punya meta, dan menilainya
   berarti melaporkan kerusakan buatan sendiri. Audit memakai konkurensi 2 dan
-  satu kali coba ulang — pada 5 permintaan bersamaan perkap.com mulai membalas
+  satu kali coba ulang — pada 5 permintaan bersamaan situs nyata mulai membalas
   503, dan laporan yang berubah tiap dijalankan tidak bisa dipercaya.
 - **Skor Rank Math.** Selalu 0/100 untuk halaman Elementor; lihat bagian di atas.
 

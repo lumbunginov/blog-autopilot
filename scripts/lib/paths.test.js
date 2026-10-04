@@ -8,7 +8,7 @@ const { sanitizeId, makePaths } = require('./paths');
 function tmpRoot() { return fs.mkdtempSync(path.join(os.tmpdir(), 'ab-paths-')); }
 
 test('id dibersihkan jadi aman untuk nama folder', () => {
-  assert.strictEqual(sanitizeId('Perkap.com'), 'perkapcom');
+  assert.strictEqual(sanitizeId('Example.com'), 'examplecom');
   assert.strictEqual(sanitizeId('Blog Saya!'), 'blog-saya');
   assert.strictEqual(sanitizeId('  spasi  '), 'spasi');
 });
@@ -21,8 +21,8 @@ test('id yang mencoba keluar folder ditolak', () => {
 
 test('path tenant tersusun di bawah data/blogs', () => {
   const p = makePaths(tmpRoot());
-  assert.ok(p.configPath('perkapcom').endsWith(path.join('data', 'blogs', 'perkapcom', 'config.json')));
-  assert.ok(p.cachePath('perkapcom').endsWith('articles-cache.json'));
+  assert.ok(p.configPath('examplecom').endsWith(path.join('data', 'blogs', 'examplecom', 'config.json')));
+  assert.ok(p.cachePath('examplecom').endsWith('articles-cache.json'));
 });
 
 test('listBlogs kosong kalau folder belum ada', () => {
@@ -33,17 +33,17 @@ test('listBlogs kosong kalau folder belum ada', () => {
 test('listBlogs hanya memuat direktori, mengabaikan berkas _active', () => {
   const root = tmpRoot();
   const p = makePaths(root);
-  fs.mkdirSync(path.join(root, 'data', 'blogs', 'perkapcom'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'data', 'blogs', '_active'), 'perkapcom');
-  assert.deepStrictEqual(p.listBlogs(), ['perkapcom']);
+  fs.mkdirSync(path.join(root, 'data', 'blogs', 'examplecom'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'data', 'blogs', '_active'), 'examplecom');
+  assert.deepStrictEqual(p.listBlogs(), ['examplecom']);
 });
 
 test('activeBlog memilih tenant pertama kalau _active belum ada', () => {
   const root = tmpRoot();
   const p = makePaths(root);
-  fs.mkdirSync(path.join(root, 'data', 'blogs', 'perkapcom'), { recursive: true });
-  assert.strictEqual(p.activeBlog(), 'perkapcom');
-  assert.strictEqual(fs.readFileSync(path.join(root, 'data', 'blogs', '_active'), 'utf-8').trim(), 'perkapcom');
+  fs.mkdirSync(path.join(root, 'data', 'blogs', 'examplecom'), { recursive: true });
+  assert.strictEqual(p.activeBlog(), 'examplecom');
+  assert.strictEqual(fs.readFileSync(path.join(root, 'data', 'blogs', '_active'), 'utf-8').trim(), 'examplecom');
 });
 
 test('activeBlog null kalau belum ada tenant sama sekali', () => {

@@ -35,8 +35,8 @@ function loadDotEnv(filePath, env = process.env) {
 }
 
 // Nama variabel diturunkan dari id yang SUDAH disanitasi, bukan dari masukan mentah.
-// Kalau tidak, "Perkap.com" membaca config dari folder "perkapcom" (configPath
-// menyanitasi di dalam) tapi mencari PERKAP.COM_WP_APP_PASSWORD — variabel yang
+// Kalau tidak, "Example.com" membaca config dari folder "examplecom" (configPath
+// menyanitasi di dalam) tapi mencari EXAMPLE.COM_WP_APP_PASSWORD — variabel yang
 // tak akan pernah ada, sehingga wpPasswordSet melapor false untuk tenant yang
 // password-nya justru sudah diset. Sanitasi di sini menutup seluruh pemanggil
 // sekaligus, bukan satu route saja.

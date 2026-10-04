@@ -27,7 +27,7 @@ Target bentuknya mengikuti skill `business-asset` yang sudah terbukti: `server.j
 | Framework | Express | `:id` param jadi tulang punggung multi-tenant; hilang ~150–200 baris boilerplate |
 | Distribusi | git clone + `npm install` | menggantikan jalur `.skill` zip; build.js tidak diurus di spec ini |
 | Sumber daftar artikel | Sync WordPress | WP sudah jadi sumber kebenaran; tidak perlu migrasi INDEX.csv |
-| Tenant pertama | `G:\Project\Perkap Article\` di-import | 583 artikel + 20+ kategori sudah ada di sana |
+| Tenant pertama | `<folder-skill-lama>\` di-import | 583 artikel + 20+ kategori sudah ada di sana |
 | Article Writer lama | Tidak disentuh | tetap jadi cadangan selama transisi |
 
 ## Struktur akhir
@@ -54,7 +54,7 @@ Target bentuknya mengikuti skill `business-asset` yang sudah terbukti: `server.j
     js/                       # dipecah per tab
   data/
     blogs/
-      perkapcom/
+      examplecom/
         config.json
         articles-cache.json
         article-plans.json
@@ -73,8 +73,8 @@ di disk; dashboard tinggal menulis ulang isinya saat user ganti tenant.
 Tidak disimpan di `config.json`. Di `.env`, dinamai per tenant:
 
 ```
-PERKAPCOM_WP_APP_PASSWORD=...
-PERKAPCOM_IMAGE_API_KEY=...
+EXAMPLECOM_WP_APP_PASSWORD=...
+EXAMPLECOM_IMAGE_API_KEY=...
 ```
 
 `lib/env.js` mengekspor `resolveCredentials(blogId, config)` yang menggabungkan config +
@@ -83,7 +83,7 @@ variabel yang kurang** — jangan kirim request lalu melaporkan 401 sebagai hasi
 
 Script `post-to-wp.js` dan `upload-image.js` diubah membaca env, tidak lagi menerima
 `--password` lewat argv: argv terlihat di `ps` dan masuk ke log intersepsi perintah.
-Perkap sudah memperbaiki ini (PER-2297); jangan diulang di sini.
+Ini sudah pernah diperbaiki di versi sebelumnya; jangan diulang di sini.
 
 ## Langkah refactor (strangler)
 
@@ -146,15 +146,15 @@ tenant aktif, supaya `index.html` tidak perlu ditulis ulang di langkah ini.
 
 UI: dropdown pemilih tenant di sidebar.
 
-### 2. Import tenant perkap
+### 2. Import tenant example
 
 `scripts/import-blog.js <sumber> <id>` — sekali jalan, bukan route.
 
-Sumber: `G:\Project\Perkap Article\` — perhatikan file ada di **root project**, bukan di
+Sumber: `<folder-skill-lama>\` — perhatikan file ada di **root project**, bukan di
 dalam `.claude/skills/blog-autopilot/` (instalasi itu versi lama; source sekarang
 membacanya dari `SKILL_DIR`). Yang disalin:
 
-- `blog-autopilot-config.json` → `data/blogs/perkapcom/config.json`
+- `blog-autopilot-config.json` → `data/blogs/examplecom/config.json`
 - `articles-cache.json` (583 artikel, sync 2026-04-18) → `articles-cache.json`
 - `article-plans.json` (2 plan), `agent-queue.json` (2 task)
 
@@ -168,7 +168,7 @@ Lihat bagian Kredensial di atas. `.env.example` mendokumentasikan nama variabel 
 ### 4. Schedule-date otomatis
 
 Salin `find-schedule-date.js` + unit test-nya dari
-`Perkap_com/project/article/.claude/skills/post-article/scripts/`. Sumber tanggal terpakai
+`example_com/project/article/.claude/skills/post-article/scripts/`. Sumber tanggal terpakai
 diganti: bukan `Index_Published.csv`, tapi field `date` di `articles-cache.json`.
 Default jam 06:00 WIB dipertahankan.
 
@@ -200,7 +200,7 @@ Bukti per langkah, bukan "kelihatannya jalan":
 | S1 | `node --test scripts/lib/*.test.js` hijau |
 | S2 | server start; `GET /api/articles` → 583; 5 tab kebaca |
 | S3 | dashboard render; console tanpa error baru |
-| F1 | `GET /api/blogs` → `perkapcom`; ganti tenant → config ikut ganti |
+| F1 | `GET /api/blogs` → `examplecom`; ganti tenant → config ikut ganti |
 | F2 | 583 artikel + 20 kategori muncul di dashboard; `grep -r "jhKd" data/` kosong |
 | F3 | `.env` dihapus → error menyebut nama variabel yang kurang, bukan 401 |
 | F4 | test hijau; tanggal usulan tidak menabrak `date` mana pun di cache |
@@ -213,4 +213,4 @@ memakai sesi browser yang sudah terbuka.
 
 - Fitur 6–10 (lihat `docs/AGENDA.md`)
 - `build.js` / distribusi `.skill` zip
-- `Perkap_com/project/article/` (Article Writer lama tetap utuh)
+- `example_com/project/article/` (Article Writer lama tetap utuh)

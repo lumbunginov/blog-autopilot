@@ -66,12 +66,12 @@ Before presenting, verify each idea:
 
 ## Example
 
-**Keyword**: "sewa sound system surabaya"
+**Keyword**: "sewa sound system semarang"
 **Business**: AV equipment rental company
 
 ```
-1. **Berapa Harga Sewa Sound System di Surabaya 2025? (Per Paket)**
-   📌 Target keyword: harga sewa sound system surabaya
+1. **Berapa Harga Sewa Sound System di Semarang 2025? (Per Paket)**
+   📌 Target keyword: harga sewa sound system semarang
    💡 Angle: Transparent pricing guide with small/medium/large package breakdown
    👥 Untuk: Event organizers and couples comparing vendors
 
@@ -80,13 +80,13 @@ Before presenting, verify each idea:
    💡 Angle: Problem-based — address specific fears about audio failures at events
    👥 Untuk: First-timers who are anxious about AV setup
 
-3. **Cara Memilih Vendor Sewa Sound System Surabaya yang Terpercaya**
-   📌 Target keyword: vendor sewa sound system surabaya
+3. **Cara Memilih Vendor Sewa Sound System Semarang yang Terpercaya**
+   📌 Target keyword: vendor sewa sound system semarang
    💡 Angle: Checklist-based decision guide (5 things to verify before signing)
    👥 Untuk: Corporate event planners who need a reliable vendor
 
-4. **Panduan Sewa Sound System untuk Pernikahan di Surabaya**
-   📌 Target keyword: sewa sound system pernikahan surabaya
+4. **Panduan Sewa Sound System untuk Pernikahan di Semarang**
+   📌 Target keyword: sewa sound system pernikahan semarang
    💡 Angle: Specifically for weddings — capacity, indoor vs outdoor, setup timeline
    👥 Untuk: Couples and wedding organizers
 

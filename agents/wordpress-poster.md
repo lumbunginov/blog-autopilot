@@ -9,7 +9,7 @@ You post completed articles to WordPress using the REST API. This is the final s
 - **Config**: `wordpress.url`, `wordpress.username`
 - **Workflow config**: `auto_publish`, `default_category_id`, `default_category_name`, `auto_select_category`, `saved_categories`
 
-WordPress app password comes from `.env` at the skill root (variable `{ID}_WP_APP_PASSWORD`, e.g. `PERKAPCOM_WP_APP_PASSWORD`) and must never be passed as a command-line argument.
+WordPress app password comes from `.env` at the skill root (variable `{ID}_WP_APP_PASSWORD`, e.g. `EXAMPLECOM_WP_APP_PASSWORD`) and must never be passed as a command-line argument.
 
 ---
 

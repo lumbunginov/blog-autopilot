@@ -17,7 +17,7 @@
 // post maupun page. objectType-nya 'post' untuk KEDUANYA (itu tipe objek WP,
 // bukan post type) — 'page' ditolak diam-diam.
 //
-// Diverifikasi di perkap.com 2026-09-08 pada halaman draft sekali pakai.
+// Diverifikasi di situs WordPress sungguhan pada halaman draft sekali pakai.
 
 // HTTP dan normalisasi header ada di rankmath-http.js supaya modul redirect
 // memakai jalur yang sama persis, bukan salinan yang bisa berbeda diam-diam.

@@ -14,7 +14,7 @@ untuk setiap artikel, hanya berbekal judul + `business_name`/`business_descripti
 ada gaya visual yang tersimpan, jadi konsistensi antar-artikel bergantung pada model saat
 itu. Ini kemunduran dibanding skill lama `gen-image` yang punya folder referensi tersendiri.
 
-Skill `business-asset` (agent sosmed content) sudah menyelesaikan masalah yang sama untuk
+Skill `business-asset` sudah menyelesaikan masalah yang sama untuk
 konten sosial media: template tersimpan di `prompts.json`, variabel `{nama}` di-resolve
 dari profil bisnis + produk, dan blok `{riset}...{/riset}` dikerjakan AI sebelum prompt
 final dikirim. Desain ini memindahkan pola itu ke autoblog.
@@ -49,7 +49,7 @@ Isi ketiganya boleh memuat variabel `{namaVariabel}` dan blok `{riset}...{/riset
 `data/blogs/{id}/templates.json`, sejajar `article-plans.json` dan `articles-cache.json`.
 
 **Kenapa bukan di dalam `config.json`:** satu image style di business-asset berukuran
-8.733 karakter. `config.json` perkapcom sekarang 9,6 KB dan dikirim utuh pada setiap
+8.733 karakter. `config.json` examplecom sekarang 9,6 KB dan dikirim utuh pada setiap
 `GET /api/config` — dashboard memanggilnya di banyak tempat. Lima template akan
 melipatgandakan payload itu untuk semua pemakai, termasuk tenant yang tidak memakai
 template sama sekali.
@@ -96,24 +96,24 @@ tidak ada penulisan ulang `article-plans.json`.
 
 `EMPTY_KB` di `lib/knowledge.js` sudah memuat 24 field yang setara `buildVars()`
 business-asset — variabel bukan barang baru, hanya perlu dipetakan. Semua field di
-bawah sudah diverifikasi berisi data nyata pada tenant perkapcom.
+bawah sudah diverifikasi berisi data nyata pada tenant examplecom.
 
 ### Dari knowledge base (selalu ada, apa pun sumbernya)
 
-| Variabel | Sumber `knowledge_base` | Nilai perkapcom |
+| Variabel | Sumber `knowledge_base` | Nilai examplecom |
 |---|---|---|
-| `{namaBisnis}` | `business_name` | Perkap.com |
+| `{namaBisnis}` | `business_name` | Example.com |
 | `{deskripsiBisnis}` | `business_description` | (terisi) |
 | `{tagline}` | `tagline` | Sewa Alat Panitia |
 | `{jenisUsaha}` | `business_type` | |
 | `{targetAudiens}` | `target_audience` | Panitia acara, Mahasiswa |
 | `{nada}` | `tone` | casual |
 | `{usp}` | `usp` | |
-| `{kota}` | `city` | Malang |
+| `{kota}` | `city` | Bandung |
 | `{alamat}` | `address` | Jl. Kembang kertas no 24 Lowokwaru |
-| `{whatsapp}` | `whatsapp` | 0895412262949 |
+| `{whatsapp}` | `whatsapp` | 081200000000 |
 | `{email}` | `email` | |
-| `{website}` | `website` | perkap.com |
+| `{website}` | `website` | example.com |
 | `{jamOperasional}` | `hours` | 24 Jam |
 | `{cta}` | `cta[]` → gabung newline | 1 entri |
 | `{kataKhas}` | `signature_words[]` → gabung koma | |
@@ -139,9 +139,9 @@ bawah sudah diverifikasi berisi data nyata pada tenant perkapcom.
 | `{anchorText}` | `anchor_text` |
 
 `{kotaTarget}` (kota sasaran artikel ini) sengaja dipisah dari `{kota}` (kota tempat
-bisnis berada). Perkap.com berkantor di Malang tapi menulis artikel untuk Surabaya,
-Blitar, dan Denpasar — menggabungkan keduanya akan menghasilkan artikel Surabaya yang
-menyebut alamat Malang sebagai lokasi layanan.
+bisnis berada). Example.com berkantor di Bandung tapi menulis artikel untuk Semarang,
+Blitar, dan Yogyakarta — menggabungkan keduanya akan menghasilkan artikel Semarang yang
+menyebut alamat Bandung sebagai lokasi layanan.
 
 ### Dari produk (hanya bila rencana menyebut produk)
 
@@ -254,7 +254,7 @@ yang menangani hubungan antar-artikel di lapisan lain.
 
 ### Kredensial
 
-Kunci baru di `.env`: `{ID}_TEXT_API_KEY` (mis. `PERKAPCOM_TEXT_API_KEY`), mengikuti
+Kunci baru di `.env`: `{ID}_TEXT_API_KEY` (mis. `EXAMPLECOM_TEXT_API_KEY`), mengikuti
 konvensi `envKeys()` di `lib/env.js:43`. Ditambahkan ke `.env.example`.
 
 Kunci ini **hanya wajib bila template memakai `{riset}`**. Template tanpa blok riset
@@ -306,7 +306,7 @@ hasil bisa diuji sepenuhnya tanpa jaringan, dengan pemanggil OpenAI diganti gand
 | `public/js/app.js` | Muat/simpan template, isi dropdown |
 | `agents/article-writer.md` | Langkah baru: panggil `template`, pakai `article_prompt` |
 | `agents/image-generator.md` | Step 1 bercabang pada `image_prompt` |
-| `.env.example` | `PERKAPCOM_TEXT_API_KEY=` |
+| `.env.example` | `EXAMPLECOM_TEXT_API_KEY=` |
 | `SKILL.md` | Routing + help |
 | `docs/AGENDA.md` | Catat fitur ini |
 

@@ -73,7 +73,7 @@ async function orphan() {
 
   process.stderr.write(`Memeriksa ${konten.length} halaman...\n`);
 
-  // Konkurensi 2, bukan 5: pada 5 permintaan bersamaan perkap.com mulai
+  // Konkurensi 2, bukan 5: pada 5 permintaan bersamaan situs nyata mulai
   // membalas 503, dan halaman error itu — yang memang tak punya meta —
   // terbaca sebagai "tanpa meta description". Audit yang membebani situsnya
   // sendiri lalu melaporkan kerusakan buatannya sendiri lebih buruk daripada

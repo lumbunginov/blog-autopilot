@@ -9,15 +9,15 @@ const { makePaths } = require('../lib/paths');
 
 function baRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cfgroute-ba-'));
-  const dir = path.join(root, 'perkapcom');
+  const dir = path.join(root, 'examplecom');
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify({
-    nama: 'Perkap.com', deskripsi: 'Sewa alat panitia.', targetMarket: 'Panitia',
+    nama: 'Example.com', deskripsi: 'Sewa alat panitia.', targetMarket: 'Panitia',
     toneOfVoice: 'santai', kataHindari: ['Termurah']
   }));
   fs.writeFileSync(path.join(dir, 'products.json'), JSON.stringify([
     { id: 'ht', nama: 'Sewa HT', harga: 'Rp 35.000',
-      konteks: 'Detail https://perkap.com/sewa-ht/', faq: 'tanya jawab' }
+      konteks: 'Detail https://example.com/sewa-ht/', faq: 'tanya jawab' }
   ]));
   return root;
 }
@@ -49,9 +49,9 @@ const MANUAL = {
 
 function baConfig(root) {
   return {
-    wordpress: { url: 'https://perkap.com', username: 'u' },
+    wordpress: { url: 'https://example.com', username: 'u' },
     knowledge_base: { business_name: 'Manual Inc', products: [{ name: 'A', url: '' }] },
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   };
 }
 
@@ -67,9 +67,9 @@ test('GET /api/config mode manual tidak berubah perilakunya', async () => {
 test('GET /api/config mode business_asset mengembalikan data live', async () => {
   await withServer(baConfig(baRoot()), async (base) => {
     const r = await (await fetch(`${base}/api/config`)).json();
-    assert.strictEqual(r.knowledge_base.business_name, 'Perkap.com');
+    assert.strictEqual(r.knowledge_base.business_name, 'Example.com');
     assert.strictEqual(r.knowledge_base.products.length, 1);
-    assert.strictEqual(r.knowledge_base.products[0].url, 'https://perkap.com/sewa-ht/');
+    assert.strictEqual(r.knowledge_base.products[0].url, 'https://example.com/sewa-ht/');
     assert.strictEqual(r._knowledge.source, 'business_asset');
   });
 });
@@ -106,7 +106,7 @@ test('POST /api/config mode business_asset: knowledge_base kosong dari browser T
     const res = await fetch(`${base}/api/config`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        knowledge_source: { type: 'business_asset', business_asset: { root: baRoot(), business_id: 'perkapcom' } },
+        knowledge_source: { type: 'business_asset', business_asset: { root: baRoot(), business_id: 'examplecom' } },
         knowledge_base: { business_name: '', products: [], prohibited_topics: [], custom_entries: [] }
       })
     });
@@ -133,13 +133,13 @@ test('POST /api/config bisa mengganti knowledge_source ke business_asset', async
     await fetch(`${base}/api/config`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+        knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
       })
     });
     const saved = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
     assert.strictEqual(saved.knowledge_source.type, 'business_asset');
     const r = await (await fetch(`${base}/api/config`)).json();
-    assert.strictEqual(r.knowledge_base.business_name, 'Perkap.com');
+    assert.strictEqual(r.knowledge_base.business_name, 'Example.com');
   });
 });
 
@@ -157,7 +157,7 @@ test('mode business_asset dengan folder salah: GET tetap 200 dan menyebut errorn
 test('GET /api/blogs/:id/config ikut memakai resolver', async () => {
   await withServer(baConfig(baRoot()), async (base) => {
     const r = await (await fetch(`${base}/api/blogs/testblog/config`)).json();
-    assert.strictEqual(r.knowledge_base.business_name, 'Perkap.com');
+    assert.strictEqual(r.knowledge_base.business_name, 'Example.com');
     assert.strictEqual(r._knowledge.source, 'business_asset');
   });
 });
@@ -212,7 +212,7 @@ test('POST /api/config juga menolak kredensial berbarengan dengan knowledge_base
 test('siklus manual → business_asset → manual tidak menghapus cadangan manual', async () => {
   const root = baRoot();
   const AWAL = {
-    wordpress: { url: 'https://perkap.com', username: 'u' },
+    wordpress: { url: 'https://example.com', username: 'u' },
     knowledge_base: {
       business_name: 'CADANGAN MANUAL',
       business_description: 'ditulis user',
@@ -224,7 +224,7 @@ test('siklus manual → business_asset → manual tidak menghapus cadangan manua
       custom_entries: [{ title: 'catatan penting', body: 'isi' }],
       // Profil lengkap ikut diuji: kalau suatu saat strip diubah jadi allowlist
       // per-field dan field baru terlupa, test ini yang menangkapnya.
-      city: 'Surabaya',
+      city: 'Semarang',
       whatsapp: '0812345',
       tagline: 'Slogan Manual',
       cta: ['Hubungi kami'],
@@ -238,11 +238,11 @@ test('siklus manual → business_asset → manual tidak menghapus cadangan manua
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
     }).then(r => r.json());
 
-    await post({ knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } } });
+    await post({ knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } } });
 
     // Yang tampil di layar sekarang data business asset.
     const tampil = (await (await fetch(`${base}/api/config`)).json()).knowledge_base;
-    assert.strictEqual(tampil.business_name, 'Perkap.com', 'prasyarat: mode BA aktif');
+    assert.strictEqual(tampil.business_name, 'Example.com', 'prasyarat: mode BA aktif');
 
     // User memindahkan radio ke manual lalu menekan Save. collectForm() ikut
     // mengirim knowledge_base hasil panen DOM — yaitu data BA di atas.
@@ -271,7 +271,7 @@ test('siklus manual → business_asset → manual tidak menghapus cadangan manua
     assert.strictEqual(disk.knowledge_base.custom_entries.length, 1);
     assert.strictEqual(disk.workflow.saved_categories.length, 1);
     // Profil lengkap juga harus selamat, bukan tertimpa data business asset.
-    assert.strictEqual(disk.knowledge_base.city, 'Surabaya');
+    assert.strictEqual(disk.knowledge_base.city, 'Semarang');
     assert.strictEqual(disk.knowledge_base.whatsapp, '0812345');
     assert.strictEqual(disk.knowledge_base.tagline, 'Slogan Manual');
     assert.deepStrictEqual(disk.knowledge_base.cta, ['Hubungi kami']);
@@ -281,7 +281,7 @@ test('siklus manual → business_asset → manual tidak menghapus cadangan manua
 
 test('sumber business asset rusak lalu user kembali ke manual: cadangan tetap bisa dipulihkan', async () => {
   const AWAL = {
-    wordpress: { url: 'https://perkap.com' },
+    wordpress: { url: 'https://example.com' },
     knowledge_base: {
       business_name: 'CADANGAN MANUAL', products: [{ name: 'P1', url: '' }],
       prohibited_topics: ['judi'], custom_entries: [{ title: 'c', body: 'i' }]
@@ -311,15 +311,15 @@ test('sumber business asset rusak lalu user kembali ke manual: cadangan tetap bi
 test('suffix judul SEO memakai nama bisnis yang berlaku, bukan cadangan manual basi', async () => {
   const root = baRoot();
   const cfg = {
-    wordpress: { url: 'https://perkap.com', username: 'u' },
+    wordpress: { url: 'https://example.com', username: 'u' },
     knowledge_base: { business_name: 'NAMA LAMA MANUAL', products: [] },
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
     // sengaja tanpa seo_plugin supaya withSeoDefaults yang mengisinya
   };
   await withServer(cfg, async (base) => {
     const r = await (await fetch(`${base}/api/config`)).json();
-    assert.strictEqual(r.knowledge_base.business_name, 'Perkap.com');
-    assert.strictEqual(r.seo_plugin.rankmath.title_suffix, '| Perkap.com',
+    assert.strictEqual(r.knowledge_base.business_name, 'Example.com');
+    assert.strictEqual(r.seo_plugin.rankmath.title_suffix, '| Example.com',
       'suffix mendarat di meta title tiap artikel — kalau memakai nama basi, salahnya senyap');
   });
 });
@@ -327,14 +327,14 @@ test('suffix judul SEO memakai nama bisnis yang berlaku, bukan cadangan manual b
 test('label tenant di daftar blog memakai nama yang berlaku', async () => {
   const root = baRoot();
   const cfg = {
-    wordpress: { url: 'https://perkap.com' },
+    wordpress: { url: 'https://example.com' },
     knowledge_base: { business_name: 'NAMA LAMA MANUAL', products: [] },
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   };
   await withServer(cfg, async (base) => {
     const r = await (await fetch(`${base}/api/blogs`)).json();
     const t = r.blogs.find(b => b.id === 'testblog');
-    assert.strictEqual(t.name, 'Perkap.com',
+    assert.strictEqual(t.name, 'Example.com',
       'sidebar dan tab Knowledge Base harus menyebut nama yang sama');
   });
 });

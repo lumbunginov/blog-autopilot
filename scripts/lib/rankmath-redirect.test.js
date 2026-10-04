@@ -9,8 +9,8 @@ const rd = require('./rankmath-redirect');
 // URL penuh yang lolos apa adanya tersimpan tanpa keluhan lalu tak pernah cocok.
 assert.strictEqual(rd.polaSumber('/sewa-webcam-lama/'), 'sewa-webcam-lama');
 assert.strictEqual(rd.polaSumber('sewa-webcam-lama'), 'sewa-webcam-lama');
-assert.strictEqual(rd.polaSumber('https://perkap.com/sewa-webcam-lama/'), 'sewa-webcam-lama');
-assert.strictEqual(rd.polaSumber('https://perkap.com/a/b/c/'), 'a/b/c');
+assert.strictEqual(rd.polaSumber('https://example.com/sewa-webcam-lama/'), 'sewa-webcam-lama');
+assert.strictEqual(rd.polaSumber('https://example.com/a/b/c/'), 'a/b/c');
 assert.strictEqual(rd.polaSumber('  /spasi/  '), 'spasi');
 
 assert.throws(() => rd.polaSumber(''), /kosong/);

@@ -6,7 +6,7 @@ Menutup: agenda Fitur 8 (Product knowledge) di `docs/AGENDA.md`
 
 ## Masalah
 
-Knowledge base tenant diisi manual lewat dashboard. Untuk perkap, hasilnya tipis dan
+Knowledge base tenant diisi manual lewat dashboard. Untuk example, hasilnya tipis dan
 sebagian masih isian contoh bawaan:
 
 | Field | Isi sekarang |
@@ -16,14 +16,14 @@ sebagian masih isian contoh bawaan:
 | `target_audience` | teks placeholder template: "Who your customers are (e.g., …)" |
 | `prohibited_topics` | kosong |
 
-Padahal data yang sama sudah dirawat di skill `business-asset` (agent sosmed content),
+Padahal data yang sama sudah dirawat di skill `business-asset`,
 jauh lebih lengkap dan diperbarui rutin:
 
-`G:\Project\Paperclip\Perkap_com\project\sosmed_content\data\businesses\perkapcom\`
+`<root-business-asset>\data\businesses\examplecom\`
 
 - `profile.json` — nama, tagline, jenis usaha, kota, targetMarket, toneOfVoice, kataHindari, website
 - `products.json` — **45 produk**, tiap produk punya `nama`, `harga`, `konteks`
-  (product knowledge penuh; 35 memuat URL perkap.com), `faq`, `targetMarket`
+  (product knowledge penuh; 35 memuat URL example.com), `faq`, `targetMarket`
 
 Mengetik ulang 45 produk ke dashboard adalah kerja sia-sia yang langsung basi begitu
 business asset diperbarui.
@@ -34,7 +34,7 @@ business asset diperbarui.
 |---|---|---|
 | Cara baca | **Live read** tiap dipakai | edit di dashboard sosmed langsung terasa; tidak ada salinan basi |
 | Kedalaman produk | nama + url + harga + konteks + faq | penulis artikel dapat spesifikasi asli, bukan hanya nama |
-| Sumber data | baca file langsung | server sosmed (3101) tidak perlu hidup |
+| Sumber data | baca file langsung | server business-asset tidak perlu hidup |
 | Pemilih | `root` + `business_id` terpisah | UI bisa menampilkan dropdown; user tidak menempel path |
 | Mode business_asset | knowledge base **read-only** | tanpa ini, sekali Save hasil live tertulis balik jadi salinan beku |
 | Folder hilang | error yang menyebut path | jangan diam-diam jatuh ke manual atau ke KB kosong |
@@ -47,8 +47,8 @@ Field baru di `data/blogs/{id}/config.json`:
 "knowledge_source": {
   "type": "business_asset",
   "business_asset": {
-    "root": "G:\\Project\\Paperclip\\Perkap_com\\project\\sosmed_content\\data\\businesses",
-    "business_id": "perkapcom"
+    "root": "<root-business-asset>\\data\\businesses",
+    "business_id": "examplecom"
   }
 }
 ```
@@ -83,7 +83,7 @@ Tidak pernah ikut di `GET /api/config`.
 | `target_audience` | `profile.targetMarket` | |
 | `tone` | `profile.toneOfVoice` dipetakan | `santai`→`casual`, `formal`/`profesional`→`professional`, `edukatif`→`educational`; tak dikenal → `professional` |
 | `products[]` | `products.json` | `name`←`nama`, `price`←`harga`, `url` diekstrak dari `konteks` |
-| `internal_links[]` | URL unik hasil ekstraksi | anchor = nama produk; 45 produk perkap → 27 link unik |
+| `internal_links[]` | URL unik hasil ekstraksi | anchor = nama produk; 45 produk example → 27 link unik |
 | `avoid_words[]` | `profile.kataHindari` | **field baru** |
 | `prohibited_topics` | — | selalu `[]` |
 | `custom_entries` | — | selalu `[]` |
@@ -165,10 +165,10 @@ Tab Knowledge Base dapat kartu baru **di paling atas**, sebelum "Auto-fill from 
 ```
 Sumber Knowledge Base
 ( ) Input manual        — isi sendiri di halaman ini
-(o) Business Asset      — ambil dari data bisnis skill sosmed content
+(o) Business Asset      — ambil dari data bisnis skill business-asset
 
-  Folder root  [ G:\...\data\businesses        ]  [Muat]
-  Bisnis       [ Perkap.com (45 produk)      v ]
+  Folder root  [ C:\...\data\businesses        ]  [Muat]
+  Bisnis       [ Example.com (45 produk)      v ]
 
   Terbaca: 45 produk - 35 internal link - tone casual
 ```
@@ -202,7 +202,7 @@ Kalau resolusi gagal, kartu menampilkan kotak merah berisi path yang dicari dan 
 | Pemetaan | `node --test scripts/lib/business-asset.test.js` hijau |
 | Live read | ubah `nama` di `profile.json` → muat ulang dashboard → nama ikut berubah tanpa import |
 | Produk | `GET /api/config` → `knowledge_base.products.length === 45` |
-| Internal link | `internal_links` berisi 27 URL perkap.com asli (unik; sebagian produk berbagi halaman); `yourblog.com` tidak ada |
+| Internal link | `internal_links` berisi 27 URL example.com asli (unik; sebagian produk berbagi halaman); `yourblog.com` tidak ada |
 | Read-only | POST config berisi `knowledge_base` palsu → file di disk tidak berubah + ada `warning` |
 | Tingkat penuh | `blog-config.js product "Bel Cerdas Cermat"` memuat `context`; `GET /api/config` tidak |
 | Traversal | `business_id: "../../rahasia"` ditolak, menyebut id tidak valid |

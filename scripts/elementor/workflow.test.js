@@ -18,7 +18,7 @@ const SAMPLE = [{
   id: 'sec1', elType: 'section', settings: { padding: '10' },
   elements: [{
     id: 'col1', elType: 'column', settings: {},
-    elements: [{ id: 'h1', elType: 'widget', widgetType: 'heading', settings: { title: 'Sewa HT Malang' } }]
+    elements: [{ id: 'h1', elType: 'widget', widgetType: 'heading', settings: { title: 'Sewa HT Bandung' } }]
   }]
 }];
 
@@ -37,8 +37,8 @@ function tmpDirs() {
 }
 
 test('parseBlogArg memisahkan --blog dari argumen posisional', () => {
-  assert.deepStrictEqual(parseBlogArg(['home.json', '--blog', 'perkapcom']),
-    { blogId: 'perkapcom', rest: ['home.json'] });
+  assert.deepStrictEqual(parseBlogArg(['home.json', '--blog', 'examplecom']),
+    { blogId: 'examplecom', rest: ['home.json'] });
   assert.deepStrictEqual(parseBlogArg(['--blog=lain', 'a.json', 'b.json']),
     { blogId: 'lain', rest: ['a.json', 'b.json'] });
   assert.deepStrictEqual(parseBlogArg(['a.json']), { blogId: null, rest: ['a.json'] });
@@ -149,13 +149,13 @@ test('clone-template menghasilkan JSON valid dengan id baru dan teks tergantikan
   try {
     execFileSync(process.execPath, [
       path.join(SCRIPTS, 'clone-template.js'),
-      '__uji-src.json', '__uji-dst.json', 'Sewa HT Denpasar',
-      '--replace', 'Malang:Denpasar'
+      '__uji-src.json', '__uji-dst.json', 'Sewa HT Yogyakarta',
+      '--replace', 'Bandung:Yogyakarta'
     ], { stdio: 'pipe' });
     const out = JSON.parse(fs.readFileSync(dst, 'utf-8'));
     assert.ok(Array.isArray(out.content), 'output harus format halaman WordPress');
     const text = JSON.stringify(out);
-    assert.ok(text.includes('Denpasar') && !text.includes('Malang'), 'teks belum tergantikan');
+    assert.ok(text.includes('Yogyakarta') && !text.includes('Bandung'), 'teks belum tergantikan');
     assert.notStrictEqual(out.content[0].id, 'sec1', 'id harus diregenerasi');
   } finally {
     [src, dst].forEach(f => { if (fs.existsSync(f)) fs.unlinkSync(f); });
@@ -208,11 +208,11 @@ test('create-page default status draft dan menolak status asing', () => {
 
 test('payload create memuat penanda Elementor dan data ter-stringify', () => {
   const p = create.buildPayload({
-    title: 'Sewa HT Denpasar', slug: 'sewa-ht-denpasar', status: 'draft',
+    title: 'Sewa HT Yogyakarta', slug: 'sewa-ht-yogyakarta', status: 'draft',
     sections: SAMPLE, pageSettings: { hide_title: 'yes' }
   });
-  assert.strictEqual(p.title, 'Sewa HT Denpasar');
-  assert.strictEqual(p.slug, 'sewa-ht-denpasar');
+  assert.strictEqual(p.title, 'Sewa HT Yogyakarta');
+  assert.strictEqual(p.slug, 'sewa-ht-yogyakarta');
   assert.strictEqual(p.status, 'draft');
   assert.strictEqual(p.meta._elementor_edit_mode, 'builder');
   assert.strictEqual(p.meta._elementor_template_type, 'wp-page');

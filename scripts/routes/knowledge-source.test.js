@@ -9,7 +9,7 @@ const { makePaths } = require('../lib/paths');
 
 function baRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ks-ba-'));
-  for (const [id, nama, n] of [['perkapcom', 'Perkap.com', 2], ['karvaid', 'Karva.id', 1]]) {
+  for (const [id, nama, n] of [['examplecom', 'Example.com', 2], ['contohid', 'Contoh.id', 1]]) {
     const dir = path.join(root, id);
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify({ nama, toneOfVoice: 'santai' }));
@@ -21,12 +21,12 @@ function baRoot() {
   fs.mkdirSync(path.join(root, 'bukan-bisnis'), { recursive: true });
   fs.writeFileSync(path.join(root, 'bukan-bisnis', 'catatan.txt'), 'rahasia');
   // Foto sah untuk tes rute /api/business-asset-photo.
-  fs.mkdirSync(path.join(root, 'perkapcom', 'photos'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'perkapcom', 'photos', 'sah.png'), 'PNG-PALSU-UNTUK-TES');
+  fs.mkdirSync(path.join(root, 'examplecom', 'photos'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'examplecom', 'photos', 'sah.png'), 'PNG-PALSU-UNTUK-TES');
   // Berkas non-gambar yang BENAR-BENAR ADA di photos/ — supaya tes ekstensi
   // menggigit allowlist (lapis 2), bukan cuma 404-karena-tidak-ada.
-  fs.writeFileSync(path.join(root, 'perkapcom', 'photos', 'config.json'), 'PENANDA-CONFIG-RAHASIA');
-  fs.writeFileSync(path.join(root, 'perkapcom', 'photos', 'catatan.txt'), 'PENANDA-CATATAN-RAHASIA');
+  fs.writeFileSync(path.join(root, 'examplecom', 'photos', 'config.json'), 'PENANDA-CONFIG-RAHASIA');
+  fs.writeFileSync(path.join(root, 'examplecom', 'photos', 'catatan.txt'), 'PENANDA-CATATAN-RAHASIA');
   return root;
 }
 
@@ -52,7 +52,7 @@ test('daftar bisnis hanya folder yang punya profile.json', async () => {
   await withServer({}, async (base) => {
     const r = await (await fetch(`${base}/api/business-assets?root=${encodeURIComponent(root)}`)).json();
     const ids = r.businesses.map(b => b.id).sort();
-    assert.deepStrictEqual(ids, ['karvaid', 'perkapcom']);
+    assert.deepStrictEqual(ids, ['contohid', 'examplecom']);
     assert.ok(!ids.includes('bukan-bisnis'));
   });
 });
@@ -61,8 +61,8 @@ test('daftar bisnis menyertakan nama dan jumlah produk', async () => {
   const root = baRoot();
   await withServer({}, async (base) => {
     const r = await (await fetch(`${base}/api/business-assets?root=${encodeURIComponent(root)}`)).json();
-    const p = r.businesses.find(b => b.id === 'perkapcom');
-    assert.strictEqual(p.name, 'Perkap.com');
+    const p = r.businesses.find(b => b.id === 'examplecom');
+    assert.strictEqual(p.name, 'Example.com');
     assert.strictEqual(p.productCount, 2);
   });
 });
@@ -95,8 +95,8 @@ test('daftar bisnis tidak pernah membocorkan isi berkas lain', async () => {
 test('preview melaporkan ringkasan tenant aktif', async () => {
   const root = baRoot();
   await withServer({
-    wordpress: { url: 'https://perkap.com' },
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    wordpress: { url: 'https://example.com' },
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   }, async (base) => {
     const r = await (await fetch(`${base}/api/knowledge-preview`)).json();
     assert.strictEqual(r.source, 'business_asset');
@@ -142,7 +142,7 @@ test('respons hanya memuat id, name, productCount — bukan field lain dari prof
 test('foto: berkas sah dilayani dengan content-type gambar', async () => {
   const root = baRoot();
   await withServer({
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   }, async (base) => {
     const res = await fetch(`${base}/api/business-asset-photo?file=sah.png`);
     assert.strictEqual(res.status, 200);
@@ -153,7 +153,7 @@ test('foto: berkas sah dilayani dengan content-type gambar', async () => {
 test('foto: path traversal ditolak dan tidak membocorkan isi berkas', async () => {
   const root = baRoot();
   await withServer({
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   }, async (base) => {
     const jahat = [
       '../../../../.env',
@@ -174,7 +174,7 @@ test('foto: path traversal ditolak dan tidak membocorkan isi berkas', async () =
 test('foto: ekstensi selain gambar ditolak', async () => {
   const root = baRoot();
   await withServer({
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   }, async (base) => {
     for (const f of ['config.json', 'catatan.txt', 'skrip.js', 'tanpaekstensi']) {
       const res = await fetch(`${base}/api/business-asset-photo?file=` + f);
@@ -209,7 +209,7 @@ test('foto: mode manual menolak, karena tidak punya sumber gambar', async () => 
 test('foto: berkas yang tidak ada memberi 404 tanpa menyebut path absolut', async () => {
   const root = baRoot();
   await withServer({
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   }, async (base) => {
     const res = await fetch(`${base}/api/business-asset-photo?file=tidakada.png`);
     assert.strictEqual(res.status, 404);
@@ -221,7 +221,7 @@ test('foto: berkas yang tidak ada memberi 404 tanpa menyebut path absolut', asyn
 test('detail produk: mengembalikan satu produk penuh, bukan katalog', async () => {
   const root = baRoot();
   await withServer({
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   }, async (base) => {
     const res = await fetch(`${base}/api/business-asset-product?id=p0`);
     assert.strictEqual(res.status, 200);
@@ -235,7 +235,7 @@ test('detail produk: mengembalikan satu produk penuh, bukan katalog', async () =
 test('detail produk: produk tidak dikenal memberi 404, bukan 500', async () => {
   const root = baRoot();
   await withServer({
-    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'perkapcom' } }
+    knowledge_source: { type: 'business_asset', business_asset: { root, business_id: 'examplecom' } }
   }, async (base) => {
     const res = await fetch(`${base}/api/business-asset-product?id=tidak-ada-produk-ini`);
     assert.strictEqual(res.status, 404);

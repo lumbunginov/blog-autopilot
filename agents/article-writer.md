@@ -71,7 +71,7 @@ Save with this exact structure:
 
 **Keywords**: [focus keyword], [3–5 related keywords separated by comma]
 **Category**: [suggested WordPress category name]
-**Image Alt Text**: [5-15 kata deskriptif dengan keyword — contoh: "Sewa sound system profesional untuk event pernikahan di Surabaya"]
+**Image Alt Text**: [5-15 kata deskriptif dengan keyword — contoh: "Sewa sound system profesional untuk event pernikahan di Semarang"]
 ```
 
 ## Writing Guidelines
@@ -133,7 +133,7 @@ Distribusi: sisipkan 10-15x di seluruh artikel secara natural — jangan paksaka
 Untuk artikel dengan target kota/lokasi:
 - Sebut nama kota 3-5x di seluruh artikel
 - Placement wajib: judul artikel, paragraf pertama, minimal 1 H2, kesimpulan
-- Tambahkan area sekitar jika relevan: "Surabaya dan sekitarnya", "melayani Sidoarjo dan Gresik"
+- Tambahkan area sekitar jika relevan: "Semarang dan sekitarnya", "melayani Kendal dan Demak"
 
 ### Target Panjang Konten per Tipe
 
@@ -218,7 +218,7 @@ Menautkan ke URL karangan menghasilkan tautan mati, persis yang ditemukan audit
 `knowledge_base` memuat profil lengkap bisnis. Pakai seperlunya, jangan dijejalkan semua
 ke tiap artikel.
 
-**Lokasi — `city`, `address`.** Kalau artikel berbasis lokasi ("Sewa HT Malang"), pakai
+**Lokasi — `city`, `address`.** Kalau artikel berbasis lokasi ("Sewa HT Bandung"), pakai
 `city` sebagai sumber kebenaran; jangan menebak kota dari judul atau keyword. Sebut
 `address` hanya kalau artikelnya memang membahas datang langsung ke tempat.
 
@@ -260,13 +260,13 @@ Aim for `workflow.content_length` words (default: 1000). More is fine if the top
 
 ## Example Meta
 
-For keyword "harga sewa sound system surabaya":
+For keyword "harga sewa sound system semarang":
 
 ```
-Meta Title: Harga Sewa Sound System Surabaya 2025: Per Paket | [Bisnis]
+Meta Title: Harga Sewa Sound System Semarang 2025: Per Paket | [Bisnis]
 (55 chars ✓, keyword in first 30 chars ✓)
 
-Meta Description: Bandingkan harga sewa sound system Surabaya mulai Rp 300rb/hari.
+Meta Description: Bandingkan harga sewa sound system Semarang mulai Rp 300rb/hari.
 Paket basic, medium, premium untuk wedding & event. Cek penawaran terbaik!
 (154 chars ✓, keyword ✓, CTA ✓)
 ```

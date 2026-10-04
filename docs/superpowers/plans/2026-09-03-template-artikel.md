@@ -12,15 +12,15 @@
 
 ## Global Constraints
 
-- Semua path dijalankan dari root skill: `G:/Project/Sikil Project/autoblog/.claude/skills/blog-autopilot`
-- Ini folder **dev**. Jangan menyentuh instalasi lain. Skill `business-asset` di `Perkap_com/project/sosmed_content` hanya **dibaca** sebagai rujukan — jangan pernah menulis ke sana.
-- `data/blogs/perkapcom/` memuat data hidup (663 artikel di cache, 2 rencana). Jangan menghapus atau menulis ulang isinya di luar yang diminta task.
+- Semua path dijalankan dari root skill: `<root-skill>`
+- Ini folder **dev**. Jangan menyentuh instalasi lain. Skill `business-asset` di `<root-business-asset>` hanya **dibaca** sebagai rujukan — jangan pernah menulis ke sana.
+- `data/blogs/examplecom/` memuat data hidup (663 artikel di cache, 2 rencana). Jangan menghapus atau menulis ulang isinya di luar yang diminta task.
 - Uji: `npm test` (= `node --test scripts/lib/*.test.js scripts/routes/*.test.js`). Semua uji lama harus tetap hijau di setiap commit.
 - Kredensial hanya di `.env`. Tidak pernah di argv, config, dokumen, pesan commit, atau file yang dilacak git.
 - Nama variabel template berbahasa Indonesia (`{namaBisnis}`, bukan `{business_name}`).
 - Variabel tak dikenal **dibiarkan utuh** di keluaran, tidak dikosongkan.
 - Komentar kode berbahasa Indonesia, mengikuti gaya file sekitarnya.
-- Jangan menjalankan `Get-Process node | Stop-Process` — itu mematikan server Paperclip di port 3100. Untuk restart, pakai PID dari `netstat -ano | grep :3847` lalu `taskkill //PID <pid> //F`.
+- Jangan menjalankan `Get-Process node | Stop-Process` — itu mematikan server node lain di mesin yang sama. Untuk restart, pakai PID dari `netstat -ano | grep :3847` lalu `taskkill //PID <pid> //F`.
 
 ---
 
@@ -270,7 +270,7 @@ git commit -m "feat(template): penyimpanan templates.json per tenant"
   - `buildVars(kb, plan, produk) -> object` — peta nama variabel → string
   - `resolveVars(text, vars) -> string` — `{var}` dikenal diganti; **tak dikenal dibiarkan utuh**
 
-**Catatan penting untuk implementer:** `lsi_keywords` tersimpan sebagai **string** di `data/blogs/perkapcom/article-plans.json`, tapi `public/js/app.js:1682` menyimpannya sebagai **array**. Kedua bentuk harus diterima. Ini bukan bug yang diperbaiki task ini — hanya ditangani.
+**Catatan penting untuk implementer:** `lsi_keywords` tersimpan sebagai **string** di `data/blogs/examplecom/article-plans.json`, tapi `public/js/app.js:1682` menyimpannya sebagai **array**. Kedua bentuk harus diterima. Ini bukan bug yang diperbaiki task ini — hanya ditangani.
 
 - [ ] **Step 1: Tulis uji yang gagal**
 
@@ -283,31 +283,31 @@ const assert = require('node:assert');
 const { buildVars, resolveVars } = require('./template-vars');
 
 const KB = {
-  business_name: 'Perkap.com', business_description: 'Sewa alat acara',
+  business_name: 'Example.com', business_description: 'Sewa alat acara',
   tagline: 'Sewa Alat Panitia', business_type: '', target_audience: 'Panitia acara',
-  tone: 'casual', usp: '', city: 'Malang', address: 'Jl. Kembang kertas no 24',
-  whatsapp: '0895412262949', email: '', website: 'perkap.com', hours: '24 Jam',
+  tone: 'casual', usp: '', city: 'Bandung', address: 'Jl. Kembang kertas no 24',
+  whatsapp: '081200000000', email: '', website: 'example.com', hours: '24 Jam',
   cta: ['Hubungi kami'], signature_words: ['gaskeun'], avoid_words: ['murahan'],
   dos: ['sebut harga'], donts: ['janji berlebihan'], prohibited_topics: ['politik']
 };
 
 const RENCANA = {
-  keyword: 'sewa ht malang', title: 'Sewa HT Malang 2026',
-  lsi_keywords: 'rental ht, sewa radio', city: 'Surabaya',
+  keyword: 'sewa ht bandung', title: 'Sewa HT Bandung 2026',
+  lsi_keywords: 'rental ht, sewa radio', city: 'Semarang',
   category_name: 'Sewa HT', content_type: 'transactional', target_words: 800,
-  slug: 'sewa-ht-malang', notes: 'catatan internal',
-  anchor_url: 'https://perkap.com/sewa-ht/', anchor_text: 'sewa HT'
+  slug: 'sewa-ht-bandung', notes: 'catatan internal',
+  anchor_url: 'https://example.com/sewa-ht/', anchor_text: 'sewa HT'
 };
 
 const PRODUK = {
-  nama: 'Sewa HT', harga: '25K/hari', url: 'https://perkap.com/sewa-ht/',
+  nama: 'Sewa HT', harga: '25K/hari', url: 'https://example.com/sewa-ht/',
   konteks: 'HT analog untuk panitia', faq: 'Q: berapa hari minimal?',
   targetMarket: 'panitia event'
 };
 
 test('variabel knowledge base terisi', () => {
   const v = buildVars(KB, RENCANA, null);
-  assert.equal(v.namaBisnis, 'Perkap.com');
+  assert.equal(v.namaBisnis, 'Example.com');
   assert.equal(v.tagline, 'Sewa Alat Panitia');
   assert.equal(v.nada, 'casual');
   assert.equal(v.jamOperasional, '24 Jam');
@@ -323,8 +323,8 @@ test('array knowledge base digabung jadi teks', () => {
 
 test('kota bisnis dan kota target artikel adalah dua variabel berbeda', () => {
   const v = buildVars(KB, RENCANA, null);
-  assert.equal(v.kota, 'Malang');
-  assert.equal(v.kotaTarget, 'Surabaya');
+  assert.equal(v.kota, 'Bandung');
+  assert.equal(v.kotaTarget, 'Semarang');
 });
 
 test('rencana tanpa kota → kotaTarget kosong, bukan undefined', () => {
@@ -345,7 +345,7 @@ test('variabel produk terisi saat produk ada', () => {
   const v = buildVars(KB, RENCANA, PRODUK);
   assert.equal(v.produkNama, 'Sewa HT');
   assert.equal(v.produkHarga, '25K/hari');
-  assert.equal(v.produkUrl, 'https://perkap.com/sewa-ht/');
+  assert.equal(v.produkUrl, 'https://example.com/sewa-ht/');
   assert.equal(v.produkFaq, 'Q: berapa hari minimal?');
   assert.equal(v.produkTargetMarket, 'panitia event');
 });
@@ -362,13 +362,13 @@ test('jumlahKata jadi string, bukan angka', () => {
 });
 
 test('resolveVars mengganti variabel yang dikenal', () => {
-  assert.equal(resolveVars('Halo {namaBisnis} di {kota}', { namaBisnis: 'Perkap.com', kota: 'Malang' }),
-    'Halo Perkap.com di Malang');
+  assert.equal(resolveVars('Halo {namaBisnis} di {kota}', { namaBisnis: 'Example.com', kota: 'Bandung' }),
+    'Halo Example.com di Bandung');
 });
 
 test('variabel TAK DIKENAL dibiarkan utuh, tidak dikosongkan', () => {
-  assert.equal(resolveVars('{namaBisnis} {namaBisnsi}', { namaBisnis: 'Perkap.com' }),
-    'Perkap.com {namaBisnsi}');
+  assert.equal(resolveVars('{namaBisnis} {namaBisnsi}', { namaBisnis: 'Example.com' }),
+    'Example.com {namaBisnsi}');
 });
 
 test('variabel dikenal bernilai kosong tetap diganti jadi kosong', () => {
@@ -452,9 +452,9 @@ function buildVars(kb, plan, produk) {
     keyword:      teks(p.keyword),
     judul:        teks(p.title),
     lsi:          lsiTeks(p.lsi_keywords),
-    // kotaTarget SENGAJA terpisah dari kota: bisnis berkantor di Malang tapi
-    // menulis artikel untuk Surabaya. Menggabungkannya menghasilkan artikel
-    // Surabaya yang menyebut alamat Malang sebagai lokasi layanan.
+    // kotaTarget SENGAJA terpisah dari kota: bisnis berkantor di Bandung tapi
+    // menulis artikel untuk Semarang. Menggabungkannya menghasilkan artikel
+    // Semarang yang menyebut alamat Bandung sebagai lokasi layanan.
     kotaTarget:   teks(p.city),
     kategori:     teks(p.category_name),
     tipeKonten:   teks(p.content_type),
@@ -535,7 +535,7 @@ const { askOpenAI } = require('./openai-text');
 const { envKeys } = require('./env');
 
 test('envKeys menyediakan nama kunci teks per tenant', () => {
-  assert.equal(envKeys('perkapcom').textKey, 'PERKAPCOM_TEXT_API_KEY');
+  assert.equal(envKeys('examplecom').textKey, 'EXAMPLECOM_TEXT_API_KEY');
   assert.equal(envKeys('blog-baru').textKey, 'BLOG_BARU_TEXT_API_KEY');
 });
 
@@ -557,7 +557,7 @@ Tambahkan ke `scripts/lib/env.test.js` (di akhir file):
 
 ```js
 test('envKeys memuat kunci teks', () => {
-  assert.equal(envKeys('perkapcom').textKey, 'PERKAPCOM_TEXT_API_KEY');
+  assert.equal(envKeys('examplecom').textKey, 'EXAMPLECOM_TEXT_API_KEY');
 });
 ```
 
@@ -659,7 +659,7 @@ Tambahkan satu baris di akhir `.env.example`:
 
 ```
 # Hanya dibutuhkan bila template memakai blok {riset}. Kosongkan bila tidak dipakai.
-PERKAPCOM_TEXT_API_KEY=
+EXAMPLECOM_TEXT_API_KEY=
 ```
 
 - [ ] **Step 6: Jalankan uji, pastikan lolos**
@@ -751,8 +751,8 @@ test('prompt yang dikirim memuat semua tugas dan format keluaran yang diminta', 
 
 test('konteks bisnis ikut dikirim bila diberikan', async () => {
   const ask = askPalsu('[HASIL 1]a[/HASIL 1]');
-  await resolveRiset('{riset}t{/riset}', { ask, konteks: 'PROFIL: Perkap.com' });
-  assert.match(ask.panggilan[0], /PROFIL: Perkap\.com/);
+  await resolveRiset('{riset}t{/riset}', { ask, konteks: 'PROFIL: Example.com' });
+  assert.match(ask.panggilan[0], /PROFIL: Example\.com/);
 });
 
 test('balasan tanpa tag HASIL melempar, bukan menghasilkan prompt terpotong diam-diam', async () => {
@@ -1294,7 +1294,7 @@ Harapan: `function`
 
 - [ ] **Step 3: Uji manual — rencana tanpa template**
 
-Jalankan dari root project `G:/Project/Sikil Project/autoblog`:
+Jalankan dari root project `<root-project>`:
 
 ```bash
 node .claude/skills/blog-autopilot/scripts/blog-config.js template plan_1776027660002_c3d4
@@ -1308,19 +1308,19 @@ Skrip di bawah mencari sendiri template bernama `UJI SEMENTARA`, jadi tidak ada 
 yang perlu kamu salin antar-perintah. Jalankan dari folder skill:
 
 ```bash
-cd "G:/Project/Sikil Project/autoblog/.claude/skills/blog-autopilot"
+cd "<root-skill>"
 node -e "
 const fs=require('fs');
 const { saveTemplate } = require('./scripts/lib/template-store');
 const { makePaths } = require('./scripts/lib/paths');
 const p = makePaths('.');
-const { template } = saveTemplate(p.templatesPath('perkapcom'), {
+const { template } = saveTemplate(p.templatesPath('examplecom'), {
   name: 'UJI SEMENTARA',
   article_prompt: 'Tulis {jumlahKata} kata tentang {keyword} untuk {namaBisnis} di {kotaTarget}. Nada {nada}. Variabel salah: {tidakAda}',
   image_prompt: 'Foto {produkNama} di {kota}',
   meta_title_pattern: '{keyword} | {namaBisnis}'
 });
-const f='./data/blogs/perkapcom/article-plans.json';
+const f='./data/blogs/examplecom/article-plans.json';
 const d=JSON.parse(fs.readFileSync(f,'utf-8'));
 d.plans[0].template_id=template.id;
 d.plans[0].product='Sewa HT';
@@ -1330,24 +1330,24 @@ console.log('PLAN_ID=' + d.plans[0].id);
 ```
 
 Catat `PLAN_ID` dari keluaran, lalu jalankan dari root project
-`G:/Project/Sikil Project/autoblog`:
+`<root-project>`:
 
 ```bash
 node .claude/skills/blog-autopilot/scripts/blog-config.js template "<PLAN_ID>"
 ```
 
-Harapan: kode keluar 0; `article_prompt` memuat `800`, `Perkap.com`, dan `{tidakAda}` **utuh**; `image_prompt` memuat nama produk dan `Malang`.
+Harapan: kode keluar 0; `article_prompt` memuat `800`, `Example.com`, dan `{tidakAda}` **utuh**; `image_prompt` memuat nama produk dan `Bandung`.
 
 - [ ] **Step 5: Uji manual — template dengan riset tanpa kunci API**
 
 Ubah template yang sama (dicari lewat namanya, bukan id yang disalin):
 
 ```bash
-cd "G:/Project/Sikil Project/autoblog/.claude/skills/blog-autopilot"
+cd "<root-skill>"
 node -e "
 const { readTemplates, saveTemplate } = require('./scripts/lib/template-store');
 const { makePaths } = require('./scripts/lib/paths');
-const f = makePaths('.').templatesPath('perkapcom');
+const f = makePaths('.').templatesPath('examplecom');
 const t = readTemplates(f).templates.find(x => x.name === 'UJI SEMENTARA');
 saveTemplate(f, { id: t.id, name: t.name,
   article_prompt: '{riset}Sebutkan 3 fakta tentang {produkNama}{/riset}' });
@@ -1355,23 +1355,23 @@ console.log('template diubah, sekarang memakai {riset}');
 "
 ```
 
-Pastikan `PERKAPCOM_TEXT_API_KEY` masih kosong di `.env`, lalu jalankan lagi
+Pastikan `EXAMPLECOM_TEXT_API_KEY` masih kosong di `.env`, lalu jalankan lagi
 `template "<PLAN_ID>"` dari root project.
 
-Harapan: kode keluar **1**, pesan menyebut `PERKAPCOM_TEXT_API_KEY`, tidak ada JSON di stdout.
+Harapan: kode keluar **1**, pesan menyebut `EXAMPLECOM_TEXT_API_KEY`, tidak ada JSON di stdout.
 
 - [ ] **Step 6: Bersihkan data uji**
 
 ```bash
-cd "G:/Project/Sikil Project/autoblog/.claude/skills/blog-autopilot"
+cd "<root-skill>"
 node -e "
 const fs=require('fs');
 const { readTemplates, deleteTemplate } = require('./scripts/lib/template-store');
 const { makePaths } = require('./scripts/lib/paths');
-const tf = makePaths('.').templatesPath('perkapcom');
+const tf = makePaths('.').templatesPath('examplecom');
 const t = readTemplates(tf).templates.find(x => x.name === 'UJI SEMENTARA');
 if (t) deleteTemplate(tf, t.id);
-const f='./data/blogs/perkapcom/article-plans.json';
+const f='./data/blogs/examplecom/article-plans.json';
 const d=JSON.parse(fs.readFileSync(f,'utf-8'));
 delete d.plans[0].template_id; delete d.plans[0].product;
 fs.writeFileSync(f,JSON.stringify(d,null,2));
@@ -1382,11 +1382,11 @@ console.log('bersih');
 Verifikasi bahwa rencana hidup benar-benar kembali seperti semula:
 
 ```bash
-git diff --stat data/blogs/perkapcom/article-plans.json
+git diff --stat data/blogs/examplecom/article-plans.json
 ```
 
 Harapan: tidak ada selisih. Bila ada, kembalikan dengan
-`git checkout -- data/blogs/perkapcom/article-plans.json`.
+`git checkout -- data/blogs/examplecom/article-plans.json`.
 
 - [ ] **Step 7: Jalankan seluruh uji**
 
@@ -1802,7 +1802,7 @@ netstat -ano | grep :3847
 taskkill //PID <pid> //F
 ```
 
-Jangan pernah memakai `Get-Process node | Stop-Process` — itu mematikan server Paperclip di port 3100.
+Jangan pernah memakai `Get-Process node | Stop-Process` — itu mematikan server node lain di mesin yang sama.
 
 Lalu jalankan: `npm start`
 
@@ -2138,7 +2138,7 @@ Klik **Simpan**. Harapan: toast "Template dibuat", kartu muncul di daftar.
 Klik menu **Perencanaan** → **+ Tambah Manual**. Isi:
 
 - Focus Keyword: `e2e uji template artikel`
-- Kota: `Surabaya`
+- Kota: `Semarang`
 - Produk: pilih `Sewa HT` dari dropdown produk
 - Template Artikel: pilih `E2E Uji Template`
 
@@ -2150,13 +2150,13 @@ Ambil `plan_id` rencana itu:
 
 ```bash
 node -e "
-const d=require('./data/blogs/perkapcom/article-plans.json');
+const d=require('./data/blogs/examplecom/article-plans.json');
 const p=d.plans.find(x=>x.keyword==='e2e uji template artikel');
 console.log(p.id, '| template_id=', p.template_id, '| product=', p.product, '| city=', p.city);
 "
 ```
 
-Lalu, dari root project `G:/Project/Sikil Project/autoblog`:
+Lalu, dari root project `<root-project>`:
 
 ```bash
 node .claude/skills/blog-autopilot/scripts/blog-config.js template "<plan_id>"
@@ -2165,10 +2165,10 @@ node .claude/skills/blog-autopilot/scripts/blog-config.js template "<plan_id>"
 Harapan, semuanya harus benar sekaligus:
 
 - kode keluar 0
-- `article_prompt` memuat `Perkap.com` (dari `{namaBisnis}`)
-- `article_prompt` memuat `Surabaya`, **bukan** `Malang` (`{kotaTarget}` ≠ `{kota}`)
+- `article_prompt` memuat `Example.com` (dari `{namaBisnis}`)
+- `article_prompt` memuat `Semarang`, **bukan** `Bandung` (`{kotaTarget}` ≠ `{kota}`)
 - `article_prompt` memuat `{tidakAdaVariabelIni}` **utuh** — variabel tak dikenal tidak dikosongkan
-- `image_prompt` memuat `Sewa HT` (dari `{produkNama}`) dan `Malang` (dari `{kota}`)
+- `image_prompt` memuat `Sewa HT` (dari `{produkNama}`) dan `Bandung` (dari `{kota}`)
 - `meta_title` memuat keyword dan nama bisnis
 - `warning` bernilai `null`
 
@@ -2181,9 +2181,9 @@ Edit template lewat UI, tambahkan di akhir Prompt Artikel:
 ```
 
 Simpan, lalu jalankan lagi perintah `template` yang sama (dengan
-`PERKAPCOM_TEXT_API_KEY` masih kosong di `.env`).
+`EXAMPLECOM_TEXT_API_KEY` masih kosong di `.env`).
 
-Harapan: kode keluar **1**, pesan menyebut `PERKAPCOM_TEXT_API_KEY`, dan **tidak
+Harapan: kode keluar **1**, pesan menyebut `EXAMPLECOM_TEXT_API_KEY`, dan **tidak
 ada JSON** di stdout. Ini yang mencegah artikel ditulis tanpa risetnya.
 
 - [ ] **Step 6: Verifikasi template terhapus tidak merusak rencana**
@@ -2199,23 +2199,23 @@ Hapus rencana `e2e uji template artikel` lewat UI. Verifikasi:
 
 ```bash
 node -e "
-const d=require('./data/blogs/perkapcom/article-plans.json');
+const d=require('./data/blogs/examplecom/article-plans.json');
 console.log('sisa rencana:', d.plans.length, d.plans.map(p=>p.keyword));
-const t=require('./data/blogs/perkapcom/templates.json');
+const t=require('./data/blogs/examplecom/templates.json');
 console.log('sisa template:', t.templates.length);
 "
 ```
 
-Harapan: 2 rencana asli (`harga sewa stand partitur malang murah` dan satu lagi),
+Harapan: 2 rencana asli (`harga sewa stand partitur bandung murah` dan satu lagi),
 0 template. Kalau `templates.json` tidak ada setelah dihapus semua, itu wajar.
 
 - [ ] **Step 8: Verifikasi server lain masih hidup**
 
 ```bash
-netstat -ano | grep -E ":(3100|3101|3001|3847)" | head
+netstat -ano | grep -E ":(3001|3847)" | head
 ```
 
-Harapan: port 3100 (Paperclip) dan 3101 (sosmed content) masih mendengarkan.
+Harapan: server node lain di mesin yang sama masih mendengarkan.
 Kalau salah satunya mati, itu berarti ada perintah yang mematikan node secara
 menyeluruh — laporkan, jangan diamkan.
 
@@ -2241,7 +2241,7 @@ menyebutkan apa yang diperbaiki.
 **Urutan tugas mengikat.** Task 6 memakai keluaran Task 1–4; Task 9 memakai Task 8;
 Task 12 memverifikasi semuanya. Jangan melompat.
 
-**Data hidup.** `data/blogs/perkapcom/` memuat 663 artikel di cache dan 2 rencana
+**Data hidup.** `data/blogs/examplecom/` memuat 663 artikel di cache dan 2 rencana
 nyata. Task 6 dan 12 menyentuhnya untuk uji manual — ikuti langkah pembersihannya
 sampai selesai, dan verifikasi dengan `git status` bahwa tidak ada sisa.
 
@@ -2249,7 +2249,7 @@ sampai selesai, dan verifikasi dengan `git status` bahwa tidak ada sisa.
 
 1. Variabel tak dikenal harus **utuh**, bukan kosong. Kalau ini terbalik, salah
    ketik di template hilang tanpa jejak.
-2. `{kota}` dan `{kotaTarget}` harus berbeda. Kalau digabung, artikel Surabaya
-   akan menyebut alamat Malang sebagai lokasi layanan.
+2. `{kota}` dan `{kotaTarget}` harus berbeda. Kalau digabung, artikel Semarang
+   akan menyebut alamat Bandung sebagai lokasi layanan.
 3. Beberapa blok `{riset}` harus jadi **satu** panggilan. Satu panggilan per blok
    berarti biaya berlipat tanpa manfaat.

@@ -6,12 +6,12 @@
  * mengumpulkan tiap href internal, me-resolve tiap URL unik lewat HTTP, dan
  * melaporkan yang mati beserta artikel yang mengaitkannya.
  *
- * Diport dari post-article/scripts/audit-internal-links.js (Perkap_com).
+ * Diport dari skrip audit tautan internal versi awal.
  * BACA-SAJA: tidak ada penulisan ke WordPress, tidak ada kredensial dipakai.
  *
  * Usage:
  *   node audit-links.js                       # crawl penuh tenant aktif
- *   node audit-links.js --blog perkapcom       # tenant tertentu
+ *   node audit-links.js --blog examplecom      # tenant tertentu
  *   node audit-links.js --limit 50             # crawl 50 post pertama saja
  */
 
@@ -218,7 +218,7 @@ async function mapLimit(items, limit, fn) {
   }));
 
   // Hanya 4xx membuktikan halaman benar-benar hilang. 5xx (atau galat jaringan)
-  // berarti origin sedang tidak sehat — perkap.com membalas 503 saat sibuk —
+  // berarti origin sedang tidak sehat — situs nyata bisa membalas 503 saat sibuk —
   // jadi itu dilaporkan terpisah sebagai tak pasti, tidak dihitung sebagai
   // tautan rusak.
   const isDead = (r) => r.status >= 400 && r.status < 500 && r.status !== 408 && r.status !== 429;

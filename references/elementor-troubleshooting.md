@@ -72,7 +72,7 @@ How to Fix:
    ```bash
    node .claude/skills/blog-autopilot/scripts/elementor/clone-template.js \
      source.json target.json "Page Title" \
-     --replace "Malang:Denpasar"
+     --replace "Bandung:Yogyakarta"
    ```
 
 2. **If file is already broken**:

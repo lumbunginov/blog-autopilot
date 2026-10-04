@@ -54,18 +54,18 @@ data/blogs/<blog-id>/elementor/
 └── compress/   ← siap upload (dihasilkan, jangan diedit)
 ```
 
-Nama berkas memakai slug halaman: `sewa-ht-malang.json`.
+Nama berkas memakai slug halaman: `sewa-ht-bandung.json`.
 
 ## Alur: edit halaman yang sudah ada
 
 ```bash
-node download-page.js sewa-ht-malang
-node extract-elementor.js sewa-ht-malang.json
-# edit elementor/sewa-ht-malang.json
-node validate-elementor.js sewa-ht-malang.json
-node check-blueprint.js sewa-ht-malang.json
-node compress-elementor.js sewa-ht-malang.json
-node upload-page.js sewa-ht-malang
+node download-page.js sewa-ht-bandung
+node extract-elementor.js sewa-ht-bandung.json
+# edit elementor/sewa-ht-bandung.json
+node validate-elementor.js sewa-ht-bandung.json
+node check-blueprint.js sewa-ht-bandung.json
+node compress-elementor.js sewa-ht-bandung.json
+node upload-page.js sewa-ht-bandung
 ```
 
 ## Alur: halaman baru dari template
@@ -74,8 +74,8 @@ node upload-page.js sewa-ht-malang
 rekursif, lalu memvalidasi sebelum menulis:
 
 ```bash
-node clone-template.js sewa-ht-malang.json sewa-ht-denpasar.json \
-  "Sewa HT Denpasar" --replace "Malang:Denpasar"
+node clone-template.js sewa-ht-bandung.json sewa-ht-yogyakarta.json \
+  "Sewa HT Yogyakarta" --replace "Bandung:Yogyakarta"
 ```
 
 Keluarannya format halaman WordPress (`{content, page_settings, version, title, type}`)
@@ -100,8 +100,8 @@ sengaja sama. Keluar kode 1 bila ada sisa.
 Setelah lolos, kirim jadi halaman baru:
 
 ```bash
-node create-page.js sewa-ht-denpasar.json "Sewa HT Denpasar" \
-  --slug sewa-ht-denpasar --status draft
+node create-page.js sewa-ht-yogyakarta.json "Sewa HT Yogyakarta" \
+  --slug sewa-ht-yogyakarta --status draft
 ```
 
 `create-page.js` menerima dua bentuk berkas — array section (hasil
@@ -131,7 +131,7 @@ node capture-blueprint.js sewa-kabel-aux-to-rca.json produk-sewa   --note "Halam
 Tandai halaman lain yang harus mengikutinya (cukup sekali per halaman):
 
 ```bash
-node check-blueprint.js sewa-tripod-kamera-malang.json --blueprint produk-sewa
+node check-blueprint.js sewa-tripod-kamera-bandung.json --blueprint produk-sewa
 ```
 
 Sesudah itu `node check-blueprint.js <slug>` — atau `all` untuk semua yang sudah

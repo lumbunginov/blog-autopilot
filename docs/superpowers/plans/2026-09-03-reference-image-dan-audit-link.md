@@ -4,7 +4,7 @@
 
 **Goal:** Gambar artikel memakai foto produk asli dari business asset, dan 662 artikel terbit bisa diaudit tautan internalnya.
 
-**Architecture:** Field `url` ditambahkan ke produk di repo `business-asset` (dev 3001 → push → pull di production 3101). Autoblog membaca `p.url` dengan ekstraksi-dari-konteks sebagai fallback, menyajikan foto lewat satu rute berlapis-kunci, dan menampilkan produk sebagai kartu expandable read-only. Modul pencocokan murni memilih produk untuk sebuah artikel; `image-generator.md` mengirim fotonya sebagai reference image ke Seedream. Audit link diport baca-saja dari `post-article`.
+**Architecture:** Field `url` ditambahkan ke produk di repo `business-asset` (dev → push → pull di production). Autoblog membaca `p.url` dengan ekstraksi-dari-konteks sebagai fallback, menyajikan foto lewat satu rute berlapis-kunci, dan menampilkan produk sebagai kartu expandable read-only. Modul pencocokan murni memilih produk untuk sebuah artikel; `image-generator.md` mengirim fotonya sebagai reference image ke Seedream. Audit link diport baca-saja dari `post-article`.
 
 **Tech Stack:** Node.js 18+ (CommonJS), Express, `node --test` + `node:assert` (tanpa framework), vanilla JS di dashboard, BytePlus Seedream 4.5.
 
@@ -14,10 +14,10 @@
 
 Nilai-nilai ini mengikat SETIAP task. Disalin verbatim dari spec dan dari aturan proyek yang sudah berlaku.
 
-- **Dua repo, dua folder.** Task 1–3 dikerjakan di `G:\Project\Sikil Project\business_asset\.claude\skills\business-asset` (dev, port 3001). Task 4–12 di `G:\Project\Sikil Project\autoblog\.claude\skills\blog-autopilot`. **JANGAN PERNAH** mengedit `G:\Project\Paperclip\Perkap_com\project\sosmed_content` — itu clone production, perubahan di sana hilang saat pull.
-- **Restart server hanya dengan PID-filter.** `netstat -ano | grep :<port>` lalu `taskkill //PID <pid> //F`. **JANGAN PERNAH** `Get-Process node | Stop-Process` — itu membunuh server Paperclip di port 3100 dan seluruh proses node lain (kejadian 2026-08-08).
+- **Dua repo, dua folder.** Task 1–3 dikerjakan di `<root-business-asset>` (dev, port 3001). Task 4–12 di `<root-skill>`. **JANGAN PERNAH** mengedit `<root-business-asset>` — itu clone production, perubahan di sana hilang saat pull.
+- **Restart server hanya dengan PID-filter.** `netstat -ano | grep :<port>` lalu `taskkill //PID <pid> //F`. **JANGAN PERNAH** `Get-Process node | Stop-Process` — itu membunuh seluruh proses node lain di mesin yang sama (kejadian 2026-08-08).
 - **Business asset hanya dibaca oleh autoblog.** Tidak ada kode autoblog yang menulis ke `data/businesses/`. Satu-satunya penulisan ke sana datang dari dashboard business-asset itu sendiri (Task 1–3).
-- **Data hidup, jangan disentuh sembarangan.** `data/blogs/perkapcom/` memuat 662 artikel dan 59 kategori. `data/businesses/perkapcom/` dipakai agent sosmed tiap 30 menit. Uji dengan tenant/bisnis buatan, bukan yang hidup.
+- **Data hidup, jangan disentuh sembarangan.** `data/blogs/examplecom/` memuat 662 artikel dan 59 kategori. `data/businesses/examplecom/` dipakai agent otomatis secara berkala. Uji dengan tenant/bisnis buatan, bukan yang hidup.
 - **Kredensial hanya di `.env`.** Tidak pernah di argv, config, docs, pesan commit, atau berkas yang dilacak git.
 - **Bahasa.** Komentar kode dan pesan galat berbahasa Indonesia, mengikuti kode yang sudah ada. Nama fungsi dan variabel boleh Inggris bila itu istilah teknis.
 - **Tes.** `npm test` di autoblog (`node --test scripts/lib/*.test.js scripts/routes/*.test.js`). Di business-asset: `node --test scripts/lib/*.test.js`. Baseline sebelum mulai: autoblog **172 hijau**, business-asset **120 hijau**. Tidak boleh ada yang merah saat selesai.
@@ -28,7 +28,7 @@ Nilai-nilai ini mengikat SETIAP task. Disalin verbatim dari spec dan dari aturan
 
 # BAGIAN A — Repo `business-asset` (Task 1–3)
 
-Folder kerja: `G:\Project\Sikil Project\business_asset\.claude\skills\business-asset`
+Folder kerja: `<root-business-asset>`
 
 ---
 
@@ -63,9 +63,9 @@ test('URL kosong sah — 10 produk memang belum punya halaman', () => {
 });
 
 test('URL http dan https diterima, spasi pinggir dibuang', () => {
-  assert.equal(bersihkanUrl('https://perkap.com/bel-cerdas-cermat/'), 'https://perkap.com/bel-cerdas-cermat/');
-  assert.equal(bersihkanUrl('  https://perkap.com/x/  '), 'https://perkap.com/x/');
-  assert.equal(bersihkanUrl('http://perkap.com/x/'), 'http://perkap.com/x/');
+  assert.equal(bersihkanUrl('https://example.com/bel-cerdas-cermat/'), 'https://example.com/bel-cerdas-cermat/');
+  assert.equal(bersihkanUrl('  https://example.com/x/  '), 'https://example.com/x/');
+  assert.equal(bersihkanUrl('http://example.com/x/'), 'http://example.com/x/');
 });
 
 test('skema selain http/https ditolak dengan status 400', () => {
@@ -75,7 +75,7 @@ test('skema selain http/https ditolak dengan status 400', () => {
 });
 
 test('teks yang bukan URL ditolak dengan status 400', () => {
-  for (const jelek of ['bukan url', 'perkap.com/tanpa-skema', '://rusak']) {
+  for (const jelek of ['bukan url', 'example.com/tanpa-skema', '://rusak']) {
     assert.throws(() => bersihkanUrl(jelek), (e) => e.status === 400, `harus menolak: ${jelek}`);
   }
 });
@@ -182,7 +182,7 @@ Baris baru:
 
 - [ ] **Step 7: Verifikasi manual lewat HTTP**
 
-Server dev 3001 sudah jalan. Buat bisnis uji supaya data perkap yang hidup tidak tersentuh:
+Server dev 3001 sudah jalan. Buat bisnis uji supaya data example yang hidup tidak tersentuh:
 
 ```bash
 curl -s -X POST http://localhost:3001/api/businesses -H "Content-Type: application/json" -d '{"nama":"Uji URL Produk"}'
@@ -252,7 +252,7 @@ Di `public/index.html`, cari baris:
 Tambahkan tepat di bawahnya:
 
 ```html
-          <div class="form-group" style="margin-top:10px"><label>URL Halaman Produk</label><input id="p-url" type="url" placeholder="https://perkap.com/nama-produk/"><div style="font-size:11px;color:var(--text-dim);margin-top:4px">Opsional. Dipakai sebagai tautan internal saat artikel blog menyebut produk ini.</div></div>
+          <div class="form-group" style="margin-top:10px"><label>URL Halaman Produk</label><input id="p-url" type="url" placeholder="https://example.com/nama-produk/"><div style="font-size:11px;color:var(--text-dim);margin-top:4px">Opsional. Dipakai sebagai tautan internal saat artikel blog menyebut produk ini.</div></div>
 ```
 
 - [ ] **Step 2: Kirim `url` saat menyimpan**
@@ -332,16 +332,16 @@ git commit -m "feat(produk): kolom URL halaman produk di form dan kartu"
 
 **Interfaces:**
 - Consumes: Task 1 dan 2 sudah ter-commit di folder dev
-- Produces: production clone (3101) berjalan dengan kode yang sama; `products.json` perkap memuat `url` untuk produk yang punya halaman
+- Produces: production clone berjalan dengan kode yang sama; `products.json` example memuat `url` untuk produk yang punya halaman
 
-**PERINGATAN — langkah berurutan, jangan dilompati.** Task ini menyentuh data hidup yang dipakai agent sosmed tiap 30 menit dan dibaca live oleh autoblog. Kerjakan berurutan dan verifikasi tiap langkah sebelum lanjut.
+**PERINGATAN — langkah berurutan, jangan dilompati.** Task ini menyentuh data hidup yang dipakai agent otomatis secara berkala dan dibaca live oleh autoblog. Kerjakan berurutan dan verifikasi tiap langkah sebelum lanjut.
 
 - [ ] **Step 1: Cadangkan `products.json` production**
 
 ```bash
-cd "G:/Project/Paperclip/Perkap_com/project/sosmed_content"
-cp data/businesses/perkapcom/products.json "data/businesses/perkapcom/products.json.bak-$(date +%Y%m%d-%H%M%S)-preurl"
-ls -la data/businesses/perkapcom/products.json.bak-*preurl
+cd "<root-business-asset>"
+cp data/businesses/examplecom/products.json "data/businesses/examplecom/products.json.bak-$(date +%Y%m%d-%H%M%S)-preurl"
+ls -la data/businesses/examplecom/products.json.bak-*preurl
 ```
 
 Diharapkan: satu berkas cadangan baru, ukuran sekitar 237 KB.
@@ -349,7 +349,7 @@ Diharapkan: satu berkas cadangan baru, ukuran sekitar 237 KB.
 - [ ] **Step 2: Push dari dev**
 
 ```bash
-cd "G:/Project/Sikil Project/business_asset/.claude/skills/business-asset"
+cd "<root-business-asset>"
 git log --oneline -3
 git push
 ```
@@ -357,7 +357,7 @@ git push
 - [ ] **Step 3: Pull di production**
 
 ```bash
-cd "G:/Project/Paperclip/Perkap_com/project/sosmed_content"
+cd "<root-business-asset>"
 git status --short
 git pull
 git log --oneline -1
@@ -365,10 +365,10 @@ git log --oneline -1
 
 Diharapkan: commit teratas sama persis dengan folder dev. Kalau `git status` menunjukkan berkas kode yang termodifikasi (bukan `data/`), **berhenti** — berarti ada yang pernah mengedit langsung di production; laporkan sebelum melanjutkan.
 
-- [ ] **Step 4: Restart server 3101 — HANYA dengan PID-filter**
+- [ ] **Step 4: Restart server production — HANYA dengan PID-filter**
 
 ```bash
-netstat -ano | grep :3101
+netstat -ano | grep :<port-production>
 ```
 
 Catat PID dari baris `LISTENING`, lalu:
@@ -377,38 +377,38 @@ Catat PID dari baris `LISTENING`, lalu:
 taskkill //PID <pid-yang-dicatat> //F
 ```
 
-**JANGAN PERNAH** `Get-Process node | Stop-Process` — itu membunuh server Paperclip di port 3100 dan seluruh proses node lain di mesin ini (kejadian 2026-08-08).
+**JANGAN PERNAH** `Get-Process node | Stop-Process` — itu membunuh seluruh proses node lain di mesin yang sama di mesin ini (kejadian 2026-08-08).
 
 Nyalakan kembali:
 
 ```bash
-cd "G:/Project/Paperclip/Perkap_com/project/sosmed_content"
+cd "<root-business-asset>"
 node scripts/server.js
 ```
 
 Jalankan di latar belakang. Verifikasi hidup:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3101/
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:<port-production>/
 ```
 
 Diharapkan: `200`.
 
-- [ ] **Step 5: Verifikasi server Paperclip 3100 masih hidup**
+- [ ] **Step 5: Verifikasi server node lain masih hidup**
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3100/
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:<port-server-lain>/
 ```
 
-Diharapkan: bukan `000`. Kalau `000`, server Paperclip ikut mati — nyalakan kembali sebelum melanjutkan.
+Diharapkan: bukan `000`. Kalau `000`, server node lain ikut mati — nyalakan kembali sebelum melanjutkan.
 
 - [ ] **Step 6: Isi URL untuk 10 produk yang kosong**
 
-Sepuluh produk ini tidak punya URL di `konteks`-nya. Buka dashboard production `http://localhost:3101` lewat Playwright (**reuse sesi yang sudah terbuka**), pilih bisnis Perkap.com, tab Produk, lalu isi kolom URL Halaman Produk untuk masing-masing:
+Sepuluh produk ini tidak punya URL di `konteks`-nya. Buka dashboard production `http://localhost:<port-production>` lewat Playwright (**reuse sesi yang sudah terbuka**), pilih bisnis Example.com, tab Produk, lalu isi kolom URL Halaman Produk untuk masing-masing:
 
 | Produk | URL |
 |---|---|
-| Hollyland LARK A1 Duo | (cari di perkap.com; kosongkan kalau belum ada halaman) |
+| Hollyland LARK A1 Duo | (cari di example.com; kosongkan kalau belum ada halaman) |
 | Converter Type-C to HDMI Vention | (idem) |
 | Mixer Audio Ashley SMR 6 | (idem) |
 | Mixer Audio Yamaha DX06 | (idem) |
@@ -419,17 +419,17 @@ Sepuluh produk ini tidak punya URL di `konteks`-nya. Buka dashboard production `
 | Tripod Kamera QZSD-999H | (idem) |
 | Stand Parled | (idem) |
 
-**Kosong adalah jawaban yang sah.** Kalau halaman produknya memang belum ada di perkap.com, biarkan kosong — mengarang URL menghasilkan tautan mati di artikel, yang justru masalah yang sedang diperbaiki Fitur 7. Cari dulu di `https://perkap.com/?s=<nama produk>` sebelum memutuskan.
+**Kosong adalah jawaban yang sah.** Kalau halaman produknya memang belum ada di example.com, biarkan kosong — mengarang URL menghasilkan tautan mati di artikel, yang justru masalah yang sedang diperbaiki Fitur 7. Cari dulu di `https://example.com/?s=<nama produk>` sebelum memutuskan.
 
 Catat berapa yang benar-benar terisi; angka itu masuk laporan akhir.
 
 - [ ] **Step 7: Verifikasi data utuh**
 
 ```bash
-cd "G:/Project/Paperclip/Perkap_com/project/sosmed_content"
+cd "<root-business-asset>"
 node -e "
-const p = require('./data/businesses/perkapcom/products.json');
-const bak = require('./data/businesses/perkapcom/' + require('fs').readdirSync('./data/businesses/perkapcom').find(f => f.includes('preurl')));
+const p = require('./data/businesses/examplecom/products.json');
+const bak = require('./data/businesses/examplecom/' + require('fs').readdirSync('./data/businesses/examplecom').find(f => f.includes('preurl')));
 console.log('jumlah produk sekarang:', p.length, '| sebelum:', bak.length);
 console.log('punya url:', p.filter(x => x.url).length);
 const hilang = bak.filter(b => !p.find(x => x.id === b.id));
@@ -449,7 +449,7 @@ Tidak ada `git commit` di task ini: `data/` ada di `.gitignore` kedua repo. Cata
 
 # BAGIAN B — Produk kaya di autoblog (Task 4–7)
 
-Folder kerja: `G:\Project\Sikil Project\autoblog\.claude\skills\blog-autopilot`
+Folder kerja: `<root-skill>`
 
 ---
 
@@ -607,13 +607,13 @@ Tambahkan `hitungFaq` ke `module.exports`.
 node --test scripts/lib/business-asset.test.js
 ```
 
-- [ ] **Step 5: Verifikasi dengan data perkap yang asli**
+- [ ] **Step 5: Verifikasi dengan data example yang asli**
 
 ```bash
 node -e "
 const ba = require('./scripts/lib/business-asset');
-const { products } = ba.readBusinessAsset('G:/Project/Paperclip/Perkap_com/project/sosmed_content/data/businesses', 'perkapcom');
-const hasil = ba.mapProducts(products, 'https://perkap.com');
+const { products } = ba.readBusinessAsset('<root-business-asset>/data/businesses', 'examplecom');
+const hasil = ba.mapProducts(products, 'https://example.com');
 console.log('produk:', hasil.products.length);
 console.log('punya url:', hasil.products.filter(p => p.url).length);
 console.log('internal link unik:', hasil.internal_links.length);
@@ -1001,7 +1001,7 @@ Tambahkan ke blok `<style>` yang sudah ada. Wajib: `.produk-kartu-foto` berukura
 
 **Reuse sesi browser yang sudah terbuka.** Server autoblog di port 3847.
 
-1. Buka dashboard, tab Knowledge Base, tenant `perkapcom` (mode business_asset)
+1. Buka dashboard, tab Knowledge Base, tenant `examplecom` (mode business_asset)
 2. Hitung kartu: harus **45**
 3. Hitung lencana "belum ada URL": harus sama dengan 45 dikurangi jumlah produk ber-URL (10 dikurangi yang terisi di Task 3)
 4. Buka satu kartu produk ber-galeri (mis. Bel Cerdas Cermat) → konteks, FAQ, dan 4 gambar galeri tampil
@@ -1068,7 +1068,7 @@ let s=''; process.stdin.on('data',d=>s+=d).on('end',()=>{
 });"
 ```
 
-Diharapkan: nama benar, URL perkap.com, context panjang, image terisi, galeri 4.
+Diharapkan: nama benar, URL example.com, context panjang, image terisi, galeri 4.
 
 Pastikan juga `GET /api/config` **tidak** ikut membengkak:
 
@@ -1149,7 +1149,7 @@ test('judul artikel memuat nama produk', () => {
 });
 
 test('kata kunci fokus memuat nama produk', () => {
-  assert.equal(matchProduct(PRODUK, { keyword: 'sewa bel cerdas cermat custom malang' }).product.id, 'bel-cerdas-cermat-custom');
+  assert.equal(matchProduct(PRODUK, { keyword: 'sewa bel cerdas cermat custom bandung' }).product.id, 'bel-cerdas-cermat-custom');
 });
 
 test('DUA produk berbagi kata umum: TIDAK MENEBAK, kembalikan null', () => {
@@ -1235,7 +1235,7 @@ function matchProduct(products, opsi) {
   const title = normal(o.title);
   const keyword = normal(o.keyword);
 
-  // 1. Nama produk eksplisit. Ini jalur normal: alur artikel perkap sudah
+  // 1. Nama produk eksplisit. Ini jalur normal: alur artikel example sudah
   //    membawa nama produk, jadi tidak perlu menebak apa pun.
   if (productName) {
     const persis = list.find(p => normal(p.id) === productName || normal(p.name) === productName);
@@ -1293,14 +1293,14 @@ node --test scripts/lib/product-match.test.js
 node -e "
 const ba = require('./scripts/lib/business-asset');
 const { matchProduct } = require('./scripts/lib/product-match');
-const { products } = ba.readBusinessAsset('G:/Project/Paperclip/Perkap_com/project/sosmed_content/data/businesses', 'perkapcom');
-const ringkas = ba.mapProducts(products, 'https://perkap.com').products;
+const { products } = ba.readBusinessAsset('<root-business-asset>/data/businesses', 'examplecom');
+const ringkas = ba.mapProducts(products, 'https://example.com').products;
 const uji = [
   'Tips Memilih Bel Cerdas Cermat untuk Lomba Sekolah',
   'Panduan Lengkap Mixer Audio untuk Pemula',
   'Review Mixer Audio Yamaha DX06',
   'Cara Menghemat Anggaran Acara Kantor',
-  'Sewa Sound System Malang untuk Wedding'
+  'Sewa Sound System Bandung untuk Wedding'
 ];
 for (const t of uji) {
   const r = matchProduct(ringkas, { title: t });
@@ -1463,7 +1463,7 @@ const payload = JSON.stringify(badan);
 
 - [ ] **Step 4: Uji satu gambar sungguhan**
 
-Kalau `PERKAPCOM_IMAGE_API_KEY` ada di `.env`, hasilkan satu gambar dengan reference dan
+Kalau `EXAMPLECOM_IMAGE_API_KEY` ada di `.env`, hasilkan satu gambar dengan reference dan
 satu tanpa, untuk judul yang sama. Bandingkan: yang memakai reference harus menampilkan
 alat yang bentuknya sama dengan foto aslinya.
 
@@ -1494,7 +1494,7 @@ git commit -m "feat(gambar): foto produk asli jadi reference image Seedream"
 - Consumes: `makePaths`, config tenant
 - Produces: `normalizeLink(raw, siteUrl) → string | null`, `extractLinks(html, siteUrl) → [{url, anchor}]`; berkas laporan di `data/blogs/{id}/audit/`
 
-**Konteks:** Diport dari `G:\Project\Paperclip\Perkap_com\project\article\.claude\skills\post-article\scripts\audit-internal-links.js` (315 baris). Bagian yang murni (normalisasi dan ekstraksi tautan) dipisah ke modul supaya bisa dites tanpa jaringan; sisanya (crawl, resolve, laporan) tetap satu skrip.
+**Konteks:** Diport dari `<skill-artikel-lama>\scripts\audit-internal-links.js` (315 baris). Bagian yang murni (normalisasi dan ekstraksi tautan) dipisah ke modul supaya bisa dites tanpa jaringan; sisanya (crawl, resolve, laporan) tetap satu skrip.
 
 **PENTING — empat perilaku yang wajib diport apa adanya.** Masing-masing lahir dari laporan palsu yang benar-benar terjadi. Menghapus salah satunya menghasilkan laporan yang terlihat benar dan salah.
 
@@ -1508,24 +1508,24 @@ const { test } = require('node:test');
 const assert = require('node:assert');
 const { normalizeLink, extractLinks } = require('./link-extract');
 
-const SITUS = 'https://perkap.com';
+const SITUS = 'https://example.com';
 
 test('tautan ke situs lain diabaikan', () => {
   assert.equal(normalizeLink('https://google.com/x', SITUS), null);
-  assert.equal(normalizeLink('https://tokopedia.com/perkap', SITUS), null);
+  assert.equal(normalizeLink('https://tokopedia.com/example', SITUS), null);
 });
 
 test('www dan huruf besar dianggap situs yang sama', () => {
-  assert.equal(normalizeLink('https://www.perkap.com/x/', SITUS), 'https://perkap.com/x/');
-  assert.equal(normalizeLink('https://PERKAP.com/x/', SITUS), 'https://perkap.com/x/');
+  assert.equal(normalizeLink('https://www.example.com/x/', SITUS), 'https://example.com/x/');
+  assert.equal(normalizeLink('https://EXAMPLE.com/x/', SITUS), 'https://example.com/x/');
 });
 
 test('path relatif diselesaikan terhadap situs', () => {
-  assert.equal(normalizeLink('/sewa-ht/', SITUS), 'https://perkap.com/sewa-ht/');
+  assert.equal(normalizeLink('/sewa-ht/', SITUS), 'https://example.com/sewa-ht/');
 });
 
 test('http dinaikkan ke https, fragment dibuang', () => {
-  assert.equal(normalizeLink('http://perkap.com/x/#bagian', SITUS), 'https://perkap.com/x/');
+  assert.equal(normalizeLink('http://example.com/x/#bagian', SITUS), 'https://example.com/x/');
 });
 
 test('skema non-web diabaikan', () => {
@@ -1538,14 +1538,14 @@ test('artefak REST /wp-json/ diabaikan', () => {
   // Elementor membangun paginasi dari URL permintaan saat itu. Lewat REST,
   // paginasi muncul sebagai /wp-json/... yang tidak bisa dijangkau pengunjung
   // mana pun. Audit pertama melaporkan 55 "tautan mati" seperti ini.
-  assert.equal(normalizeLink('https://perkap.com/wp-json/wp/v2/pages/page/2/', SITUS), null);
+  assert.equal(normalizeLink('https://example.com/wp-json/wp/v2/pages/page/2/', SITUS), null);
 });
 
 test('extractLinks mengambil url dan teks anchor, membersihkan tag di dalamnya', () => {
   const html = '<p><a href="/sewa-ht/">Sewa <strong>HT</strong></a> dan <a href="https://google.com">luar</a></p>';
   const hasil = extractLinks(html, SITUS);
   assert.equal(hasil.length, 1);
-  assert.equal(hasil[0].url, 'https://perkap.com/sewa-ht/');
+  assert.equal(hasil[0].url, 'https://example.com/sewa-ht/');
   assert.equal(hasil[0].anchor, 'Sewa HT');
 });
 
@@ -1556,7 +1556,7 @@ test('extractLinks tahan terhadap html kosong atau rusak', () => {
 });
 
 test('situs kosong berarti tidak ada tautan internal yang bisa dikenali', () => {
-  assert.equal(normalizeLink('https://perkap.com/x/', ''), null);
+  assert.equal(normalizeLink('https://example.com/x/', ''), null);
 });
 ```
 
@@ -1568,7 +1568,7 @@ node --test scripts/lib/link-extract.test.js
 
 - [ ] **Step 3: Implementasikan modul murni**
 
-Buat `scripts/lib/link-extract.js` — port dari `normalize` dan `extractLinks` di skrip lama, dengan situs jadi parameter (bukan konstanta `perkap.com`).
+Buat `scripts/lib/link-extract.js` — port dari `normalize` dan `extractLinks` di skrip lama, dengan situs jadi parameter (bukan konstanta `example.com`).
 
 ```js
 'use strict';
@@ -1631,7 +1631,7 @@ Buat `scripts/audit-links.js`. Port `fetchAll`, `checkStatus`, `mapLimit`, dan p
 
 | Aspek | Lama | Baru |
 |---|---|---|
-| Situs | konstanta `'https://perkap.com'` | `cfg.wordpress.url` tenant aktif |
+| Situs | konstanta `'https://example.com'` | `cfg.wordpress.url` tenant aktif |
 | Ekstraksi | fungsi lokal | `require('./lib/link-extract')` |
 | Keluaran | path relatif ke folder skill | `paths.blogDir(id) + '/audit/link-YYYY-MM-DD.md'` dan `.json` |
 | Argumen | `--limit`, `--out` | tambah `--blog <id>` |
@@ -1655,13 +1655,13 @@ Kredensial: tidak ada. Audit hanya membaca REST publik (`?status=publish`). Jang
 node scripts/audit-links.js --limit 20
 ```
 
-Diharapkan: laporan tertulis di `data/blogs/perkapcom/audit/`, kolom "tak pasti" terpisah dari "mati", dan skrip selesai tanpa melempar.
+Diharapkan: laporan tertulis di `data/blogs/examplecom/audit/`, kolom "tak pasti" terpisah dari "mati", dan skrip selesai tanpa melempar.
 
 Pastikan tidak ada yang ditulis ke tempat lain:
 
 ```bash
 git status --short
-node -e "console.log(require('fs').statSync('G:/Project/Paperclip/Perkap_com/project/sosmed_content/data/businesses/perkapcom/products.json').mtime)"
+node -e "console.log(require('fs').statSync('<root-business-asset>/data/businesses/examplecom/products.json').mtime)"
 ```
 
 Diharapkan: hanya berkas laporan yang baru (dan `data/blogs/` ada di `.gitignore`, jadi `git status` bersih); mtime `products.json` tidak berubah.
@@ -1768,7 +1768,7 @@ Di `scripts/audit-links.js`, setelah bagian tautan mati, tambahkan bagian baru. 
 | Produk | URL | Artikel menautkan |
 |---|---|---|
 | Stand Parled | (belum ada URL) | — |
-| Mixer Yamaha DX06 | https://perkap.com/... | 0 |
+| Mixer Yamaha DX06 | https://example.com/... | 0 |
 ```
 
 - [ ] **Step 5: Port audit gambar utama**

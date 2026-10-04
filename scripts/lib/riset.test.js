@@ -50,8 +50,8 @@ test('prompt yang dikirim memuat semua tugas dan format keluaran yang diminta', 
 
 test('konteks bisnis ikut dikirim bila diberikan', async () => {
   const ask = askPalsu('[HASIL 1]a[/HASIL 1]');
-  await resolveRiset('{riset}t{/riset}', { ask, konteks: 'PROFIL: Perkap.com' });
-  assert.match(ask.panggilan[0], /PROFIL: Perkap\.com/);
+  await resolveRiset('{riset}t{/riset}', { ask, konteks: 'PROFIL: Example.com' });
+  assert.match(ask.panggilan[0], /PROFIL: Example\.com/);
 });
 
 test('balasan tanpa tag HASIL melempar, bukan menghasilkan prompt terpotong diam-diam', async () => {
